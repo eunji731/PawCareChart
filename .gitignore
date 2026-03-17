@@ -1,0 +1,52 @@
+# --- [ Root & Common ] ---
+.DS_Store
+Thumbs.db
+*.log
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# --- [ IDE - IntelliJ IDEA ] ---
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+.metadata/
+
+# --- [ AI Tools (Antigravity, Cursor, etc.) ] ---
+.anthropic/
+.cursorrules
+# AI가 생성한 임시 작업 로그나 캐시가 있다면 추가
+.antigravity/
+
+# --- [ Backend - Spring Boot & Gradle ] ---
+backend/.gradle/
+backend/build/
+backend/bin/
+backend/help.html
+backend/.lock
+backend/.swp
+
+# Swagger / OpenAPI 관련 (자동 생성 파일인 경우)
+backend/src/main/resources/static/swagger-ui/
+backend/generated/
+
+# --- [ Frontend - React & Vite ] ---
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+frontend/*.local
+frontend/.eslintcache
+
+# Vite 캐시 및 로그
+frontend/.vite/
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+
+# --- [ Database & Others ] ---
+# Supabase나 로컬 DB 관련 설정 파일이 있다면 추가
+.supabase/
