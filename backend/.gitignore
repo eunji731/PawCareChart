@@ -1,0 +1,60 @@
+# ==========================================
+# 1. Security & Environment (보안 및 환경변수 - 매우 중요!)
+# ==========================================
+# 내 컴퓨터의 진짜 DB 비밀번호가 적힌 파일들은 절대 깃허브에 올라가지 않도록 막습니다.
+.env
+**/.env
+.env.*.local
+**/application-dev.yml
+**/application-secret.yml
+
+# (참고: application.yml과 application-prod.yml은 
+# 실제 비밀번호 대신 ${DB_PASSWORD} 같은 껍데기만 있으므로 깃에 올라가도 안전합니다.)
+
+
+# ==========================================
+# 2. Backend (Spring Boot / Gradle)
+# ==========================================
+backend/.gradle/
+backend/build/
+backend/out/
+backend/bin/
+# IDE 및 STS 관련 캐시/설정 파일
+backend/.apt_generated
+backend/.classpath
+backend/.factorypath
+backend/.project
+backend/.settings
+backend/.springBeans
+backend/.sts4-cache
+
+
+# ==========================================
+# 3. Frontend (React / Vite)
+# ==========================================
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+frontend/.eslintcache
+frontend/.vite/
+
+
+# ==========================================
+# 4. OS & IDE (운영체제 및 에디터 캐시)
+# ==========================================
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.iws
+*.iml
+*.ipr
+*.log
+
+
+# ==========================================
+# 5. AI Tools (Vibe Coding용 도구 캐시)
+# ==========================================
+.anthropic/
+.antigravity/
+.cursor/
