@@ -1,4 +1,5 @@
 import { useLogin } from '../hooks/useLogin';
+import { useNavigate } from 'react-router-dom';
 
 export const LoginForm = () => {
   const {
@@ -10,6 +11,8 @@ export const LoginForm = () => {
     loading,
     handleLogin,
   } = useLogin();
+
+  const navigate = useNavigate();
 
   return (
     <form onSubmit={handleLogin} className="flex flex-col gap-4">
@@ -61,11 +64,12 @@ export const LoginForm = () => {
         {loading ? '로그인 중...' : '로그인하기'}
       </button>
 
-      {/* 회원가입 링크 (현재는 껍데기) */}
+      {/* 회원가입 버튼 */}
       <div className="mt-5 text-center">
         <span className="text-sm text-stone-500 mr-2">아직 멍케어차트 회원이 아니신가요?</span>
         <button
           type="button"
+          onClick={() => navigate('/signup')}
           className="text-sm font-bold text-amber-600 hover:text-amber-700 hover:underline cursor-pointer transition-colors"
         >
           회원가입
