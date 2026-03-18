@@ -1,0 +1,100 @@
+-- ==========================================
+-- 1. 사용자 및 인증 관리
+-- ==========================================
+
+-- 사용자 테이블
+CREATE TABLE users (
+    id BIGSERIAL PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,     -- 로그인 아이디 (이메일)
+    password VARCHAR(255) NOT NULL,         -- 암호화된 비밀번호
+    name VARCHAR(50) NOT NULL,              -- 보호자 이름
+    role VARCHAR(20) DEFAULT 'ROLE_USER',   -- 권한 (Spring Security 용)
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 리프레시 토큰 테이블 (JWT 로그인 유지용)
+CREATE TABLE refresh_tokens (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    token VARCHAR(255) UNIQUE NOT NULL,
+    expiry_date TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+-- ==========================================
+-- 2. 반려견 정보 관리
+-- ==========================================
+
+-- 반려견 테이블
+CREATE TABLE dogs (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    name VARCHAR(50) NOT NULL,              -- 반려견 이름 (예: 봉봉)
+    breed VARCHAR(50),                      -- 견종
+    birth_date DATE,                        -- 생일
+    weight DECIMAL(5,2),                    -- 몸무게
+    profile_image_url TEXT,                 -- 대표사진 URL (Supabase Storage 경로)
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+-- ==========================================
+-- 3. 병원 기록 및 비용 관리
+-- ==========================================
+
+-- 병원 진료 기록 테이블
+CREATE TABLE vet_records (
+    id BIGSERIAL PRIMARY KEY,
+    dog_id BIGINT NOT NULL REFERENCES dogs(id) ON DELETE CASCADE,
+    visit_date DATE NOT NULL,               -- 방문 날짜
+    clinic_name VARCHAR(100) NOT NULL,      -- 병원명
+    symptoms TEXT,                          -- 증상
+    diagnosis TEXT,                         -- 진단명
+    treatment TEXT,                         -- 처치 내용
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 비용 기록 테이블
+CREATE TABLE expenses (
+    id BIGSERIAL PRIMARY KEY,
+    dog_id BIGINT NOT NULL REFERENCES dogs(id) ON DELETE CASCADE,
+    vet_record_id BIGINT REFERENCES vet_records(id) ON DELETE SET NULL, -- 진료 기록과 연결 (선택사항)
+    expense_date DATE NOT NULL,             -- 결제 날짜
+    category VARCHAR(50) NOT NULL,          -- 카테고리 (예: 진료비, 약값, 수술비 등)
+    amount INTEGER NOT NULL,                -- 금액
+    memo TEXT,                              -- 메모
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+-- ==========================================
+-- 4. 통합 첨부파일 관리 (다형성 매핑 적용)
+-- ==========================================
+
+-- 순수 파일 메타데이터 테이블
+CREATE TABLE files (
+    id BIGSERIAL PRIMARY KEY,
+    original_file_name VARCHAR(255) NOT NULL, -- 원본 파일명 (예: 진료영수증.jpg)
+    stored_file_name VARCHAR(255) NOT NULL,   -- 서버 저장용 파일명 (UUID_진료영수증.jpg)
+    file_url TEXT NOT NULL,                   -- Supabase Storage 접근 URL
+    file_size BIGINT,                         -- 파일 크기
+    file_type VARCHAR(50),                    -- 확장자 또는 MIME 타입
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 통합 파일 매핑 테이블
+CREATE TABLE file_mappings (
+    id BIGSERIAL PRIMARY KEY,
+    file_id BIGINT NOT NULL REFERENCES files(id) ON DELETE CASCADE,
+    target_type VARCHAR(50) NOT NULL,         -- 사용처 (예: 'VET_RECORD', 'EXPENSE')
+    target_id BIGINT NOT NULL,                -- 해당 기록의 PK (병원기록 ID 또는 비용기록 ID)
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 다형성 매핑의 조회 성능 향상을 위한 인덱스 생성 (필수)
+CREATE INDEX idx_file_mappings_target ON file_mappings (target_type, target_id);
