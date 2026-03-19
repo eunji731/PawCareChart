@@ -1,7 +1,8 @@
 import { Card } from '../../../components/common/Card';
 import { Button } from '../../../components/common/Button';
 import { Badge } from '../../../components/common/Badge';
-import { Table, Column } from '../../../components/common/Table';
+import { Table } from '../../../components/common/Table';
+import type { Column } from '../../../components/common/Table';
 
 interface RecordData {
   id: number;

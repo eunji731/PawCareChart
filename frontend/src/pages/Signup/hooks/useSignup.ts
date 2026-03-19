@@ -21,7 +21,7 @@ export const useSignup = () => {
 
     try {
       // Spring Boot 회원가입 API 연동 (Custom API)
-      const response = await apiClient.post('/auth/signup', {
+      await apiClient.post('/auth/signup', {
         email,
         password,
         name
