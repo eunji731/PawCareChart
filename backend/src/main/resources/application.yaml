@@ -19,3 +19,9 @@ mybatis:
   configuration:
     # DB의 스네이크 케이스(예: user_name)를 자바의 카멜 케이스(예: userName)로 자동 변환합니다. (매우 중요!)
     map-underscore-to-camel-case: true
+
+jwt:
+  # Base64 encoded 256-bit+ key. Override with environment variable in each environment.
+  secret: ${JWT_SECRET_BASE64}
+  access-token-expire-seconds: ${JWT_ACCESS_TOKEN_EXPIRE_SECONDS}
+  refresh-token-expire-seconds: ${JWT_REFRESH_TOKEN_EXPIRE_SECONDS}
