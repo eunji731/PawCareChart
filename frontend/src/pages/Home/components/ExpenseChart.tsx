@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Card } from '../../../components/common/Card';
-import { Tabs } from '../../../components/common/Tabs';
+import { Card } from '@/components/common/Card';
+import { Tabs } from '@/components/common/Tabs';
 
 export const ExpenseChart = () => {
   const [activeTab, setActiveTab] = useState<'month'|'history'>('month');

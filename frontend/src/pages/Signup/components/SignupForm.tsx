@@ -1,4 +1,4 @@
-import { useSignup } from '../hooks/useSignup';
+import { useSignup } from '@/pages/Signup/hooks/useSignup';
 
 export const SignupForm = () => {
   const {

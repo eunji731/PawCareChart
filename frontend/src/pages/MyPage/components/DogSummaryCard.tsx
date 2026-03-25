@@ -1,27 +1,27 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card } from '../../../components/common/Card';
+import type { Dog } from '@/types/dog';
+import { Card } from '@/components/common/Card';
 
 interface DogSummaryCardProps {
-  dog: {
-    id: number;
-    name: string;
-    breed?: string;
-    weight?: number;
-  };
+  dog: Dog;
 }
 
 export const DogSummaryCard: React.FC<DogSummaryCardProps> = ({ dog }) => {
   const navigate = useNavigate();
 
   return (
-    <Card 
+    <Card
       onClick={() => navigate(`/dogs/edit/${dog.id}`)}
       className="p-4 hover:border-amber-200 transition-all cursor-pointer group hover:shadow-md"
     >
       <div className="flex items-center gap-4">
         <div className="w-14 h-14 bg-orange-50 rounded-full flex items-center justify-center border border-orange-100 text-2xl shadow-inner">
-          🐶
+          {dog.profileImageUrl ? (
+            <img src={dog.profileImageUrl} alt={dog.name} className="w-full h-full object-cover rounded-full" />
+          ) : (
+            '🐶'
+          )}
         </div>
         <div>
           <h4 className="text-[15px] font-black text-stone-800 group-hover:text-amber-600 transition-colors tracking-tight">{dog.name}</h4>
@@ -33,4 +33,3 @@ export const DogSummaryCard: React.FC<DogSummaryCardProps> = ({ dog }) => {
     </Card>
   );
 };
-

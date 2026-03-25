@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { Dog } from '../../../types/dog';
-import { Card } from '../../../components/common/Card';
+import type { Dog } from '@/types/dog';
+import { Card } from '@/components/common/Card';
 
 interface DogCardProps {
   dog: Dog;
@@ -10,8 +10,7 @@ interface DogCardProps {
 export const DogCard: React.FC<DogCardProps> = ({ dog }) => {
   const navigate = useNavigate();
 
-  // 생년월일로 나이 계산 (간단 버전)
-  const calculateAge = (birthDate?: string) => {
+  const calculateAge = (birthDate?: string | null) => {
     if (!birthDate) return '나이 미등록';
     const birth = new Date(birthDate);
     const today = new Date();
@@ -28,49 +27,31 @@ export const DogCard: React.FC<DogCardProps> = ({ dog }) => {
       onClick={() => navigate(`/dogs/edit/${dog.id}`)}
       className="group hover:shadow-xl hover:border-amber-200 transition-all duration-300 overflow-hidden"
     >
-      {/* 카드 상단 이미지 영역 */}
       <div className="relative h-48 bg-orange-50 overflow-hidden">
-        {dog.profile_image_url ? (
-          <img
-            src={dog.profile_image_url}
-            alt={dog.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-          />
+        {dog.profileImageUrl ? (
+          <img src={dog.profileImageUrl} alt={dog.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-6xl opacity-50 select-none">
-            🐶
-          </div>
+          <div className="w-full h-full flex items-center justify-center text-6xl opacity-50 select-none">🐶</div>
         )}
         <div className="absolute top-3 right-3">
-          <button className="w-8 h-8 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center shadow-sm hover:bg-white text-stone-400 hover:text-amber-600 transition-colors">
-            ✏️
-          </button>
+          <button className="w-8 h-8 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center shadow-sm hover:bg-white text-stone-400 hover:text-amber-600 transition-colors">✏️</button>
         </div>
       </div>
-
-      {/* 카드 하단 정보 영역 */}
       <div className="p-5">
         <div className="flex justify-between items-start mb-2">
           <div>
-            <h3 className="text-[18px] font-black text-stone-800 tracking-tight group-hover:text-amber-600 transition-colors">
-              {dog.name}
-            </h3>
+            <h3 className="text-[18px] font-black text-stone-800 tracking-tight group-hover:text-amber-600 transition-colors">{dog.name}</h3>
             <p className="text-[12px] font-bold text-amber-600/70">{dog.breed || '견종 미지정'}</p>
           </div>
           <div className="bg-orange-50 px-2 py-1 rounded-lg border border-orange-100">
-            <span className="text-[11px] font-black text-orange-600">
-              {dog.weight ? `${dog.weight}kg` : '0kg'}
-            </span>
+            <span className="text-[11px] font-black text-orange-600">{dog.weight ? `${dog.weight}kg` : '0kg'}</span>
           </div>
         </div>
-
         <div className="mt-4 pt-4 border-t border-orange-50 flex items-center justify-between">
           <div className="flex items-center gap-1.5">
-            <span className="text-[12px] text-stone-400 font-bold">🎂 {dog.birth_date || '날짜 미등록'}</span>
+            <span className="text-[12px] text-stone-400 font-bold">🎂 {dog.birthDate || '날짜 미등록'}</span>
           </div>
-          <span className="text-[12px] text-stone-500 font-black bg-stone-100 px-2 py-0.5 rounded-md">
-            {calculateAge(dog.birth_date)}
-          </span>
+          <span className="text-[12px] text-stone-500 font-black bg-stone-100 px-2 py-0.5 rounded-md">{calculateAge(dog.birthDate)}</span>
         </div>
       </div>
     </Card>

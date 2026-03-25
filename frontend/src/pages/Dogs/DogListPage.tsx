@@ -1,37 +1,31 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PageLayout } from '../../components/layout/PageLayout';
-import { Button } from '../../components/common/Button';
-import { DogCard } from './components/DogCard';
-import type { Dog } from '../../types/dog';
+import { PageLayout } from '@/components/layout/PageLayout';
+import { Button } from '@/components/common/Button';
+import { DogCard } from '@/pages/Dogs/List/components/DogCard';
+import type { Dog } from '@/types/dog';
+import { dogApi } from '@/api/dogApi';
 
 export const DogListPage = () => {
   const navigate = useNavigate();
+  const [dogs, setDogs] = useState<Dog[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // DDL dogs 테이블 명세 기준 더미 데이터
-  const dummyDogs: Dog[] = [
-    {
-      id: 1,
-      user_id: 1,
-      name: '초코',
-      breed: '토이푸들',
-      birth_date: '2020-05-15',
-      weight: 4.5,
-      profile_image_url: '',
-      created_at: '',
-      updated_at: ''
-    },
-    {
-      id: 2,
-      user_id: 1,
-      name: '뭉치',
-      breed: '비숑 프리제',
-      birth_date: '2022-11-20',
-      weight: 6.2,
-      profile_image_url: '',
-      created_at: '',
-      updated_at: ''
-    }
-  ];
+  useEffect(() => {
+    const fetchDogs = async () => {
+      try {
+        setIsLoading(true);
+        const data = await dogApi.getDogs();
+        setDogs(data);
+      } catch (err: any) {
+        setError(err.response?.data?.message || '목록을 불러오지 못했습니다.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchDogs();
+  }, []);
 
   return (
     <PageLayout
@@ -48,9 +42,18 @@ export const DogListPage = () => {
         </Button>
       </div>
 
-      {dummyDogs.length > 0 ? (
+      {isLoading ? (
+        <div className="py-24 text-center">
+          <p className="text-stone-400 font-black animate-pulse text-[15px]">데이터를 불러오는 중입니다... 🐾</p>
+        </div>
+      ) : error ? (
+        <div className="py-24 text-center bg-red-50 rounded-3xl border border-red-100">
+          <p className="text-red-500 font-black text-[15px]">{error}</p>
+          <Button onClick={() => window.location.reload()} variant="outline" className="mt-4 border-red-200 text-red-400">다시 시도</Button>
+        </div>
+      ) : dogs.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-          {dummyDogs.map(dog => (
+          {dogs.map(dog => (
             <DogCard key={dog.id} dog={dog} />
           ))}
         </div>

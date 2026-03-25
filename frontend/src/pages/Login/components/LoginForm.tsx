@@ -1,4 +1,4 @@
-import { useLogin } from '../hooks/useLogin';
+import { useLogin } from '@/pages/Login/hooks/useLogin';
 import { useNavigate } from 'react-router-dom';
 
 export const LoginForm = () => {

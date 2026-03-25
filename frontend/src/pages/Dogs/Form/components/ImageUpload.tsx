@@ -31,33 +31,11 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({ imageUrl, onChange }) 
           📷
         </button>
       </div>
-      
       <div className="flex gap-2">
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          type="button"
-          className="text-[11px] font-bold text-stone-500 hover:text-amber-600 transition-colors"
-        >
-          사진 변경
-        </button>
-        {imageUrl && (
-          <button
-            onClick={() => onChange(null)}
-            type="button"
-            className="text-[11px] font-bold text-red-400 hover:text-red-600 transition-colors"
-          >
-            삭제
-          </button>
-        )}
+        <button onClick={() => fileInputRef.current?.click()} type="button" className="text-[11px] font-bold text-stone-500 hover:text-amber-600 transition-colors">사진 변경</button>
+        {imageUrl && <button onClick={() => onChange(null)} type="button" className="text-[11px] font-bold text-red-400 hover:text-red-600 transition-colors">삭제</button>}
       </div>
-
-      <input
-        type="file"
-        ref={fileInputRef}
-        onChange={handleFileChange}
-        accept="image/*"
-        className="hidden"
-      />
+      <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
       <p className="text-[10px] text-stone-400 font-medium">우리 강아지의 가장 예쁜 사진을 골라주세요!</p>
     </div>
   );

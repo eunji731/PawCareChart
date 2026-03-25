@@ -1,9 +1,9 @@
-import { Header } from './components/Header';
-import { ContextBar } from './components/ContextBar';
-import { KpiCards } from './components/KpiCards';
-import { MainDataTable } from './components/MainDataTable';
-import { ExpenseChart } from './components/ExpenseChart';
-import { HealthWidgets } from './components/HealthWidgets';
+import { Header } from '@/pages/Home/components/Header';
+import { ContextBar } from '@/pages/Home/components/ContextBar';
+import { KpiCards } from '@/pages/Home/components/KpiCards';
+import { MainDataTable } from '@/pages/Home/components/MainDataTable';
+import { ExpenseChart } from '@/pages/Home/components/ExpenseChart';
+import { HealthWidgets } from '@/pages/Home/components/HealthWidgets';
 
 export const HomePage = () => {
   return (
