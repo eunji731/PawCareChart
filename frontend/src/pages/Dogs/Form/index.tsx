@@ -20,9 +20,7 @@ const DogFormPage = () => {
     setIsDeleteModalOpen,
     handleConfirmDeleteDog,
     isEdit,
-    profileDisplayUrls,
-    handleProfileSelect,
-    handleProfileDelete,
+    photoUploader,
   } = useDogForm(id);
 
   if (isFetching) {
@@ -46,9 +44,9 @@ const DogFormPage = () => {
           <FileUploader 
             variant="profile"
             mode="single"
-            displayUrls={profileDisplayUrls}
-            onFileSelect={handleProfileSelect}
-            onFileDelete={handleProfileDelete}
+            displayUrls={photoUploader.displayUrls}
+            onFileSelect={(files) => photoUploader.handleSelect(files, 1)}
+            onFileDelete={photoUploader.handleDelete}
             loading={false}
             maxCount={1}
           />

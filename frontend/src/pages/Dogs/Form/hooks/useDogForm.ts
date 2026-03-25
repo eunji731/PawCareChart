@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { dogApi } from '@/api/dogApi';
-import { fileApi } from '@/api/fileApi';
+import { useFileUpload } from '@/hooks/useFileUpload';
 import type { DogCreateRequest } from '@/types/dog';
 
 export const useDogForm = (id?: string) => {
@@ -19,49 +19,8 @@ export const useDogForm = (id?: string) => {
   const [isFetching, setIsFetching] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
-  // ============ 프로필 사진 상태 (직접 관리) ============
-  const [existingImageUrl, setExistingImageUrl] = useState<string | null>(null); // 서버에 저장된 기존 URL
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);           // 새로 선택한 파일
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);             // 새 파일의 blob 미리보기
-
-  // FileUploader 컴포넌트에 넘길 displayUrls 계산
-  // 우선순위: 새 미리보기 > 기존 서버 URL > 빈 배열
-  const profileDisplayUrls: string[] = previewUrl
-    ? [previewUrl]
-    : existingImageUrl
-      ? [existingImageUrl]
-      : [];
-
-  // blob URL 메모리 정리
-  const revokePreview = useCallback(() => {
-    if (previewUrl && previewUrl.startsWith('blob:')) {
-      URL.revokeObjectURL(previewUrl);
-    }
-  }, [previewUrl]);
-
-  useEffect(() => {
-    return () => revokePreview();
-  }, [revokePreview]);
-
-  // ============ FileUploader에 넘길 핸들러 ============
-
-  // 📷 카메라로 파일 선택 완료 시 (FileUploader의 onFileSelect)
-  const handleProfileSelect = (files: File[]) => {
-    if (files.length === 0) return;
-    revokePreview();
-    const file = files[0];
-    setSelectedFile(file);
-    setPreviewUrl(URL.createObjectURL(file));
-    setExistingImageUrl(null); // 새 파일 선택하면 기존 URL은 무효화
-  };
-
-  // ✕ 사진 삭제 클릭 시 (FileUploader의 onFileDelete)
-  const handleProfileDelete = (_index: number) => {
-    revokePreview();
-    setSelectedFile(null);
-    setPreviewUrl(null);
-    setExistingImageUrl(null);
-  };
+  // 프로필 사진: 공통 훅 사용 (단일 모드)
+  const photoUploader = useFileUpload('DOG');
 
   // ============ 초기 데이터 로드 ============
   useEffect(() => {
@@ -76,10 +35,8 @@ export const useDogForm = (id?: string) => {
             birthDate: dogData.birthDate || '',
             weight: dogData.weight?.toString() || '',
           });
-          // 기존 프로필 이미지 URL 세팅
-          if (dogData.profileImageUrl) {
-            setExistingImageUrl(dogData.profileImageUrl);
-          }
+          // 기존 프로필 이미지를 공통 훅에 세팅
+          photoUploader.setInitialUrls([dogData.profileImageUrl]);
         } catch (err: any) {
           alert('정보를 불러오지 못했습니다.');
           navigate('/dogs');
@@ -101,9 +58,11 @@ export const useDogForm = (id?: string) => {
     try {
       setIsLoading(true);
       let currentDogId = Number(id);
-      let finalProfileImageUrl: string | null = existingImageUrl; // 기본: 기존 이미지 유지 (삭제했으면 null)
 
-      // 1단계: dog 엔티티 먼저 저장 (신규는 ID 확보 목적)
+      // 현재 유효한 이미지 URL (기존 유지 or 삭제됐으면 null)
+      let finalProfileImageUrl: string | null = photoUploader.existingUrls[0] || null;
+
+      // 1단계: dog 엔티티 저장 (신규는 ID 확보 목적)
       const dogPayload: DogCreateRequest = {
         name: formData.name.trim(),
         breed: formData.breed.trim() || null,
@@ -116,31 +75,22 @@ export const useDogForm = (id?: string) => {
         await dogApi.updateDog(currentDogId, dogPayload);
       } else {
         const response = await dogApi.createDog(dogPayload);
-        // apiClient 인터셉터가 껍데기를 까주므로 response.data가 실제 데이터
         const created = (response as any).data || response;
         currentDogId = created.id;
       }
 
-      // 2단계: 새로 선택한 파일이 있으면 업로드
-      if (selectedFile) {
+      // 2단계: 새로 선택한 파일이 있으면 공통 훅으로 업로드
+      if (photoUploader.hasNewFiles) {
         try {
-          const uploaded = await fileApi.uploadFiles({
-            targetType: 'DOG',
-            targetId: currentDogId,
-            files: [selectedFile],
-          });
-
-          // 업로드 결과에서 URL 추출
-          const uploadedFiles = Array.isArray(uploaded) ? uploaded : [];
-          if (uploadedFiles.length > 0) {
-            finalProfileImageUrl = uploadedFiles[0].fileUrl || null;
+          const uploaded = await photoUploader.upload(currentDogId);
+          if (uploaded && uploaded.length > 0) {
+            finalProfileImageUrl = uploaded[0].fileUrl || null;
           }
         } catch (uploadErr) {
           console.error('파일 업로드 실패:', uploadErr);
-          // 업로드 실패해도 나머지 정보는 저장된 상태
         }
 
-        // 3단계: 업로드된 URL로 dog 엔티티 업데이트
+        // 3단계: 업로드 URL로 dog 엔티티 업데이트
         if (finalProfileImageUrl) {
           await dogApi.updateDog(currentDogId, {
             ...dogPayload,
@@ -183,9 +133,7 @@ export const useDogForm = (id?: string) => {
     setIsDeleteModalOpen,
     handleConfirmDeleteDog,
     isEdit,
-    // 사진 관련 (FileUploader 컴포넌트에 전달)
-    profileDisplayUrls,
-    handleProfileSelect,
-    handleProfileDelete,
+    // 사진 관련: 공통 훅의 인터페이스를 그대로 노출
+    photoUploader,
   };
 };
