@@ -1,27 +1,27 @@
 spring:
-  # --- [ 운영 서버용 DB 연결 정보 ] ---
+  # --- [ 운영 환경용 DB 연결 ] ---
   datasource:
-    # 배포된 서버의 시스템 환경 변수(예: GitHub Secrets)에서 실제 값을 주입받습니다.
     url: ${DB_URL}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
-  # --- [ JPA (Hibernate) 운영용 설정 (보안/성능) ] ---
+  # --- [ JPA (Hibernate) 설정 (운영) ] ---
   jpa:
     hibernate:
-      # [매우 중요] 운영 DB는 절대 맘대로 테이블을 수정하면 안 됩니다!
-      # validate는 현재 자바 Entity와 실제 DB 테이블의 구조가 똑같은지 검사만 하고, 다르면 서버 실행을 막습니다.
       ddl-auto: validate
-    # 성능 저하를 막기 위해 운영 환경에서는 쿼리를 콘솔에 찍지 않습니다.
     show-sql: false
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
-# --- [ 운영 서버용 로그 설정 ] ---
+# --- [ 운영 환경용 로깅 설정 ] ---
 logging:
   level:
-    # 운영 환경에서는 불필요한 디버그 로그를 끄고, 진짜 중요한 정보나 에러(INFO, WARN, ERROR)만 남깁니다.
     root: INFO
     com.pawcarechart: INFO
+
+# --- [ 운영 환경용 파일 업로드 설정 ] ---
+file:
+  upload-dir: ${FILE_UPLOAD_DIR:/var/www/pawcare/uploads}
+  base-url: ${FILE_BASE_URL:https://api.pawcarechart.com/api/files/download}

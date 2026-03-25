@@ -66,8 +66,12 @@ public class DogService {
     @Transactional
     public void deleteDog(Long dogId, Long userId) {
         Dog dog = dogRepository.findByIdAndUserId(dogId, userId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "삭제 권한이 없거나 존재하지 않는 반려견입니다."));
+                .orElseThrow(() -> {
+                    System.out.println("Delete failed: Dog not found or unauthorized. dogId: " + dogId + ", userId: " + userId);
+                    return new ResponseStatusException(HttpStatus.FORBIDDEN, "삭제 권한이 없거나 존재하지 않는 반려견입니다.");
+                });
         
         dogRepository.delete(dog);
+        System.out.println("Delete success: dogId " + dogId + " has been removed.");
     }
 }

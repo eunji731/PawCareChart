@@ -5,6 +5,7 @@ import { Input } from '@/components/common/Input';
 import { FormActions } from '@/components/common/FormActions';
 import { ImageUpload } from '@/pages/Dogs/Form/components/ImageUpload';
 import { useDogForm } from '@/pages/Dogs/Form/hooks/useDogForm';
+import { ConfirmModal } from '@/components/common/ConfirmModal';
 
 const DogFormPage = () => {
   const { id } = useParams();
@@ -17,6 +18,9 @@ const DogFormPage = () => {
     previewImage,
     handleImageChange,
     handleSave,
+    isDeleteModalOpen,
+    setIsDeleteModalOpen,
+    handleConfirmDelete,
     isEdit
   } = useDogForm(id);
 
@@ -53,8 +57,26 @@ const DogFormPage = () => {
           </div>
         </Section>
 
-        <FormActions onCancel={() => navigate(-1)} onSave={handleSave} isSubmitting={isLoading} saveLabel={isEdit ? '수정 완료' : '등록하기'} />
+        <FormActions 
+          onCancel={() => navigate(-1)} 
+          onSave={handleSave} 
+          onDelete={isEdit ? () => setIsDeleteModalOpen(true) : undefined}
+          isSubmitting={isLoading} 
+          saveLabel={isEdit ? '수정 완료' : '등록하기'} 
+        />
       </div>
+
+      {/* 공통 컴포넌트 재사용 */}
+      <ConfirmModal
+        open={isDeleteModalOpen}
+        title={`${formData.name} 삭제`}
+        description={`정말로 정보를 삭제하시겠습니까?\n삭제된 데이터는 복구할 수 없습니다.`}
+        confirmText="삭제하기"
+        variant="danger"
+        loading={isLoading}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setIsDeleteModalOpen(false)}
+      />
     </PageLayout>
   );
 };

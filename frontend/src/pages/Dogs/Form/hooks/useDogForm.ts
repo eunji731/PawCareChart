@@ -18,6 +18,9 @@ export const useDogForm = (id?: string) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  
+  // 삭제 모달 전용 상태 추가
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   useEffect(() => {
     if (isEdit && id) {
@@ -90,6 +93,23 @@ export const useDogForm = (id?: string) => {
     }
   };
 
+  // 공통 모달에서 실제 실행될 삭제 로직
+  const handleConfirmDelete = async () => {
+    if (!id || !isEdit) return;
+
+    try {
+      setIsLoading(true);
+      await dogApi.deleteDog(Number(id));
+      alert('삭제되었습니다.');
+      setIsDeleteModalOpen(false);
+      navigate('/dogs');
+    } catch (err: any) {
+      alert(err.response?.data?.message || '삭제 중 오류가 발생했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return {
     formData,
     setFormData,
@@ -98,6 +118,9 @@ export const useDogForm = (id?: string) => {
     previewImage,
     handleImageChange,
     handleSave,
+    isDeleteModalOpen,
+    setIsDeleteModalOpen,
+    handleConfirmDelete,
     isEdit
   };
 };

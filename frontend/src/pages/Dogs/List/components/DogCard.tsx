@@ -5,10 +5,28 @@ import { Card } from '@/components/common/Card';
 
 interface DogCardProps {
   dog: Dog;
+  onDelete?: (id: number, name: string) => void;
 }
 
-export const DogCard: React.FC<DogCardProps> = ({ dog }) => {
+export const DogCard: React.FC<DogCardProps> = ({ dog, onDelete }) => {
   const navigate = useNavigate();
+
+  const handleDelete = (e: React.MouseEvent) => {
+    console.log('DogCard: Trash bin clicked');
+    e.preventDefault();
+    e.stopPropagation();
+    if (onDelete) {
+      console.log('DogCard: Calling onDelete prop');
+      onDelete(dog.id, dog.name);
+    } else {
+      console.warn('DogCard: onDelete prop is missing');
+    }
+  };
+
+  const handleCardClick = () => {
+    console.log('DogCard: Card body clicked (Navigation)');
+    navigate(`/dogs/edit/${dog.id}`);
+  };
 
   const calculateAge = (birthDate?: string | null) => {
     if (!birthDate) return '나이 미등록';
@@ -24,17 +42,38 @@ export const DogCard: React.FC<DogCardProps> = ({ dog }) => {
 
   return (
     <Card
-      onClick={() => navigate(`/dogs/edit/${dog.id}`)}
-      className="group hover:shadow-xl hover:border-amber-200 transition-all duration-300 overflow-hidden"
+      onClick={handleCardClick}
+      className="group hover:shadow-xl hover:border-amber-200 transition-all duration-300 overflow-hidden relative"
     >
       <div className="relative h-48 bg-orange-50 overflow-hidden">
         {dog.profileImageUrl ? (
           <img src={dog.profileImageUrl} alt={dog.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-6xl opacity-50 select-none">🐶</div>
+          <div className="w-full h-full flex items-center justify-center text-6xl opacity-50 select-none font-sans">🐶</div>
         )}
-        <div className="absolute top-3 right-3">
-          <button className="w-8 h-8 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center shadow-sm hover:bg-white text-stone-400 hover:text-amber-600 transition-colors">✏️</button>
+        
+        {/* 액션 버튼 영역: z-index 추가 및 이벤트 버블링 방지 강화 */}
+        <div className="absolute top-3 right-3 flex gap-2 z-20">
+          <button 
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              navigate(`/dogs/edit/${dog.id}`);
+            }}
+            className="w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-sm hover:bg-white text-stone-400 hover:text-amber-600 transition-all active:scale-95 cursor-pointer border-none outline-none"
+            title="수정"
+          >
+            <span className="pointer-events-none">✏️</span>
+          </button>
+          <button
+            type="button"
+            onClick={handleDelete}
+            className="w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-sm hover:bg-white text-stone-400 hover:text-red-500 transition-all active:scale-95 cursor-pointer border-none outline-none"
+            title="삭제"
+          >
+            <span className="pointer-events-none">🗑️</span>
+          </button>
         </div>
       </div>
       <div className="p-5">

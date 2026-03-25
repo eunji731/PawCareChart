@@ -1,6 +1,11 @@
 spring:
   profiles:
     active: dev
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 50MB
 
 # --- [ Swagger (API 문서 자동화) 공통 설정 ] ---
 springdoc:
@@ -25,3 +30,13 @@ jwt:
   secret: ${JWT_SECRET_BASE64}
   access-token-expire-seconds: ${JWT_ACCESS_TOKEN_EXPIRE_SECONDS}
   refresh-token-expire-seconds: ${JWT_REFRESH_TOKEN_EXPIRE_SECONDS}
+
+# --- [ 커스텀 파일 설정 ] ---
+file:
+  upload-dir: ${FILE_UPLOAD_DIR:D:/uploads}
+  base-url: ${FILE_BASE_URL:http://localhost:8080/api/files/download}
+  allowed-types:
+    - image/jpeg
+    - image/png
+    - image/gif
+    - application/pdf
