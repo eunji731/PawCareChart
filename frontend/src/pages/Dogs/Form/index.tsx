@@ -3,9 +3,9 @@ import { PageLayout } from '@/components/layout/PageLayout';
 import { Section } from '@/components/common/Section';
 import { Input } from '@/components/common/Input';
 import { FormActions } from '@/components/common/FormActions';
-import { ImageUpload } from '@/pages/Dogs/Form/components/ImageUpload';
-import { useDogForm } from '@/pages/Dogs/Form/hooks/useDogForm';
 import { ConfirmModal } from '@/components/common/ConfirmModal';
+import { FileUploader } from '@/components/common/FileUploader';
+import { useDogForm } from '@/pages/Dogs/Form/hooks/useDogForm';
 
 const DogFormPage = () => {
   const { id } = useParams();
@@ -15,13 +15,14 @@ const DogFormPage = () => {
     setFormData,
     isLoading,
     isFetching,
-    previewImage,
-    handleImageChange,
     handleSave,
     isDeleteModalOpen,
     setIsDeleteModalOpen,
-    handleConfirmDelete,
-    isEdit
+    handleConfirmDeleteDog,
+    isEdit,
+    profileDisplayUrls,
+    handleProfileSelect,
+    handleProfileDelete,
   } = useDogForm(id);
 
   if (isFetching) {
@@ -38,16 +39,28 @@ const DogFormPage = () => {
       description={isEdit ? '소중한 가족의 정보를 업데이트합니다.' : '새로운 가족을 멍케어차트에 등록해주세요.'}
       maxWidth="max-w-2xl"
     >
-      <div className="space-y-6">
-        <Section className="flex justify-center py-10">
-          <ImageUpload 
-            imageUrl={previewImage || formData.profileImageUrl} 
-            onChange={handleImageChange} 
-          />
-        </Section>
+      <div className="flex flex-col gap-2">
 
-        <Section title="기본 프로필">
+        {/* 1. 대표 사진 영역 */}
+        <div className="flex justify-center">
+          <FileUploader 
+            variant="profile"
+            mode="single"
+            displayUrls={profileDisplayUrls}
+            onFileSelect={handleProfileSelect}
+            onFileDelete={handleProfileDelete}
+            loading={false}
+            maxCount={1}
+          />
+        </div>
+
+        {/* 2. 기본 프로필 카드 */}
+        <Section>
           <div className="space-y-5">
+            <h4 className="text-[15px] font-black text-stone-800 mb-6 flex items-center gap-2">
+              <span className="w-1.5 h-4 bg-amber-400 rounded-full"></span>
+              기본 프로필
+            </h4>
             <Input label="이름 *" placeholder="예: 초코, 뭉치" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} required />
             <Input label="견종" placeholder="예: 푸들, 말티즈, 믹스" value={formData.breed} onChange={(e) => setFormData({...formData, breed: e.target.value})} />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -66,7 +79,6 @@ const DogFormPage = () => {
         />
       </div>
 
-      {/* 공통 컴포넌트 재사용 */}
       <ConfirmModal
         open={isDeleteModalOpen}
         title={`${formData.name} 삭제`}
@@ -74,7 +86,7 @@ const DogFormPage = () => {
         confirmText="삭제하기"
         variant="danger"
         loading={isLoading}
-        onConfirm={handleConfirmDelete}
+        onConfirm={handleConfirmDeleteDog}
         onCancel={() => setIsDeleteModalOpen(false)}
       />
     </PageLayout>
