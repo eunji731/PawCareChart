@@ -1,8 +1,22 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../../context/AuthContext';
 
 export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { logout, user } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error('로그아웃 백엔드 에러(무시됨):', error);
+    } finally {
+      // 백엔드가 에러(403)를 뱉더라도 프론트엔드는 무조건 로그인 참으로 이동시켜서 로그아웃을 강제합니다!
+      navigate('/login');
+    }
+  };
 
   return (
     <header className="bg-white border-b border-orange-100 sticky top-0 z-50 shadow-sm">
@@ -20,7 +34,13 @@ export const Header = () => {
         </div>
         
         <div className="hidden md:flex items-center gap-5">
-          <Link to="#" className="text-[14px] font-bold text-stone-400 hover:text-stone-800 transition-colors">마이페이지</Link>
+          <span className="text-[14px] font-bold text-stone-600">{user?.name}님</span>
+          <button 
+            onClick={handleLogout}
+            className="text-[14px] font-bold text-stone-400 hover:text-amber-600 transition-colors cursor-pointer"
+          >
+            로그아웃
+          </button>
           <div className="w-8 h-8 bg-orange-50 rounded-full flex items-center justify-center border border-orange-100 shadow-sm cursor-pointer hover:bg-orange-100 transition-colors">
             <span className="text-sm">👤</span>
           </div>
@@ -48,10 +68,16 @@ export const Header = () => {
           <Link to="#" className="block text-stone-600 font-bold hover:text-amber-600 text-base">병원기록</Link>
           <Link to="#" className="block text-stone-600 font-bold hover:text-amber-600 text-base">비용기록</Link>
           <div className="border-t border-orange-100 pt-4 mt-2">
-            <Link to="#" className="block text-stone-400 font-bold text-sm">마이페이지</Link>
+            <button 
+              onClick={handleLogout}
+              className="block w-full text-left text-stone-400 font-bold text-sm"
+            >
+              로그아웃
+            </button>
           </div>
         </div>
       )}
     </header>
   );
 };
+

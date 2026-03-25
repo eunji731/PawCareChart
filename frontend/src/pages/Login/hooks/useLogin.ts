@@ -1,11 +1,15 @@
 import { useState } from 'react';
-import { supabase } from '../../../lib/supabaseClient';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../../context/AuthContext';
 
 export const useLogin = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  
+  const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,19 +22,17 @@ export const useLogin = () => {
     setError(null);
 
     try {
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (signInError) throw signInError;
+      // Spring Boot 백엔드 API (AuthContext 경유) 호출
+      await login({ email, password });
       
-      // TODO: 나중에 전역 상태(User) 업데이트나 페이지 이동(React Router) 처리가 들어갈 자리입니다.
-      alert('로그인에 성공했습니다! (페이지 이동 예정)');
+      alert('로그인에 성공했습니다!');
+      navigate('/'); // 홈 화면으로 이동
       
     } catch (err: any) {
       console.error('로그인 에러:', err);
-      setError(err.message || '로그인을 실패했습니다. 이메일이나 비밀번호를 확인해주세요.');
+      // 백엔드에서 내려주는 상세 에러 메시지가 있다면 표시
+      const message = err.response?.data?.message || '로그인을 실패했습니다. 이메일이나 비밀번호를 확인해주세요.';
+      setError(message);
     } finally {
       setLoading(false);
     }

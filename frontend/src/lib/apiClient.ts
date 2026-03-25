@@ -1,9 +1,29 @@
 import axios from 'axios';
 
 export const apiClient = axios.create({
-    baseURL: import.meta.env.VITE_API_BASE_URL,
+    baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
+    withCredentials: true, // HttpOnly 쿠키를 서버와 주고받기 위해 필수 설정
     headers: {
         'Content-Type': 'application/json',
     },
-    // 필요한 경우 여기에 credentials 설정 추가 (cors 관련)
 });
+
+// 응답 성공/실패 시 가로채기 (인터셉터)
+apiClient.interceptors.response.use(
+    (response) => {
+        // [수정] 백엔드에서 ApiResult({ success: true, response: ... }) 껍데기로 감싸서 보낼 경우, 
+        // 프론트의 모든 소스코드에서 번거롭게 .response를 또 까볼 필요 없도록 여기서 미리 한 겹 까서 바로 리턴합니다.
+        if (response.data && response.data.hasOwnProperty('response')) {
+            response.data = response.data.response;
+        } else if (response.data && response.data.hasOwnProperty('data')) {
+            response.data = response.data.data;
+        }
+        return response;
+    },
+    (error) => {
+        if (error.response?.status === 401) {
+            // 전역 상태 초대화 로직이 들어갈 수 있음
+        }
+        return Promise.reject(error);
+    }
+);
