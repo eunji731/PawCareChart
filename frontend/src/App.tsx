@@ -3,6 +3,8 @@ import { LoginPage } from './pages/Login';
 import { SignupPage } from './pages/Signup';
 import { HomePage } from './pages/Home';
 import { MyPage } from './pages/MyPage';
+import { DogFormPage } from './pages/Dogs/DogFormPage';
+import { DogListPage } from './pages/Dogs/DogListPage';
 import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 
@@ -27,12 +29,40 @@ function App() {
             }
           />
 
-          {/* 마이페이지 보호된 라우트로 추가 */}
+          {/* 마이페이지 보호된 라우트 */}
           <Route
             path="/mypage"
             element={
               <ProtectedRoute>
                 <MyPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* 반려견 목록 라우트 추가 */}
+          <Route
+            path="/dogs"
+            element={
+              <ProtectedRoute>
+                <DogListPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* 반려견 등록 및 수정 라우트 추가 */}
+          <Route
+            path="/dogs/new"
+            element={
+              <ProtectedRoute>
+                <DogFormPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dogs/edit/:id"
+            element={
+              <ProtectedRoute>
+                <DogFormPage />
               </ProtectedRoute>
             }
           />
