@@ -133,7 +133,7 @@ export const useDogForm = (id?: string) => {
           // 업로드 결과에서 URL 추출
           const uploadedFiles = Array.isArray(uploaded) ? uploaded : [];
           if (uploadedFiles.length > 0) {
-            finalProfileImageUrl = uploadedFiles[0].fileUrl || uploadedFiles[0].url || null;
+            finalProfileImageUrl = uploadedFiles[0].fileUrl || null;
           }
         } catch (uploadErr) {
           console.error('파일 업로드 실패:', uploadErr);

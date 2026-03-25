@@ -39,10 +39,10 @@ const DogFormPage = () => {
       description={isEdit ? '소중한 가족의 정보를 업데이트합니다.' : '새로운 가족을 멍케어차트에 등록해주세요.'}
       maxWidth="max-w-2xl"
     >
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col">
 
-        {/* 1. 대표 사진 영역 */}
-        <div className="flex justify-center">
+        {/* 1. 대표 사진 영역 (카드와 살짝 겹침) */}
+        <div className="flex justify-center relative z-10 -mb-6">
           <FileUploader 
             variant="profile"
             mode="single"
@@ -54,8 +54,8 @@ const DogFormPage = () => {
           />
         </div>
 
-        {/* 2. 기본 프로필 카드 */}
-        <Section>
+        {/* 2. 기본 프로필 카드 (사진 아래, 살짝 겹쳐진 상태) */}
+        <Section className="pt-10">
           <div className="space-y-5">
             <h4 className="text-[15px] font-black text-stone-800 mb-6 flex items-center gap-2">
               <span className="w-1.5 h-4 bg-amber-400 rounded-full"></span>

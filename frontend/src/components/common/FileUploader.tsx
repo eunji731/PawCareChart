@@ -3,7 +3,7 @@ import React, { useRef } from 'react';
 interface FileUploaderProps {
   variant?: 'profile' | 'grid';
   mode?: 'single' | 'multiple';
-  displayUrls: string[]; 
+  displayUrls: string[];
   onFileSelect: (files: File[]) => void;
   onFileDelete: (index: number) => void;
   loading?: boolean;
@@ -45,23 +45,23 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  // 1. 프로필 형태 UI (통합된 카드 헤더 감성)
+  // 1. 프로필 형태 UI
   if (variant === 'profile') {
     const imageUrl = displayUrls[0];
     return (
       <div className="flex flex-col items-center w-full">
-        <div className="relative group">
-          {/* 이미지 영역: 둥근 사각형 보전 */}
-          <div className="w-44 h-44 rounded-[40px] overflow-hidden border-4 border-white shadow-2xl bg-orange-50/50 flex items-center justify-center relative ring-1 ring-orange-100">
+        <div className="relative">
+          {/* 이미지 영역: 크고 둥근 사각형 */}
+          <div className="w-80 h-80 rounded-[2.5rem] overflow-hidden border-[3px] border-orange-100/80 bg-orange-50/30 flex items-center justify-center shadow-lg">
             {imageUrl ? (
               <img src={imageUrl} alt="Preview" className="w-full h-full object-cover" />
             ) : (
               <div className="flex flex-col items-center opacity-20 select-none">
-                <span className="text-6xl mb-1">🐶</span>
-                <span className="text-[10px] font-black text-stone-500">PHOTO</span>
+                <span className="text-9xl mb-2">🐶</span>
+                <span className="text-xs font-black text-stone-400">PHOTO</span>
               </div>
             )}
-            
+
             {loading && (
               <div className="absolute inset-0 bg-stone-900/40 flex items-center justify-center backdrop-blur-[1px]">
                 <div className="w-7 h-7 border-4 border-white/30 border-t-white rounded-full animate-spin" />
@@ -69,34 +69,34 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
             )}
           </div>
 
-          {/* 변경 버튼 (카메라) */}
+          {/* ✕ 삭제 버튼: 좌하단 */}
+          {imageUrl && !loading && (
+            <button
+              onClick={(e) => handleDelete(e, 0)}
+              type="button"
+              className="absolute -bottom-2 -left-2 bg-white text-stone-400 w-10 h-10 rounded-full border-[3px] border-orange-100 flex items-center justify-center shadow-md hover:text-red-500 hover:border-red-200 hover:bg-red-50 hover:scale-110 active:scale-95 transition-all cursor-pointer z-10"
+            >
+              <span className="text-sm font-black">✕</span>
+            </button>
+          )}
+
+          {/* 📷 카메라 버튼: 우하단 */}
           <button
             onClick={handleButtonClick}
             disabled={loading}
             type="button"
-            className="absolute -bottom-1 -right-1 bg-amber-500 text-white w-11 h-11 rounded-2xl border-4 border-white flex items-center justify-center shadow-xl hover:bg-amber-600 hover:scale-110 active:scale-95 transition-all cursor-pointer disabled:opacity-50 z-10"
+            className="absolute -bottom-2 -right-2 bg-amber-500 text-white w-10 h-10 rounded-full border-[3px] border-white flex items-center justify-center shadow-md hover:bg-amber-600 hover:scale-110 active:scale-95 transition-all cursor-pointer disabled:opacity-50 z-10"
           >
-            <span className="text-lg">📷</span>
+            <span className="text-base">📷</span>
           </button>
         </div>
 
-        {/* 삭제 버튼: 사진 바로 아래 슬림하게 배치 */}
-        {imageUrl && !loading && (
-          <button
-            onClick={(e) => handleDelete(e, 0)}
-            type="button"
-            className="mt-3 px-3 py-1 text-[11px] font-black text-stone-400 hover:text-red-500 transition-colors cursor-pointer rounded-full hover:bg-red-50"
-          >
-            ✕ 사진 삭제
-          </button>
-        )}
-        
-        <input 
-          type="file" 
-          ref={fileInputRef} 
-          onChange={handleFileChange} 
-          accept={accept} 
-          className="hidden" 
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleFileChange}
+          accept={accept}
+          className="hidden"
         />
       </div>
     );
