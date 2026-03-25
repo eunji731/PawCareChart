@@ -27,9 +27,8 @@ export const Header = () => {
           </Link>
           <nav className="hidden md:flex items-center gap-7 text-[14px] font-bold text-stone-400">
             <Link to="/" className="text-amber-600 hover:text-amber-700 transition-colors">홈</Link>
-            <Link to="#" className="hover:text-stone-800 transition-colors">반려견</Link>
-            <Link to="#" className="hover:text-stone-800 transition-colors">병원기록</Link>
-            <Link to="#" className="hover:text-stone-800 transition-colors">비용기록</Link>
+            <Link to="/dogs" className="hover:text-stone-800 transition-colors">반려견</Link>
+            <Link to="/care-records" className="hover:text-stone-800 transition-colors">케어기록</Link>
           </nav>
         </div>
         
@@ -64,9 +63,8 @@ export const Header = () => {
       {isMenuOpen && (
         <div className="md:hidden border-t border-orange-50 bg-[#FFF9F2] px-6 py-4 space-y-4 pb-6 shadow-md absolute w-full left-0 z-40">
           <Link to="/" className="block text-amber-600 font-extrabold text-base">홈</Link>
-          <Link to="#" className="block text-stone-600 font-bold hover:text-amber-600 text-base">반려견</Link>
-          <Link to="#" className="block text-stone-600 font-bold hover:text-amber-600 text-base">병원기록</Link>
-          <Link to="#" className="block text-stone-600 font-bold hover:text-amber-600 text-base">비용기록</Link>
+          <Link to="/dogs" className="block text-stone-600 font-bold hover:text-amber-600 text-base">반려견</Link>
+          <Link to="/care-records" className="block text-stone-600 font-bold hover:text-amber-600 text-base">케어기록</Link>
           <div className="border-t border-orange-100 pt-4 mt-2">
             <button 
               onClick={handleLogout}
