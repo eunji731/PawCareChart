@@ -13,21 +13,37 @@ export const DogSummaryCard: React.FC<DogSummaryCardProps> = ({ dog }) => {
   return (
     <Card
       onClick={() => navigate(`/dogs/edit/${dog.id}`)}
-      className="p-4 hover:border-amber-200 transition-all cursor-pointer group hover:shadow-md"
+      className="p-6 transition-all duration-500 hover:shadow-md border border-[#F5F5F5] group"
     >
-      <div className="flex items-center gap-4">
-        <div className="w-14 h-14 bg-orange-50 rounded-full flex items-center justify-center border border-orange-100 text-2xl shadow-inner">
+      <div className="flex items-center gap-6">
+        {/* 썸네일 영역 - 크기 확대 및 정밀화 */}
+        <div className="w-24 h-24 rounded-[24px] overflow-hidden bg-stone-50 flex items-center justify-center border border-stone-100 shrink-0 group-hover:border-[#FF6B00]/30 transition-colors">
           {dog.profileImageUrl ? (
-            <img src={dog.profileImageUrl} alt={dog.name} className="w-full h-full object-cover rounded-full" />
+            <img src={dog.profileImageUrl} alt={dog.name} className="w-full h-full object-cover" />
           ) : (
-            '🐶'
+            <span className="text-4xl opacity-20 grayscale group-hover:grayscale-0 group-hover:opacity-40 transition-all">🐕</span>
           )}
         </div>
-        <div>
-          <h4 className="text-[15px] font-black text-stone-800 group-hover:text-amber-600 transition-colors tracking-tight">{dog.name}</h4>
-          <p className="text-[11px] text-stone-400 font-extrabold mt-0.5">
-            {dog.breed || '견종 미지정'} · {dog.weight ? `${dog.weight}kg` : '몸무게 미등록'}
-          </p>
+
+        {/* 정보 영역 - 위계 선명화 */}
+        <div className="flex-grow min-w-0 py-1">
+          <div className="flex justify-between items-center mb-2">
+            <h4 className="text-[22px] font-black text-[#2D2D2D] truncate tracking-tight group-hover:text-[#FF6B00] transition-colors">
+              {dog.name}
+            </h4>
+            <div className="w-8 h-8 rounded-full bg-stone-50 flex items-center justify-center text-stone-300 group-hover:bg-[#FF6B00]/10 group-hover:text-[#FF6B00] transition-all">
+              <span className="text-lg">→</span>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <p className="text-[14px] font-bold text-stone-500 truncate">
+              {dog.breed || '품종 미등록'}
+            </p>
+            <p className="text-[13px] font-medium text-stone-400">
+              {dog.weight ? `${dog.weight}kg` : '몸무게 미등록'}
+            </p>
+          </div>
         </div>
       </div>
     </Card>

@@ -1,12 +1,10 @@
 import { useState, useEffect } from 'react';
 import { PageLayout } from '@/components/layout/PageLayout';
-import { Section } from '@/components/common/Section';
-import { LabelValue } from '@/components/common/LabelValue';
-import { Input } from '@/components/common/Input';
 import { Button } from '@/components/common/Button';
 import { Badge } from '@/components/common/Badge';
+import { Input } from '@/components/common/Input';
 import { useAuth } from '@/context/AuthContext';
-import { DogSummaryCard } from '@/pages/MyPage/components/DogSummaryCard';
+import { DogSummaryCard } from './components/DogSummaryCard';
 import type { Dog } from '@/types/dog';
 import { dogApi } from '@/api/dogApi';
 
@@ -17,7 +15,6 @@ export const MyPage = () => {
   const [dogs, setDogs] = useState<Dog[]>([]);
   const [isLoadingDogs, setIsLoadingDogs] = useState(true);
 
-  // 실데이터 연동: 로그인한 유저의 반려견 목록 가져오기
   useEffect(() => {
     const fetchMyDogs = async () => {
       try {
@@ -35,92 +32,117 @@ export const MyPage = () => {
   }, []);
 
   const handleSaveProfile = () => {
-    // TODO: 유저 이름 수정 API 연동 시 구현
     setIsEditing(false);
   };
 
   return (
-    <PageLayout
-      title="마이페이지"
-      description="내 정보와 반려견 목록을 관리합니다."
-    >
-      <div className="space-y-8">
-
-        {/* 1. 기본 정보 섹션 */}
-        <Section
-          title="기본 정보"
-          rightElement={
-            <Button
-              variant={isEditing ? 'outline' : 'ghost'}
-              size="sm"
-              onClick={() => setIsEditing(!isEditing)}
-            >
-              {isEditing ? '취소' : '수정하기'}
-            </Button>
-          }
-        >
-          <dl className="divide-y divide-orange-50">
-            <LabelValue label="이메일" value={user?.email} />
-
-            <LabelValue label="이름">
-              {isEditing ? (
-                <div className="flex gap-2 w-full max-w-md">
-                  <Input
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="이름을 입력하세요"
-                  />
-                  <Button onClick={handleSaveProfile} className="flex-shrink-0" size="md">저장</Button>
-                </div>
-              ) : (
-                <span className="text-[16px] font-black text-stone-800">{user?.name}</span>
-              )}
-            </LabelValue>
-
-            <LabelValue label="권한">
-              <Badge color="amber">
-                {user?.role_code || '일반 사용자'}
-              </Badge>
-            </LabelValue>
-          </dl>
-        </Section>
-
-        {/* 2. 내 반려견 요약 */}
-        <Section
-          title="내 반려견"
-          description="현재 등록된 소중한 가족입니다."
-          rightElement={<Button variant="outline" size="sm" onClick={() => window.location.href = '/dogs/new'}>+ 추가</Button>}
-        >
-          {isLoadingDogs ? (
-            <div className="py-10 text-center font-bold text-stone-300 animate-pulse text-sm">정보를 불러오고 있습니다...</div>
-          ) : dogs.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {dogs.map(dog => (
-                <DogSummaryCard key={dog.id} dog={dog} />
-              ))}
-            </div>
-          ) : (
-            <div className="py-12 text-center border-2 border-dashed border-orange-100 rounded-2xl bg-orange-50/30">
-              <p className="text-stone-400 font-extrabold text-[13px]">등록된 반려견이 없어요 🐾</p>
-            </div>
-          )}
-        </Section>
-
-        {/* 3. 계정 설정 */}
-        <Section title="계정 설정">
-          <div className="flex flex-wrap gap-3">
-            <Button variant="outline" className="border-orange-100 text-stone-500 hover:text-stone-800">비밀번호 변경</Button>
-            <Button
-              variant="outline"
-              className="border-red-100 text-red-400 hover:bg-red-50 hover:text-red-500 hover:border-red-200"
-              onClick={logout}
-            >
-              로그아웃
-            </Button>
+    <div className="min-h-screen bg-[#FCFAF8]">
+      <PageLayout title="" maxWidth="max-w-[1400px]">
+        {/* 1. 페이지 헤더 - 한국어 중심 */}
+        <header className="pt-8 pb-12 flex flex-col md:flex-row justify-between items-end gap-6 border-b border-stone-100 mb-12">
+          <div className="space-y-3">
+            <h1 className="text-[42px] font-black text-[#2D2D2D] tracking-tight leading-none">
+              내 프로필<span className="text-[#FF6B00]">.</span>
+            </h1>
+            <p className="text-[16px] text-stone-400 font-medium">
+              계정 정보와 등록된 가족들을 관리합니다.
+            </p>
           </div>
-        </Section>
+        </header>
 
-      </div>
-    </PageLayout>
+        <main className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start pb-32">
+
+          {/* 2. 좌측: 컴팩트 계정 정보 (4/12) */}
+          <div className="lg:col-span-4 space-y-6">
+            <div className="bg-white rounded-[28px] p-8 border border-[#F0F0F0] shadow-sm">
+              <div className="flex justify-between items-center mb-8">
+                <h3 className="text-[17px] font-black text-[#2D2D2D]">계정 정보</h3>
+                <button
+                  onClick={() => setIsEditing(!isEditing)}
+                  className="text-[13px] font-bold text-[#FF6B00] hover:underline cursor-pointer"
+                >
+                  {isEditing ? '취소' : '수정'}
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                <div className="space-y-1.5">
+                  <p className="text-[11px] font-black text-stone-300 uppercase tracking-widest">Email</p>
+                  <p className="text-[15px] font-bold text-[#2D2D2D]">{user?.email}</p>
+                </div>
+
+                <div className="space-y-1.5">
+                  <p className="text-[11px] font-black text-stone-300 uppercase tracking-widest">Name</p>
+                  {isEditing ? (
+                    <div className="flex gap-2">
+                      <Input
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        className="flex-grow h-10 py-2"
+                      />
+                      <Button onClick={handleSaveProfile} size="sm" className="shrink-0 rounded-lg">저장</Button>
+                    </div>
+                  ) : (
+                    <p className="text-[18px] font-black text-[#2D2D2D]">{user?.name}</p>
+                  )}
+                </div>
+
+                <div className="space-y-1.5">
+                  <p className="text-[11px] font-black text-stone-300 uppercase tracking-widest">Role</p>
+                  <Badge color="stone" className="px-3 py-0.5 rounded-lg opacity-70">
+                    {user?.role_code || 'MEMBER'}
+                  </Badge>
+                </div>
+              </div>
+            </div>
+
+            {/* 계정 관리 액션 */}
+            <div className="bg-white rounded-[24px] p-2 border border-[#F0F0F0] flex flex-col">
+              <button className="w-full py-3 text-[13px] font-bold text-stone-500 hover:text-[#2D2D2D] hover:bg-stone-50 rounded-2xl transition-all">
+                비밀번호 변경
+              </button>
+              <button
+                onClick={logout}
+                className="w-full py-3 text-[13px] font-bold text-red-400 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-all"
+              >
+                로그아웃
+              </button>
+            </div>
+          </div>
+
+          {/* 3. 우측: 메인 반려견 아카이브 (8/12) */}
+          <div className="lg:col-span-8 flex flex-col gap-8">
+            <div className="flex justify-between items-center px-2">
+              <h3 className="text-[24px] font-black text-[#2D2D2D] tracking-tight">함께하는 가족</h3>
+              <Button
+                variant="outline"
+                onClick={() => window.location.href = '/dogs/new'}
+                className="rounded-xl border-[#EEEEEE] hover:border-[#FF6B00] text-stone-600 font-bold px-5 h-11"
+              >
+                + 새 가족 추가
+              </Button>
+            </div>
+
+            {isLoadingDogs ? (
+              <div className="h-[300px] flex items-center justify-center">
+                <div className="w-8 h-8 border-4 border-stone-100 border-t-[#FF6B00] rounded-full animate-spin" />
+              </div>
+            ) : dogs.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                {dogs.map(dog => (
+                  <DogSummaryCard key={dog.id} dog={dog} />
+                ))}
+              </div>
+            ) : (
+              <div className="py-32 text-center bg-white rounded-[32px] border-2 border-dashed border-stone-100 flex flex-col items-center">
+                <span className="text-5xl mb-4 grayscale opacity-20">🐕</span>
+                <p className="text-stone-400 font-bold">아직 등록된 가족이 없습니다.</p>
+              </div>
+            )}
+          </div>
+
+        </main>
+      </PageLayout>
+    </div>
   );
 };
