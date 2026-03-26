@@ -1,8 +1,5 @@
-import { Card } from '@/components/common/Card';
-import { Button } from '@/components/common/Button';
 import { Badge } from '@/components/common/Badge';
-import { Table } from '@/components/common/Table';
-import type { Column } from '@/components/common/Table';
+import { Button } from '@/components/common/Button';
 
 interface RecordData {
   id: number;
@@ -23,64 +20,69 @@ export const MainDataTable = () => {
     { id: 6, date: '26.01.10', category: '지출', clinic: '해피펫온라인', desc: '심장사상충약 개별 구매', amount: 25000 },
   ];
 
-  const columns: Column<RecordData>[] = [
-    { header: '날짜', accessor: 'date', headerClassName: 'w-[75px]', cellClassName: 'text-stone-400 font-semibold text-[11px]' },
-    { 
-      header: '분류', 
-      headerClassName: 'w-[60px] text-center', 
-      cellClassName: 'text-center',
-      cell: (row) => (
-        <Badge color={row.category === '병원' ? 'amber' : 'stone'}>
-          {row.category}
-        </Badge>
-      )
-    },
-    { header: '병원/사용처', accessor: 'clinic', headerClassName: 'w-[130px]', cellClassName: 'text-stone-800 truncate max-w-[130px]' },
-    { header: '상세내용', accessor: 'desc', headerClassName: 'w-auto', cellClassName: 'text-stone-600 truncate max-w-[150px] sm:max-w-full' },
-    { 
-      header: '결제금액', 
-      headerClassName: 'w-[90px] text-right', 
-      cellClassName: 'text-right font-extrabold text-stone-800 border-r border-dashed border-stone-100',
-      cell: (row) => (
-        <>{row.amount.toLocaleString()}<span className="text-[10px] font-semibold text-stone-400 ml-0.5">원</span></>
-      )
-    },
-    { 
-      header: '반복추가', 
-      headerTitle: '이 기록과 똑같은 데이터로 새로 작성하기', 
-      headerClassName: 'w-[50px] text-center', 
-      cellClassName: 'text-center relative',
-      cell: (row) => (
-        <Button 
-          variant="icon" 
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100" 
-          title="이 내용 복사하여 새 기입창 열기"
-          onClick={(e) => { e.stopPropagation(); alert(`${row.desc} 복사 준비 중...`); }}
-        >
-          <span className="text-[13px] leading-none">🔁</span>
-        </Button>
-      )
-    }
-  ];
-
   return (
-    <Card className="h-[600px] lg:h-[824px] overflow-hidden">
-      <div className="px-5 py-4 border-b border-orange-100 bg-[#FFF9F2]/60 flex justify-between items-center shrink-0">
-        <h2 className="text-[14px] font-extrabold text-stone-800 flex items-center gap-2">
-          <span className="text-[16px]">📋</span> 케어 통합 기록망
-        </h2>
+    <div className="p-8 lg:p-10 space-y-10">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 border-b border-stone-50 pb-8">
+        <div className="space-y-2">
+          <h2 className="text-[24px] font-black text-[#2D2D2D] tracking-tight">
+            Activity <span className="text-[#FF6B00]">Log.</span>
+          </h2>
+          <p className="text-[14px] text-stone-400 font-medium tracking-tight">최근 멍케어 활동 내역을 확인하세요.</p>
+        </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="md">
-            ➕ 병원기록
-          </Button>
-          <Button variant="primary" size="md">
-            💸 비용기록
-          </Button>
+          <Button variant="outline" size="sm" className="rounded-xl px-4 py-2 border-stone-100">+ 병원</Button>
+          <Button variant="outline" size="sm" className="rounded-xl px-4 py-2 border-stone-100">+ 지출</Button>
         </div>
       </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead>
+            <tr className="text-[11px] font-black text-stone-300 uppercase tracking-widest text-left">
+              <th className="pb-6 pl-2">Date</th>
+              <th className="pb-6">Category</th>
+              <th className="pb-6">Detail</th>
+              <th className="pb-6 text-right">Amount</th>
+              <th className="pb-6 w-10"></th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-stone-50">
+            {dummyData.map((item) => (
+              <tr key={item.id} className="group hover:bg-[#FCFAF8] transition-colors">
+                <td className="py-6 pl-2 text-[13px] font-bold text-stone-400 tabular-nums">{item.date}</td>
+                <td className="py-6">
+                  <Badge color={item.category === '병원' ? 'orange' : 'stone'}>
+                    {item.category}
+                  </Badge>
+                </td>
+                <td className="py-6">
+                  <div className="space-y-1">
+                    <p className="text-[15px] font-black text-[#2D2D2D] tracking-tight">{item.clinic}</p>
+                    <p className="text-[13px] font-medium text-stone-400 truncate max-w-[200px] lg:max-w-md">{item.desc}</p>
+                  </div>
+                </td>
+                <td className="py-6 text-right">
+                  <span className="text-[16px] font-black text-[#2D2D2D] tabular-nums">
+                    {item.amount.toLocaleString()}
+                    <span className="text-[12px] ml-1 text-stone-300 font-bold">원</span>
+                  </span>
+                </td>
+                <td className="py-6 text-right pr-2">
+                  <button className="opacity-0 group-hover:opacity-100 transition-opacity text-stone-300 hover:text-[#FF6B00] active:scale-90">
+                    <span className="text-xl">🔁</span>
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
       
-      {/* 리팩토링된 Table 컴포넌트 렌더링 */}
-      <Table columns={columns} data={dummyData} />
-    </Card>
+      <div className="pt-4 flex justify-center">
+        <button className="text-[13px] font-black text-stone-300 hover:text-[#2D2D2D] transition-colors tracking-widest uppercase">
+          View All Activities
+        </button>
+      </div>
+    </div>
   );
 };

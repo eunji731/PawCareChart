@@ -1,60 +1,62 @@
-import { Card } from '@/components/common/Card';
-
 export const KpiCards = () => {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
       {/* 1. 방문 횟수 */}
-      <Card className="p-5 justify-between h-[110px] hover:shadow-md hover:-translate-y-0.5 transition-all group">
-        <div className="flex justify-between items-start mb-2">
-          <span className="text-[12px] font-extrabold text-stone-400 tracking-tight">이번 달 방문 횟수</span>
-          <span className="text-lg opacity-80 group-hover:scale-110 transition-transform">🗓️</span>
+      <div className="space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-stone-100 rounded-xl flex items-center justify-center text-xl">🗓️</div>
+          <p className="text-[13px] font-black text-stone-400 uppercase tracking-widest leading-none pt-1">Medical Visit</p>
         </div>
-        <div className="flex items-baseline gap-2 mt-auto">
-          <span className="text-[22px] font-extrabold text-stone-800 tracking-tight">2<span className="text-[14px] font-bold text-stone-400 ml-1">회</span></span>
-          <span className="text-[11px] font-extrabold tracking-tight text-amber-600 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-full ml-auto">전월대비 +1</span>
+        <div className="flex items-end justify-between border-b border-stone-100 pb-4">
+          <span className="text-[44px] font-black text-[#2D2D2D] tracking-tighter leading-none">2<span className="text-[18px] ml-1 text-stone-300 font-bold uppercase">times</span></span>
+          <span className="text-[12px] font-black text-[#FF6B00] bg-[#FF6B00]/5 px-3 py-1 rounded-lg">+1 than last</span>
         </div>
-      </Card>
+      </div>
 
-      {/* 2. 예방접종 현황 트래커 (신호등 효과) */}
-      <Card className="p-5 justify-between h-[110px] hover:shadow-md hover:-translate-y-0.5 transition-all group">
-        <div className="flex justify-between items-start mb-2">
-          <span className="text-[12px] font-extrabold text-stone-400 tracking-tight">예방접종 현황</span>
-          <span className="text-lg opacity-80 group-hover:scale-110 transition-transform">💉</span>
+      {/* 2. 예방접종 현황 */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-stone-100 rounded-xl flex items-center justify-center text-xl">💉</div>
+          <p className="text-[13px] font-black text-stone-400 uppercase tracking-widest leading-none pt-1">Vaccination</p>
         </div>
-        <div className="flex items-center gap-2.5 mt-auto bg-stone-50 rounded-xl px-2.5 py-1.5 border border-stone-100 w-max shadow-inner">
-          <div className="w-3.5 h-3.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] border border-emerald-300"></div>
-          <div className="w-3.5 h-3.5 rounded-full bg-stone-200 border border-transparent shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)]"></div>
-          <div className="w-3.5 h-3.5 rounded-full bg-stone-200 border border-transparent shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)]"></div>
-          <span className="text-[12px] font-extrabold text-stone-500 ml-1.5 leading-none">잔여일정 없음</span>
+        <div className="flex items-center justify-between border-b border-stone-100 pb-4 h-[44px]">
+          <div className="flex gap-2">
+            <div className="w-3 h-3 rounded-full bg-emerald-500 shadow-lg shadow-emerald-100 ring-4 ring-emerald-50"></div>
+            <div className="w-3 h-3 rounded-full bg-stone-100"></div>
+            <div className="w-3 h-3 rounded-full bg-stone-100"></div>
+          </div>
+          <span className="text-[13px] font-black text-stone-500">Perfect Status</span>
         </div>
-      </Card>
+      </div>
 
-      {/* 3. 복약 진행률 트래커 바 */}
-      <Card className="p-5 justify-between h-[110px] hover:shadow-md hover:-translate-y-0.5 transition-all relative overflow-hidden group">
-        <div className="flex justify-between items-start mb-1">
-          <span className="text-[12px] font-extrabold text-stone-400 tracking-tight">피부염 약 복약</span>
-          <span className="text-lg opacity-80 z-10 group-hover:scale-110 transition-transform">💊</span>
+      {/* 3. 복약 진행률 */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-stone-100 rounded-xl flex items-center justify-center text-xl">💊</div>
+          <p className="text-[13px] font-black text-stone-400 uppercase tracking-widest leading-none pt-1">Medication</p>
         </div>
-        <div className="flex items-baseline justify-between mt-auto mb-1.5 z-10 w-full pr-1">
-          <span className="text-[15px] font-extrabold text-stone-800 tracking-tight">Day 3 <span className="text-stone-400 text-xs">/ 7</span></span>
-          <span className="text-[11px] font-extrabold text-amber-600 tracking-tight bg-white/80 px-1 rounded">43% 완료</span>
+        <div className="space-y-3 border-b border-stone-100 pb-4">
+          <div className="flex justify-between items-baseline">
+            <span className="text-[18px] font-black text-[#2D2D2D]">Day 3 <span className="text-[13px] text-stone-300 font-bold">/ 7</span></span>
+            <span className="text-[13px] font-black text-[#FF6B00]">43%</span>
+          </div>
+          <div className="w-full h-1.5 bg-stone-100 rounded-full overflow-hidden">
+            <div className="h-full bg-[#FF6B00] rounded-full transition-all duration-1000" style={{ width: '43%' }}></div>
+          </div>
         </div>
-        <div className="absolute bottom-0 left-0 w-full h-[6px] bg-orange-50">
-          <div className="h-full bg-linear-to-r from-amber-400 to-orange-400 w-[43%] rounded-tr-xl"></div>
-        </div>
-      </Card>
+      </div>
 
-      {/* 4. 총 지출 통계 */}
-      <Card className="p-5 justify-between h-[110px] hover:shadow-md hover:-translate-y-0.5 transition-all group">
-        <div className="flex justify-between items-start mb-2">
-          <span className="text-[12px] font-extrabold text-stone-400 tracking-tight">이번 달 총 지출</span>
-          <span className="text-lg opacity-80 group-hover:scale-110 transition-transform">💳</span>
+      {/* 4. 총 지출 */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-stone-100 rounded-xl flex items-center justify-center text-xl">💳</div>
+          <p className="text-[13px] font-black text-stone-400 uppercase tracking-widest leading-none pt-1">Total Expense</p>
         </div>
-        <div className="flex items-baseline justify-between mt-auto">
-          <span className="text-[22px] font-extrabold text-stone-800 tracking-tight">150,000</span>
-          <span className="text-[11px] font-extrabold tracking-tight text-red-500 ml-auto">+20% ▲</span>
+        <div className="flex items-end justify-between border-b border-stone-100 pb-4">
+          <span className="text-[44px] font-black text-[#2D2D2D] tracking-tighter leading-none">150<span className="text-[18px] ml-1 text-stone-300 font-bold uppercase">k</span></span>
+          <span className="text-[12px] font-black text-red-500 bg-red-50 px-3 py-1 rounded-lg">▲ 20%</span>
         </div>
-      </Card>
+      </div>
     </div>
   );
 };
