@@ -1,6 +1,5 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { PageLayout } from '@/components/layout/PageLayout';
-import { Section } from '@/components/common/Section';
 import { Input } from '@/components/common/Input';
 import { FormActions } from '@/components/common/FormActions';
 import { ConfirmModal } from '@/components/common/ConfirmModal';
@@ -25,10 +24,10 @@ const DogFormPage = () => {
 
   if (isFetching) {
     return (
-      <PageLayout title="" maxWidth="max-w-2xl">
+      <PageLayout title="" maxWidth="max-w-[1440px]">
         <div className="h-[600px] flex flex-col items-center justify-center">
-          <div className="w-12 h-12 border-[5px] border-stone-100 border-t-[#FF6B00] rounded-full animate-spin mb-6" />
-          <p className="text-stone-300 font-black tracking-widest uppercase text-sm">Retrieving Member</p>
+          <div className="w-16 h-16 border-[6px] border-stone-100 border-t-[#FF6B00] rounded-full animate-spin mb-8" />
+          <p className="text-stone-300 font-black tracking-widest uppercase text-sm">Synchronizing</p>
         </div>
       </PageLayout>
     );
@@ -36,93 +35,103 @@ const DogFormPage = () => {
 
   return (
     <div className="min-h-screen bg-[#FCFAF8]">
-      <PageLayout title="" maxWidth="max-w-2xl">
-        {/* 1. HERO HEADER: 목록 페이지와 통일된 스타일 */}
-        <header className="pt-12 pb-24 flex flex-col items-center text-center gap-6">
-          <h1 className="text-[48px] lg:text-[56px] font-black text-[#2D2D2D] leading-[0.95] tracking-tight">
-            {isEdit ? 'Update' : 'New'} <span className="text-[#FF6B00]">Profile.</span>
-          </h1>
-          <p className="text-[16px] text-stone-400 font-medium max-w-md word-break-keep-all">
-            {isEdit 
-              ? '소중한 가족의 정보를 최신 상태로 유지하고 관리하세요.' 
-              : '새로운 가족을 멍케어차트의 멤버로 등록하고 기록을 시작하세요.'}
-          </p>
+      <PageLayout title="" maxWidth="max-w-[1440px]">
+        {/* 1. HERO HEADER: 프리미엄 타이포그래피 */}
+        <header className="pt-12 pb-16">
+          <div className="space-y-4">
+            <h1 className="text-[52px] lg:text-[64px] font-black text-[#2D2D2D] leading-[0.95] tracking-tight">
+              {isEdit ? 'Update' : 'Register'} <span className="text-[#FF6B00]">Profile.</span>
+            </h1>
+            <p className="text-[18px] text-stone-400 font-medium max-w-xl word-break-keep-all">
+              소중한 가족의 프로필을 완성하세요. <br />
+              아이의 성장을 멍케어차트가 기록하고 보관합니다.
+            </p>
+          </div>
         </header>
 
-        <div className="flex flex-col pb-32">
-          {/* 2. INTEGRATED PROFILE CARD: 사진이 카드 위에 걸쳐지는 구조 */}
-          <Section className="relative mt-16 pt-20 overflow-visible">
-            {/* PHOTO UPLOADER OVERLAY */}
-            <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-full flex justify-center pointer-events-none">
-              <div className="pointer-events-auto">
-                <FileUploader 
-                  variant="profile"
-                  mode="single"
-                  displayUrls={photoUploader.displayUrls}
-                  onFileSelect={(files) => photoUploader.handleSelect(files, 1)}
-                  onFileDelete={photoUploader.handleDelete}
-                  loading={photoUploader.isLoading}
-                  maxCount={1}
-                />
+        {/* 2. MAIN LAYOUT: 2열 아카이브 구조 */}
+        <main className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-start pb-32">
+          
+          {/* LEFT: VISUAL PROFILE PANEL (5/12) */}
+          <div className="lg:col-span-5 xl:col-span-5 lg:sticky lg:top-12">
+            <FileUploader 
+              variant="panel"
+              mode="single"
+              displayUrls={photoUploader.displayUrls}
+              onFileSelect={(files) => photoUploader.handleSelect(files, 1)}
+              onFileDelete={photoUploader.handleDelete}
+              loading={photoUploader.isLoading}
+              maxCount={1}
+            />
+          </div>
+
+          {/* RIGHT: DATA FORM PANEL (7/12) */}
+          <div className="lg:col-span-7 xl:col-span-7">
+            <div className="bg-white rounded-[32px] p-10 lg:p-14 border border-[#F0F0F0] shadow-[0_30px_80px_rgba(0,0,0,0.03)]">
+              <div className="flex items-center gap-4 mb-12 border-b border-stone-50 pb-8">
+                <span className="w-2 h-2 rounded-full bg-[#FF6B00] shadow-lg shadow-[#FF6B00]/20 ring-4 ring-[#FF6B00]/5"></span>
+                <h4 className="text-[20px] font-black text-[#2D2D2D] tracking-tight">기본 프로필 상세 정보</h4>
               </div>
-            </div>
 
-            <div className="space-y-8">
-              <div className="flex items-center gap-3 mb-2">
-                <span className="w-1.5 h-5 bg-[#FF6B00] rounded-full"></span>
-                <h4 className="text-[18px] font-black text-[#2D2D2D] tracking-tight">기본 프로필 정보</h4>
-              </div>
+              <div className="space-y-10">
+                {/* GRID 1: NAME & BREED */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <Input 
+                    label="아이 이름 *" 
+                    placeholder="아이의 소중한 이름" 
+                    value={formData.name} 
+                    onChange={(e) => setFormData({...formData, name: e.target.value})} 
+                    required 
+                  />
+                  <Input 
+                    label="품종" 
+                    placeholder="예: 토이푸들, 말티즈" 
+                    value={formData.breed} 
+                    onChange={(e) => setFormData({...formData, breed: e.target.value})} 
+                  />
+                </div>
 
-              <div className="space-y-6">
-                <Input 
-                  label="이름 *" 
-                  placeholder="아이의 이름을 입력하세요" 
-                  value={formData.name} 
-                  onChange={(e) => setFormData({...formData, name: e.target.value})} 
-                  required 
-                />
-                
-                <Input 
-                  label="견종" 
-                  placeholder="예: 토이푸들, 말티즈, 믹스견" 
-                  value={formData.breed} 
-                  onChange={(e) => setFormData({...formData, breed: e.target.value})} 
-                />
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* GRID 2: BIRTH & WEIGHT */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <Input 
                     label="생년월일" 
                     type="date" 
                     value={formData.birthDate} 
                     onChange={(e) => setFormData({...formData, birthDate: e.target.value})} 
                   />
-                  <Input 
-                    label="몸무게 (kg)" 
-                    type="number" 
-                    step="0.01" 
-                    placeholder="0.00" 
-                    value={formData.weight} 
-                    onChange={(e) => setFormData({...formData, weight: e.target.value})} 
-                  />
+                  <div className="relative">
+                    <Input 
+                      label="몸무게" 
+                      type="number" 
+                      step="0.01" 
+                      placeholder="0.00" 
+                      value={formData.weight} 
+                      onChange={(e) => setFormData({...formData, weight: e.target.value})} 
+                    />
+                    <span className="absolute right-5 bottom-4 text-[13px] font-black text-stone-300 uppercase">kg</span>
+                  </div>
                 </div>
               </div>
-            </div>
-          </Section>
 
-          <FormActions 
-            onCancel={() => navigate(-1)} 
-            onSave={handleSave} 
-            onDelete={isEdit ? () => setIsDeleteModalOpen(true) : undefined}
-            isSubmitting={isLoading} 
-            saveLabel={isEdit ? '수정 완료하기' : '멤버 등록하기'} 
-          />
-        </div>
+              {/* ACTION BAR: 위계 정리된 버튼 그룹 */}
+              <div className="mt-16 pt-10 border-t border-stone-50">
+                <FormActions 
+                  onCancel={() => navigate(-1)} 
+                  onSave={handleSave} 
+                  onDelete={isEdit ? () => setIsDeleteModalOpen(true) : undefined}
+                  isSubmitting={isLoading} 
+                  saveLabel={isEdit ? '프로필 업데이트하기' : '등록 완료하기'} 
+                />
+              </div>
+            </div>
+          </div>
+        </main>
 
         <ConfirmModal
           open={isDeleteModalOpen}
-          title={`${formData.name}의 기록 삭제`}
-          description={`정말로 정보를 삭제하시겠습니까?\n한번 삭제된 데이터는 복구할 수 없습니다.`}
-          confirmText="삭제하기"
+          title="정보 삭제 확인"
+          description={`${formData.name}의 모든 기록이 영구적으로 삭제됩니다.\n정말로 삭제하시겠습니까?`}
+          confirmText="네, 삭제합니다"
           variant="danger"
           loading={isLoading}
           onConfirm={handleConfirmDeleteDog}
