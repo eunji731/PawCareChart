@@ -10,17 +10,17 @@ interface SectionProps {
 
 export const Section: React.FC<SectionProps> = ({ title, description, children, rightElement, className = '' }) => {
   return (
-    <section className={`bg-white rounded-2xl border border-orange-100 shadow-sm overflow-hidden ${className}`}>
+    <section className={`bg-white rounded-[32px] border border-[#F0F0F0] shadow-[0_10px_40px_rgba(0,0,0,0.03)] overflow-hidden ${className}`}>
       {(title || rightElement) && (
-        <div className="px-6 py-4 border-b border-orange-50 flex items-center justify-between bg-[#FFFBF7]">
+        <div className="px-8 py-6 border-b border-[#F5F5F5] flex items-center justify-between bg-white">
           <div>
-            {title && <h3 className="text-[15px] font-extrabold text-stone-800 tracking-tight">{title}</h3>}
-            {description && <p className="text-[11px] text-stone-400 mt-0.5 font-medium">{description}</p>}
+            {title && <h3 className="text-[18px] font-black text-[#2D2D2D] tracking-tight leading-tight">{title}</h3>}
+            {description && <p className="text-[12px] text-stone-400 mt-1 font-medium">{description}</p>}
           </div>
           {rightElement}
         </div>
       )}
-      <div className="p-6">
+      <div className="p-8">
         {children}
       </div>
     </section>

@@ -1,30 +1,27 @@
 import React from 'react';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'outline' | 'ghost' | 'icon';
+  variant?: 'primary' | 'outline' | 'ghost';
   size?: 'sm' | 'md' | 'lg';
 }
 
-export const Button = ({ variant = 'primary', size = 'md', children, className = '', ...props }: ButtonProps) => {
-  const base = "font-extrabold transition-all shadow-sm flex items-center justify-center gap-1.5 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed";
+export const Button = ({ variant = 'primary', size = 'md', className = '', children, ...props }: ButtonProps) => {
+  const base = "inline-flex items-center justify-center font-bold transition-all duration-300 ease-out active:scale-[0.97] disabled:opacity-50 disabled:pointer-events-none cursor-pointer";
   
   const variants = {
-    primary: "bg-amber-500 text-white border border-transparent hover:bg-amber-600 rounded-[10px]",
-    outline: "bg-orange-50 text-stone-600 border border-orange-200 hover:bg-white hover:text-amber-700 rounded-[10px]",
-    ghost: "bg-transparent text-stone-500 border border-transparent hover:bg-orange-50 hover:text-stone-800 rounded-xl shadow-none",
-    icon: "bg-orange-50 text-amber-600 border border-orange-100 hover:bg-amber-100 hover:text-amber-700 rounded-[6px] shadow-sm"
-  };
-  
-  const sizes = {
-    sm: "px-2 py-1 text-[11px]",
-    md: "px-3 py-1.5 text-[12px]",
-    lg: "px-4 py-2.5 text-[14px]"
+    primary: "bg-[#FF6B00] text-white shadow-[0_4px_20px_rgba(255,107,0,0.15)] hover:bg-[#E66000] hover:shadow-[0_6px_25px_rgba(255,107,0,0.25)]",
+    outline: "border-2 border-[#EEEEEE] text-[#2D2D2D] bg-white hover:border-[#FF6B00] hover:text-[#FF6B00]",
+    ghost: "text-stone-400 hover:text-[#2D2D2D] hover:bg-stone-50"
   };
 
-  const isIcon = variant === 'icon';
+  const sizes = {
+    sm: "px-4 py-2 text-[13px] rounded-lg",
+    md: "px-6 py-3 text-[14px] rounded-xl",
+    lg: "px-8 py-4 text-[15px] rounded-2xl" // 메인 버튼만 더 둥근 느낌 유지
+  };
 
   return (
-    <button className={`${base} ${variants[variant]} ${isIcon ? 'w-[26px] h-[26px] p-0' : sizes[size]} ${className}`} {...props}>
+    <button className={`${base} ${variants[variant]} ${sizes[size]} ${className}`} {...props}>
       {children}
     </button>
   );

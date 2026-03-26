@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/common/Button';
-import { Input } from '@/components/common/Input';
-import type { CareRecordsFilter } from '@/types/care';
 import { dogApi } from '@/api/dogApi';
 import type { Dog } from '@/types/dog';
+import type { CareRecordsFilter } from '@/types/care';
 
 interface FilterBarProps {
   filters: CareRecordsFilter;
@@ -18,88 +17,71 @@ export const FilterBar: React.FC<FilterBarProps> = ({ filters, onChange }) => {
   }, []);
 
   return (
-    <div className="bg-white p-6 rounded-[32px] border border-orange-100 shadow-sm space-y-6">
-      <div className="flex flex-col xl:flex-row gap-6 items-start xl:items-center">
-        {/* 1. 핵심 필터 그룹 (반려견 + 유형) */}
-        <div className="flex items-center gap-3 flex-shrink-0 w-full xl:w-auto">
-          <select 
-            value={filters.dogId}
-            onChange={(e) => onChange({ dogId: e.target.value })}
-            className="flex-1 xl:w-44 px-5 py-3 rounded-2xl border border-orange-100 bg-orange-50/30 text-[15px] font-black text-stone-700 outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-50 transition-all cursor-pointer appearance-none shadow-sm"
-          >
-            <option value="">모든 반려견 🐾</option>
-            {dogs.map(dog => (
-              <option key={dog.id} value={dog.id}>{dog.name}</option>
-            ))}
-          </select>
-
-          <div className="flex p-1.5 bg-stone-100/80 rounded-2xl flex-shrink-0 shadow-inner">
-            {(['ALL', 'MEDICAL', 'EXPENSE'] as const).map((type) => (
-              <button
-                key={type}
-                onClick={() => onChange({ type })}
-                className={`px-5 py-2 rounded-xl text-[13px] font-black transition-all ${
-                  filters.type === type 
-                    ? 'bg-white text-amber-600 shadow-md scale-100' 
-                    : 'text-stone-400 hover:text-stone-600'
-                }`}
-              >
-                {type === 'ALL' ? '전체' : type === 'MEDICAL' ? '병원' : '지출'}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* 2. 검색창 (남은 공간 모두 활용) */}
-        <div className="flex-grow w-full xl:w-auto">
-          <div className="relative group">
-            <Input 
-              placeholder="증상, 병원명, 지출 메모 등 검색..." 
+    <div className="bg-white rounded-2xl p-6 shadow-[0_20px_60px_rgba(0,0,0,0.02)] border border-[#F0F0F0]">
+      <div className="flex flex-col xl:flex-row gap-6 items-stretch xl:items-center">
+        
+        {/* GROUP 1: INTEGRATED SEARCH & DOG SELECT - 정제된 사각형 */}
+        <div className="flex-grow flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-grow group">
+            <input 
+              placeholder="무엇을 찾으시나요?" 
               value={filters.keyword}
               onChange={(e) => onChange({ keyword: e.target.value })}
-              className="bg-stone-50/50 pl-12 py-3.5 border-stone-100 focus:bg-white rounded-2xl"
+              className="w-full bg-[#F9F9F9] h-[56px] pl-12 pr-6 rounded-xl border border-transparent focus:border-[#FF6B00] focus:bg-white outline-none text-[15px] font-medium transition-all duration-300 shadow-inner"
             />
-            <span className="absolute left-5 top-1/2 -translate-y-1/2 text-lg grayscale opacity-40 group-focus-within:opacity-100 group-focus-within:grayscale-0 transition-all">🔍</span>
+            <span className="absolute left-5 top-1/2 -translate-y-1/2 text-lg opacity-20 group-focus-within:opacity-100 transition-opacity">🔍</span>
+          </div>
+          
+          <div className="relative sm:w-56 group">
+            <select 
+              value={filters.dogId}
+              onChange={(e) => onChange({ dogId: e.target.value })}
+              className="w-full h-[56px] px-6 rounded-xl bg-[#F9F9F9] border border-transparent focus:border-[#FF6B00] focus:bg-white text-[14px] font-bold appearance-none outline-none cursor-pointer transition-all duration-300 shadow-inner"
+            >
+              <option value="">모든 아이들 🐾</option>
+              {dogs.map(dog => <option key={dog.id} value={dog.id}>{dog.name}</option>)}
+            </select>
+            <span className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-stone-300 font-bold group-hover:text-[#FF6B00] transition-colors">▼</span>
           </div>
         </div>
 
-        {/* 3. 액션 버튼 */}
-        <div className="flex-shrink-0 w-full xl:w-auto">
-          <Button variant="primary" className="w-full xl:w-auto px-8 py-3.5 rounded-2xl shadow-xl shadow-amber-100 font-black">
-            + 새로운 기록 남기기
-          </Button>
-        </div>
-      </div>
-
-      {/* 4. 부가 필터: 기간 선택 */}
-      <div className="flex flex-wrap items-center gap-4 text-[14px] font-black text-stone-400 border-t border-orange-50 pt-6">
-        <div className="flex items-center gap-2 mr-2">
-          <span className="w-1.5 h-1.5 rounded-full bg-orange-200"></span>
-          조회 기간
-        </div>
-        <div className="flex items-center gap-2">
-          <input 
-            type="date" 
-            value={filters.startDate}
-            onChange={(e) => onChange({ startDate: e.target.value })}
-            className="bg-orange-50/50 border border-orange-100 rounded-xl px-4 py-2 outline-none text-stone-600 focus:border-amber-300 transition-all cursor-pointer font-bold" 
-          />
-          <span className="text-stone-300">~</span>
-          <input 
-            type="date" 
-            value={filters.endDate}
-            onChange={(e) => onChange({ endDate: e.target.value })}
-            className="bg-orange-50/50 border border-orange-100 rounded-xl px-4 py-2 outline-none text-stone-600 focus:border-amber-300 transition-all cursor-pointer font-bold" 
-          />
-        </div>
-
-        {/* 빠른 기간 필터 (선택 사항) */}
-        <div className="flex gap-2 ml-auto">
-          {['1주일', '1개월', '3개월'].map(label => (
-            <button key={label} className="px-3 py-1 rounded-lg border border-stone-100 text-[11px] hover:bg-stone-50 transition-colors cursor-pointer">
-              {label}
+        {/* GROUP 2: PREMIUM SEGMENTED TABS - 곡률 축소 */}
+        <div className="flex p-1.5 bg-[#F5F5F5] rounded-xl shadow-inner">
+          {(['ALL', 'MEDICAL', 'EXPENSE'] as const).map((type) => (
+            <button
+              key={type}
+              onClick={() => onChange({ type })}
+              className={`px-8 h-[44px] rounded-lg text-[13px] font-black transition-all duration-300 active:scale-95 ${
+                filters.type === type 
+                  ? 'bg-white text-[#FF6B00] shadow-sm' 
+                  : 'text-stone-400 hover:text-stone-600'
+              }`}
+            >
+              {type === 'ALL' ? 'Total' : type === 'MEDICAL' ? 'Medical' : 'Expense'}
             </button>
           ))}
+        </div>
+
+        {/* GROUP 3: MINIMAL DATE RANGE */}
+        <div className="flex items-center gap-6 px-8 border-l border-stone-100 hidden xl:flex">
+          <div className="space-y-1 text-right">
+            <p className="text-[9px] font-black text-stone-300 uppercase tracking-widest leading-none">Date Range</p>
+            <div className="flex items-center gap-3">
+              <input 
+                type="date" 
+                value={filters.startDate}
+                onChange={(e) => onChange({ startDate: e.target.value })}
+                className="bg-transparent border-none outline-none text-[14px] font-black text-[#2D2D2D] cursor-pointer hover:text-[#FF6B00] transition-colors" 
+              />
+              <span className="text-stone-200 font-light">/</span>
+              <input 
+                type="date" 
+                value={filters.endDate}
+                onChange={(e) => onChange({ endDate: e.target.value })}
+                className="bg-transparent border-none outline-none text-[14px] font-black text-[#2D2D2D] cursor-pointer hover:text-[#FF6B00] transition-colors" 
+              />
+            </div>
+          </div>
         </div>
       </div>
     </div>
