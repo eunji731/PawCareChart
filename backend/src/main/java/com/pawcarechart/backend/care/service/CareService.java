@@ -5,11 +5,14 @@ import com.pawcarechart.backend.care.dto.CareRecordListResponse;
 import com.pawcarechart.backend.care.entity.CareRecord;
 import com.pawcarechart.backend.care.entity.ExpenseDetail;
 import com.pawcarechart.backend.care.entity.MedicalDetail;
+import com.pawcarechart.backend.care.mapper.CareMapper;
 import com.pawcarechart.backend.care.repository.CareRecordRepository;
 import com.pawcarechart.backend.care.repository.ExpenseDetailRepository;
 import com.pawcarechart.backend.care.repository.MedicalDetailRepository;
 import com.pawcarechart.backend.dog.repository.DogRepository;
 import com.pawcarechart.backend.file.constant.FileTargetType;
+import com.pawcarechart.backend.file.dto.FileCountResponse;
+import com.pawcarechart.backend.file.repository.FileMappingRepository;
 import com.pawcarechart.backend.file.service.FileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -19,6 +22,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -30,18 +35,63 @@ public class CareService {
     private final ExpenseDetailRepository expenseDetailRepository;
     private final DogRepository dogRepository;
     private final FileService fileService;
+    private final CareMapper careMapper;
+    private final FileMappingRepository fileMappingRepository;
 
     /**
      * 통합 케어 기록 목록 조회
      */
     public List<CareRecordListResponse> getCareRecords(
             Long userId, Long dogId, String type, String keyword, LocalDate startDate, LocalDate endDate) {
-        
+
         String recordType = (type == null || "ALL".equalsIgnoreCase(type) || type.isBlank()) ? null : type.toUpperCase();
         String searchKeyword = (keyword == null || keyword.isBlank()) ? null : keyword.trim();
 
-        return careRecordRepository.findCareRecordsByFilters(
-                userId, dogId, recordType, searchKeyword, startDate, endDate);
+        // 1. 기본 기록 정보 목록 조회 (이 시점에는 attachmentCount가 비어있거나 0이라고 가정)
+        List<CareRecordListResponse> baseRecords = careMapper.selectCareRecordsByFilters(
+                userId, dogId, recordType, searchKeyword, startDate, endDate
+        );
+
+        // 조회된 결과가 없다면 바로 반환
+        if (baseRecords.isEmpty()) {
+            return baseRecords;
+        }
+
+        // 2. 조회된 기록들의 ID(targetId) 목록 추출
+        List<Long> recordIds = baseRecords.stream()
+                .map(CareRecordListResponse::id)
+                .toList();
+
+        // 3. 기록 ID 목록으로 파일 개수 일괄 조회 (In 쿼리 사용)
+        // (주의: fileMapper 또는 fileRepository에 해당 메서드가 구현되어 있어야 합니다)
+        List<FileCountResponse> fileCounts = fileMappingRepository.countFilesByTargetIds(FileTargetType.CARE_RECORD,recordIds);
+
+        // 4. 매핑을 쉽게 하기 위해 Map으로 변환 (Key: targetId, Value: count)
+        Map<Long, Integer> fileCountMap = fileCounts.stream()
+                .collect(Collectors.toMap(
+                        FileCountResponse::targetId,
+                        response -> response.count().intValue() // Long 타입의 count를 Integer로 변환
+                ));
+
+        // 5. 기본 기록 정보와 파일 개수를 조합하여 새로운 Record 생성 후 반환
+        return baseRecords.stream()
+                .map(record -> new CareRecordListResponse(
+                        record.id(),
+                        record.dogId(),
+                        record.dogName(),
+                        record.dogProfileImageUrl(),
+                        record.recordType(),
+                        record.recordDate(),
+                        record.title(),
+                        record.note(),
+                        record.clinicName(),
+                        record.diagnosis(),
+                        record.medicationStatus(),
+                        record.categoryCode(),
+                        record.amount(),
+                        fileCountMap.getOrDefault(record.id(), 0) // 매칭되는 개수가 없으면 기본값 0
+                ))
+                .toList();
     }
 
     /**

@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.pawcarechart.backend.care.mapper.CareMapper">
+    <select id="selectCareRecordsByFilters" resultType="com.pawcarechart.backend.care.dto.CareRecordListResponse">
+        SELECT
+        cr.id AS id,
+        cr.dog_id AS dogId,
+        d.name AS dogName,
+        d.profile_image_url AS dogProfileImageUrl,
+        cr.record_type_code AS recordType,
+        cr.record_date AS recordDate,
+        cr.title AS title,
+        cr.note AS note,
+        md.clinic_name AS clinicName,
+        md.diagnosis AS diagnosis,
+
+        -- 투약 상태 변환 (프론트엔드 medicationStatus 포맷에 맞춤)
+        CASE
+        WHEN md.care_record_id IS NULL THEN 'NONE'
+        WHEN md.is_medication_completed = true THEN 'COMPLETED'
+        ELSE 'ACTIVE'
+        END AS medicationStatus,
+
+        ed.category_code AS categoryCode,
+        COALESCE(md.amount, ed.amount) AS amount,
+
+        -- TODO: 실제 첨부파일 테이블 조인 카운트로 변경 필요 (일단 에러 안 나게 0으로 처리)
+        0 AS attachmentCount
+
+        FROM public.care_records cr
+        INNER JOIN public.dogs d
+        ON d.id = cr.dog_id
+        LEFT JOIN public.care_record_medical_details md
+        ON md.care_record_id = cr.id
+        LEFT JOIN public.care_record_expense_details ed
+        ON ed.care_record_id = cr.id
+        WHERE cr.user_id = #{userId}
+
+        <if test="dogId != null">
+            AND cr.dog_id = #{dogId}
+        </if>
+        <if test="recordType != null and recordType != ''">
+            AND cr.record_type_code = #{recordType}
+        </if>
+        <if test="searchKeyword != null and searchKeyword != ''">
+            AND (
+            cr.title LIKE CONCAT('%', #{searchKeyword}, '%')
+            OR md.clinic_name LIKE CONCAT('%', #{searchKeyword}, '%')
+            OR md.diagnosis LIKE CONCAT('%', #{searchKeyword}, '%')
+            )
+        </if>
+        <if test="startDate != null">
+            AND cr.record_date <![CDATA[>=]]> #{startDate}
+        </if>
+        <if test="endDate != null">
+            AND cr.record_date <![CDATA[<=]]> #{endDate}
+        </if>
+
+        ORDER BY cr.record_date DESC, cr.created_at DESC
+    </select>
+
+</mapper>
