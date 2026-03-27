@@ -40,39 +40,28 @@ public class FileService {
     private final FileProperties fileProperties;
 
     /**
-     * 단일 파일 업로드 및 대상 매핑
+     * [Step 1] 파일만 먼저 저장 (임시 상태)
+     * targetId 없이 파일 정보만 DB에 기록
      */
     @Transactional
-    public FileResponse uploadSingle(FileTargetType targetType, Long targetId, Long userId, MultipartFile file) {
-        return uploadFile(targetType, targetId, userId, file);
-    }
-
-    /**
-     * 다중 파일 업로드 및 대상 매핑
-     */
-    @Transactional
-    public List<FileResponse> uploadMultiple(FileTargetType targetType, Long targetId, Long userId, List<MultipartFile> files) {
+    public List<FileResponse> uploadTemporary(Long userId, List<MultipartFile> files) {
         if (files == null || files.isEmpty()) return Collections.emptyList();
 
         return files.stream()
                 .filter(file -> file != null && !file.isEmpty())
-                .map(file -> uploadFile(targetType, targetId, userId, file))
+                .map(file -> savePhysicalFile(userId, file))
                 .collect(Collectors.toList());
     }
 
     /**
-     * 파일 저장 및 매핑 내부 로직
+     * 물리 파일 저장 및 DB 레코드 생성 (매핑 없음)
      */
-    private FileResponse uploadFile(FileTargetType targetType, Long targetId, Long userId, MultipartFile file) {
-        if (file == null || file.isEmpty()) return null;
-
-        // 파일 타입 검증
+    private FileResponse savePhysicalFile(Long userId, MultipartFile file) {
         String contentType = file.getContentType();
         if (fileProperties.getAllowedTypes() != null && !fileProperties.getAllowedTypes().contains(contentType)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "허용되지 않는 파일 형식입니다: " + contentType);
         }
 
-        // 고유 파일명 생성
         String originalName = file.getOriginalFilename();
         String extension = "";
         if (originalName != null && originalName.contains(".")) {
@@ -81,34 +70,25 @@ public class FileService {
         String storedName = UUID.randomUUID().toString() + extension;
 
         try {
-            // 물리 디렉토리 생성
             Path uploadPath = Paths.get(fileProperties.getUploadDir()).toAbsolutePath().normalize();
             if (!Files.exists(uploadPath)) {
                 Files.createDirectories(uploadPath);
             }
 
-            // 파일 복사
             Path targetLocation = uploadPath.resolve(storedName);
             Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
 
-            // DB 저장
             String baseUrl = fileProperties.getBaseUrl();
             if (!baseUrl.endsWith("/")) baseUrl += "/";
             String fileUrl = baseUrl + storedName;
 
             FileEntity fileEntity = fileRepository.save(FileEntity.builder()
+                    .userId(userId)
                     .originalFileName(originalName)
                     .storedFileName(storedName)
                     .fileUrl(fileUrl)
                     .fileSize(file.getSize())
                     .fileType(contentType)
-                    .build());
-
-            fileMappingRepository.save(FileMapping.builder()
-                    .fileId(fileEntity.getId())
-                    .targetType(targetType)
-                    .targetId(targetId)
-                    .userId(userId)
                     .build());
 
             return FileResponse.from(fileEntity);
@@ -120,7 +100,40 @@ public class FileService {
     }
 
     /**
-     * 특정 대상에 매핑된 모든 파일 정보 조회 (생성순 정렬)
+     * [Step 2] 저장된 본문 ID와 파일들을 연결
+     */
+    @Transactional
+    public void connectFilesToTarget(List<Long> fileIds, FileTargetType targetType, Long targetId, Long userId) {
+        if (fileIds == null || fileIds.isEmpty()) return;
+
+        if (targetId == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "대상 ID가 없습니다.");
+        }
+
+        fileIds.forEach(fileId -> {
+
+            if (fileId == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "파일 ID가 null 입니다.");
+            }
+            // 소유권 확인: 업로드한 사용자 본인만 매핑 가능 (FileEntity 기준)
+            FileEntity fileEntity = fileRepository.findById(fileId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "파일 정보를 찾을 수 없습니다. ID: " + fileId));
+
+            if (!fileEntity.getUserId().equals(userId)) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "파일 매핑 권한이 없습니다.");
+            }
+
+            // 매핑 정보 저장 시 userId는 포함하지 않음
+            fileMappingRepository.save(FileMapping.builder()
+                    .fileId(fileId)
+                    .targetType(targetType)
+                    .targetId(targetId)
+                    .build());
+        });
+    }
+
+    /**
+     * 특정 대상에 매핑된 모든 파일 정보 조회
      */
     public List<FileResponse> getFiles(FileTargetType targetType, Long targetId) {
         List<FileMapping> mappings = fileMappingRepository.findAllByTargetTypeAndTargetId(targetType, targetId);
@@ -133,50 +146,30 @@ public class FileService {
         
         return fileRepository.findAllById(fileIds).stream()
                 .map(FileResponse::from)
-                .sorted(Comparator.comparingLong(f -> fileIds.indexOf(f.getFileId())))
+                .sorted(Comparator.comparingLong(f -> fileIds.indexOf(f.getId())))
                 .collect(Collectors.toList());
     }
 
     /**
-     * 실제 물리 파일을 Resource로 로드 (다운로드/미리보기용)
-     */
-    public Resource loadFileAsResource(String storedFileName) {
-
-        log.info("downloadFile 진입: {}", storedFileName);
-        try {
-            Path filePath = Paths.get(fileProperties.getUploadDir()).toAbsolutePath().normalize().resolve(storedFileName);
-            Resource resource = new UrlResource(filePath.toUri());
-            
-            if (resource.exists()) {
-                return resource;
-            } else {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "파일을 찾을 수 없습니다: " + storedFileName);
-            }
-        } catch (MalformedURLException ex) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "파일 경로가 잘못되었습니다: " + storedFileName);
-        }
-    }
-
-    /**
-     * 특정 파일 1건 삭제 (권한 검증 및 물리 파일 삭제 포함)
+     * 특정 파일 1건 삭제
      */
     @Transactional
     public void deleteFile(Long fileId, Long userId) {
-        FileMapping mapping = fileMappingRepository.findByFileId(fileId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "파일 매핑 정보를 찾을 수 없습니다."));
-
-        if (!mapping.getUserId().equals(userId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "파일 삭제 권한이 없습니다.");
-        }
-
+        // 권한 검증: 파일을 업로드한 사용자 본인만 삭제 가능 (FileEntity 기준)
         FileEntity fileEntity = fileRepository.findById(fileId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "파일 정보를 찾을 수 없습니다."));
+
+        if (!fileEntity.getUserId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "파일 삭제 권한이 없습니다.");
+        }
 
         // 물리 파일 삭제
         deletePhysicalFile(fileEntity.getStoredFileName());
 
-        // DB 삭제
-        fileMappingRepository.delete(mapping);
+        // 매핑 삭제
+        fileMappingRepository.deleteByFileId(fileId);
+        
+        // 엔티티 삭제
         fileRepository.delete(fileEntity);
     }
 
@@ -191,7 +184,6 @@ public class FileService {
         List<Long> fileIds = mappings.stream().map(FileMapping::getFileId).collect(Collectors.toList());
         List<FileEntity> fileEntities = fileRepository.findAllById(fileIds);
 
-        // 물리 파일 일괄 삭제
         fileEntities.forEach(f -> deletePhysicalFile(f.getStoredFileName()));
         
         fileMappingRepository.deleteAllInBatch(mappings);
@@ -202,9 +194,19 @@ public class FileService {
         try {
             Path filePath = Paths.get(fileProperties.getUploadDir()).toAbsolutePath().normalize().resolve(storedFileName);
             Files.deleteIfExists(filePath);
-            log.info("Deleted physical file: {}", storedFileName);
         } catch (IOException ex) {
             log.warn("Could not delete physical file: {}", storedFileName, ex);
+        }
+    }
+
+    public Resource loadFileAsResource(String storedFileName) {
+        try {
+            Path filePath = Paths.get(fileProperties.getUploadDir()).toAbsolutePath().normalize().resolve(storedFileName);
+            Resource resource = new UrlResource(filePath.toUri());
+            if (resource.exists()) return resource;
+            else throw new ResponseStatusException(HttpStatus.NOT_FOUND, "파일을 찾을 수 없습니다: " + storedFileName);
+        } catch (MalformedURLException ex) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "파일 경로가 잘못되었습니다: " + storedFileName);
         }
     }
 }

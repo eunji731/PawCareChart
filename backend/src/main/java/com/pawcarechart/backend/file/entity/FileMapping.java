@@ -26,9 +26,6 @@ public class FileMapping {
     @Column(name = "target_id", nullable = false)
     private Long targetId;
 
-    @Column(name = "user_id", nullable = false)
-    private Long userId;
-
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

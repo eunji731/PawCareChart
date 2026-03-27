@@ -33,7 +33,7 @@ public class Dog {
 
     private Double weight;
 
-    @Column(name = "profile_image_url", length = 255)
+    @Column(name = "profile_image_url", columnDefinition = "TEXT")
     private String profileImageUrl;
 
     @Column(name = "created_at", nullable = false, updatable = false)

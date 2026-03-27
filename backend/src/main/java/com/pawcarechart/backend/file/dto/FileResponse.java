@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class FileResponse {
-    private Long fileId;
+    private Long id;
     private String originalFileName;
     private String fileUrl;
     private Long fileSize;
@@ -20,7 +20,7 @@ public class FileResponse {
     public static FileResponse from(FileEntity fileEntity) {
         if (fileEntity == null) return null;
         return FileResponse.builder()
-                .fileId(fileEntity.getId())
+                .id(fileEntity.getId())
                 .originalFileName(fileEntity.getOriginalFileName())
                 .fileUrl(fileEntity.getFileUrl())
                 .fileSize(fileEntity.getFileSize())

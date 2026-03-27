@@ -15,6 +15,9 @@ public class FileEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "user_id", nullable = false)
+    private Long userId; // 업로더 식별 (소유권 확인용)
+
     @Column(name = "original_file_name", nullable = false)
     private String originalFileName;
 

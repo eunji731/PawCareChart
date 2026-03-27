@@ -14,8 +14,8 @@ public record UserResponse(
         @Schema(description = "이름", example = "홍길동")
         String name,
 
-        @Schema(description = "역할", example = "ROLE_USER")
-        String role,
+        @Schema(description = "역할 코드", example = "ROLE_USER")
+        String roleCode,
 
         @Schema(description = "가입 일시")
         LocalDateTime createdAt,

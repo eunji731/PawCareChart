@@ -37,7 +37,7 @@ public class AuthService {
                 user.getId(),
                 user.getEmail(),
                 user.getName(),
-                user.getRole(),
+                user.getRoleCode(),
                 user.getCreatedAt(),
                 user.getUpdatedAt()
         );
@@ -53,7 +53,7 @@ public class AuthService {
                 .email(request.email())
                 .password(passwordEncoder.encode(request.password()))
                 .name(request.name())
-                .role("ROLE_USER")
+                .roleCode("ROLE_USER")
                 .build());
 
         return issueTokens(user);
@@ -113,7 +113,7 @@ public class AuthService {
     private AuthResponse issueTokens(User user) {
         refreshTokenRepository.deleteByUser_Id(user.getId());
 
-        String accessToken = jwtTokenProvider.createAccessToken(user.getId(), user.getEmail(), user.getRole());
+        String accessToken = jwtTokenProvider.createAccessToken(user.getId(), user.getEmail(), user.getRoleCode());
         String refreshToken = jwtTokenProvider.createRefreshToken(user.getId());
 
         refreshTokenRepository.save(RefreshToken.builder()
@@ -133,4 +133,3 @@ public class AuthService {
         );
     }
 }
-

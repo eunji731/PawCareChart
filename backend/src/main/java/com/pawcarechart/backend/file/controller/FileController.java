@@ -29,14 +29,12 @@ public class FileController {
 
     private final FileService fileService;
 
-    @Operation(summary = "다중 파일 업로드", description = "여러 파일을 특정 대상(targetType, targetId)에 업로드합니다.")
+    @Operation(summary = "파일 임시 업로드", description = "파일을 먼저 업로드하고 fileId 목록을 반환받습니다. (매핑 전 상태)")
     @PostMapping("/upload")
-    public ApiResult<List<FileResponse>> uploadMultiple(
-            @RequestParam FileTargetType targetType,
-            @RequestParam Long targetId,
+    public ApiResult<List<FileResponse>> uploadTemporary(
             @RequestParam List<MultipartFile> files,
             @AuthenticationPrincipal String userId) {
-        return ApiResult.ok(fileService.uploadMultiple(targetType, targetId, Long.valueOf(userId), files));
+        return ApiResult.ok(fileService.uploadTemporary(Long.valueOf(userId), files));
     }
 
     @Operation(summary = "파일 목록 조회", description = "특정 대상에 매핑된 모든 파일 정보를 조회합니다.")
@@ -50,8 +48,6 @@ public class FileController {
     @Operation(summary = "파일 다운로드/미리보기", description = "저장된 파일명을 통해 실제 파일을 조회합니다.")
     @GetMapping("/download/{storedFileName:.+}")
     public ResponseEntity<Resource> downloadFile(@PathVariable String storedFileName, HttpServletRequest request) {
-
-        log.info("downloadFile 진입: {}", storedFileName);
         Resource resource = fileService.loadFileAsResource(storedFileName);
 
         String contentType = null;
