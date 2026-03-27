@@ -3,8 +3,10 @@ export type RecordType = 'MEDICAL' | 'EXPENSE';
 export interface CareRecord {
   id: number;
   dogId: number;
+  dogName: string;
+  dogProfileImageUrl: string | null;
   recordType: RecordType;
-  recordDate: string; 
+  recordDate: string;
   title: string;
   note?: string;
   // Medical Details
@@ -19,11 +21,11 @@ export interface CareRecord {
 }
 
 export interface CareRecordsFilter {
-  dogId?: number | string;
-  type: RecordType | 'ALL';
-  keyword: string;
-  startDate: string;
-  endDate: string;
+  dogId?: number;
+  type?: RecordType | 'ALL';
+  keyword?: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 export interface MedicalDetailRequest {

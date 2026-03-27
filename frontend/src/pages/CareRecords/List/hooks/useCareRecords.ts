@@ -6,13 +6,8 @@ export const useCareRecords = () => {
   const [records, setRecords] = useState<CareRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // 초기 필터값 (이번 달 기준)
   const [filters, setFilters] = useState<CareRecordsFilter>({
-    dogId: '',
-    type: 'ALL',
-    keyword: '',
-    startDate: '',
-    endDate: ''
+    type: 'ALL'
   });
 
   const fetchRecords = useCallback(async () => {
