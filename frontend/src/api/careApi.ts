@@ -29,6 +29,11 @@ export const careApi = {
     return response.data;
   },
 
+  getRecordDetail: async (recordId: number) => {
+    const response = await apiClient.get(`/care-records/${recordId}`);
+    return response.data;
+  },
+
   createRecord: async (payload: CareRecordCreateRequest) => {
     return apiClient.post('/care-records', payload);
   },

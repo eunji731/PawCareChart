@@ -1,9 +1,15 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { CareRecord } from '@/types/care';
 import { Card } from '@/components/common/Card';
 
 export const TimelineItem: React.FC<{ record: CareRecord }> = ({ record }) => {
   const isMedical = record.recordType === 'MEDICAL';
+  const navigate = useNavigate();
+
+  const handleCardClick = () => {
+    navigate(`/care-records/${record.id}`);
+  };
 
   // [공통] 강아지 식별 정보 (인라인 메타 스타일)
   const DogIdentity = (
@@ -51,7 +57,10 @@ export const TimelineItem: React.FC<{ record: CareRecord }> = ({ record }) => {
         <div className="w-px h-full min-h-[140px] bg-[#F0F0F0] mt-4 group-last:hidden" />
       </div>
 
-      <Card className="flex-grow p-6 lg:p-8 transition-all duration-500 hover:translate-x-2 hover:shadow-[0_20px_50px_rgba(0,0,0,0.03)] border-none ring-1 ring-[#F0F0F0]">
+      <Card 
+        onClick={handleCardClick}
+        className="flex-grow p-6 lg:p-8 transition-all duration-500 hover:translate-x-2 hover:shadow-[0_20px_50px_rgba(0,0,0,0.03)] border-none ring-1 ring-[#F0F0F0] cursor-pointer"
+      >
         <div className="flex flex-col xl:flex-row justify-between items-start gap-8">
           
           {/* MAIN CONTENT AREA */}
