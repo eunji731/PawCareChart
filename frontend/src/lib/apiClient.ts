@@ -4,9 +4,9 @@ export const apiClient = axios.create({
     baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
     withCredentials: true, // HttpOnly 쿠키를 서버와 주고받기 위해 필수 설정
     withXSRFToken: true,
-    headers: {
-        'Content-Type': 'application/json',
-    },
+    // headers: {
+    //     'Content-Type': 'application/json',
+    // },
     xsrfCookieName: 'XSRF-TOKEN',
     xsrfHeaderName: 'X-XSRF-TOKEN',
 });

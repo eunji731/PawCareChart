@@ -59,10 +59,22 @@ export const useDogForm = (id?: string) => {
       setIsLoading(true);
       let currentDogId = Number(id);
 
-      // 현재 유효한 이미지 URL (기존 유지 or 삭제됐으면 null)
+      // 1단계: 신규 파일이 있다면 먼저 서버에 업로드하여 URL 확보
       let finalProfileImageUrl: string | null = photoUploader.existingUrls[0] || null;
 
-      // 1단계: dog 엔티티 저장 (신규는 ID 확보 목적)
+      if (photoUploader.hasNewFiles) {
+        try {
+          // targetId 없이 업로드 수행 (임시 저장 상태)
+          const uploaded = await photoUploader.upload(); 
+          if (uploaded && uploaded.length > 0) {
+            finalProfileImageUrl = uploaded[0].fileUrl || null;
+          }
+        } catch (uploadErr) {
+          console.error('파일 업로드 실패:', uploadErr);
+        }
+      }
+
+      // 2단계: 본문 저장 (확보된 URL 포함)
       const dogPayload: DogCreateRequest = {
         name: formData.name.trim(),
         breed: formData.breed.trim() || null,
@@ -74,29 +86,7 @@ export const useDogForm = (id?: string) => {
       if (isEdit) {
         await dogApi.updateDog(currentDogId, dogPayload);
       } else {
-        const response = await dogApi.createDog(dogPayload);
-        const created = (response as any).data || response;
-        currentDogId = created.id;
-      }
-
-      // 2단계: 새로 선택한 파일이 있으면 공통 훅으로 업로드
-      if (photoUploader.hasNewFiles) {
-        try {
-          const uploaded = await photoUploader.upload(currentDogId);
-          if (uploaded && uploaded.length > 0) {
-            finalProfileImageUrl = uploaded[0].fileUrl || null;
-          }
-        } catch (uploadErr) {
-          console.error('파일 업로드 실패:', uploadErr);
-        }
-
-        // 3단계: 업로드 URL로 dog 엔티티 업데이트
-        if (finalProfileImageUrl) {
-          await dogApi.updateDog(currentDogId, {
-            ...dogPayload,
-            profileImageUrl: finalProfileImageUrl,
-          });
-        }
+        await dogApi.createDog(dogPayload);
       }
 
       alert('성공적으로 저장되었습니다! ✨');

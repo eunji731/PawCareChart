@@ -6,12 +6,12 @@ export interface FileItem {
   fileSize: number;
   fileType: string;
   targetType: string;
-  targetId: number;
+  targetId: number | null;
   createdAt: string;
 }
 
 export interface FileUploadParams {
-  targetType: 'DOG' | 'CARE_RECORD' | 'HEALTH_LOG';
-  targetId: number;
+  targetType: string;
+  targetId?: number | null;
   files: File[];
 }

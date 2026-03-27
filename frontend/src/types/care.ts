@@ -4,15 +4,16 @@ export interface CareRecord {
   id: number;
   dogId: number;
   recordType: RecordType;
-  recordDate: string; // YYYY-MM-DD
+  recordDate: string; 
   title: string;
+  note?: string;
   // Medical Details
   clinicName?: string;
   diagnosis?: string;
   medicationStatus?: 'NONE' | 'ACTIVE' | 'COMPLETED';
-  // Expense Details
+  // Common / Expense
   categoryCode?: string;
-  amount?: number;
+  amount?: number | null; // 이제 MEDICAL에서도 사용됨
   // Common
   attachmentCount: number;
 }
@@ -23,4 +24,33 @@ export interface CareRecordsFilter {
   keyword: string;
   startDate: string;
   endDate: string;
+}
+
+export interface MedicalDetailRequest {
+  clinicName?: string;
+  symptoms?: string;
+  diagnosis?: string;
+  treatment?: string;
+  amount?: number | null; // 추가됨
+  medicationStartDate?: string | null;
+  medicationDays?: number | null;
+  isMedicationCompleted?: boolean;
+}
+
+export interface ExpenseDetailRequest {
+  categoryCode: string;
+  amount: number;
+  memo?: string;
+  relatedMedicalRecordId?: number | null;
+}
+
+export interface CareRecordCreateRequest {
+  dogId: number;
+  recordTypeCode: RecordType;
+  recordDate: string;
+  title: string;
+  note?: string;
+  fileIds?: number[];
+  medicalDetails?: MedicalDetailRequest | null;
+  expenseDetails?: ExpenseDetailRequest | null;
 }

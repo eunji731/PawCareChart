@@ -32,6 +32,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (credentials: any) => {
     await authApi.login(credentials);
+    // 로그인 직후 백엔드에서 갱신된 CSRF 토큰을 안전하게 가져오기 위해 호출
+    await authApi.refreshCsrfToken();
     await checkAuth(); // 로그인 성공 후 유저 정보 갱신
   };
 

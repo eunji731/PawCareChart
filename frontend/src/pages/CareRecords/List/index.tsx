@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { Button } from '@/components/common/Button';
 import { useCareRecords } from './hooks/useCareRecords';
@@ -7,6 +8,7 @@ import { FilterBar } from './components/FilterBar';
 import { CareCalendar } from './components/CareCalendar';
 
 const CareRecordListPage = () => {
+  const navigate = useNavigate();
   const { records, isLoading, filters, updateFilter } = useCareRecords();
   const [selectedDate, setSelectedDate] = useState<string>('');
 
@@ -29,7 +31,11 @@ const CareRecordListPage = () => {
             </p>
           </div>
           <div className="pb-1">
-            <Button size="lg" className="px-8 h-[56px] text-[15px] shadow-xl">
+            <Button 
+              size="lg" 
+              className="px-8 h-[56px] text-[15px] shadow-xl"
+              onClick={() => navigate('/care-records/new')}
+            >
               + 기록 추가
             </Button>
           </div>

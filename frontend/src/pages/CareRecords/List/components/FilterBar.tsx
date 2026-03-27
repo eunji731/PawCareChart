@@ -4,6 +4,8 @@ import { dogApi } from '@/api/dogApi';
 import type { Dog } from '@/types/dog';
 import type { CareRecordsFilter } from '@/types/care';
 
+import { useNavigate } from 'react-router-dom';
+
 interface FilterBarProps {
   filters: CareRecordsFilter;
   onChange: (filters: Partial<CareRecordsFilter>) => void;
@@ -11,6 +13,7 @@ interface FilterBarProps {
 
 export const FilterBar: React.FC<FilterBarProps> = ({ filters, onChange }) => {
   const [dogs, setDogs] = useState<Dog[]>([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     dogApi.getDogs().then(setDogs).catch(() => setDogs([]));
@@ -82,6 +85,17 @@ export const FilterBar: React.FC<FilterBarProps> = ({ filters, onChange }) => {
               />
             </div>
           </div>
+        </div>
+
+        {/* 4. 기록 추가 버튼 */}
+        <div className="flex-shrink-0">
+          <Button 
+            variant="primary" 
+            className="w-full h-[56px] px-8 rounded-xl shadow-lg shadow-amber-100"
+            onClick={() => navigate('/care-records/new')}
+          >
+            + 기록하기
+          </Button>
         </div>
       </div>
     </div>

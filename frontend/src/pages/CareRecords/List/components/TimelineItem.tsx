@@ -6,7 +6,7 @@ export const TimelineItem: React.FC<{ record: CareRecord }> = ({ record }) => {
   const isMedical = record.recordType === 'MEDICAL';
 
   return (
-    <div className="group flex gap-8 items-start relative">
+    <div className="group flex gap-12 items-start relative">
       <div className="flex flex-col items-center flex-shrink-0 pt-6 relative z-10">
         <div className={`w-4 h-4 rounded-full border-[3px] border-white shadow-lg transition-all duration-500 group-hover:scale-125 
           ${isMedical ? 'bg-[#FF6B00]' : 'bg-[#FFB380]'}`} 
@@ -25,7 +25,7 @@ export const TimelineItem: React.FC<{ record: CareRecord }> = ({ record }) => {
               <span className="text-[14px] font-black text-stone-300 tabular-nums">{record.recordDate}</span>
             </div>
             
-            <h4 className="text-[24px] lg:text-[28px] font-black text-[#2D2D2D] tracking-tight leading-[1.1]">
+            <h4 className="text-[24px] lg:text-[28px] font-black text-[#2D2D2D] tracking-tight leading-tight">
               {record.title}
             </h4>
 
@@ -44,9 +44,10 @@ export const TimelineItem: React.FC<{ record: CareRecord }> = ({ record }) => {
           </div>
 
           <div className="flex flex-col items-end gap-4 min-w-[180px] self-stretch xl:self-auto">
-            {record.amount !== undefined && (
+            {/* MEDICAL/EXPENSE 공통으로 amount가 있으면 표시 */}
+            {record.amount !== undefined && record.amount !== null && (
               <div className="text-right py-4 px-8 bg-[#FCFAF8] rounded-2xl border border-[#F5F5F5] w-full shadow-inner">
-                <p className="text-[10px] font-black text-stone-300 uppercase tracking-[0.2em] mb-1">Amount</p>
+                <p className="text-[10px] font-black text-stone-300 uppercase tracking-widest mb-1">Amount</p>
                 <span className="text-[28px] font-black text-[#2D2D2D] tabular-nums tracking-tighter">
                   {record.amount.toLocaleString()}
                   <span className="text-[16px] ml-1 text-stone-400 font-bold">원</span>

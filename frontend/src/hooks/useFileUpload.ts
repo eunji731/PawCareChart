@@ -89,13 +89,13 @@ export const useFileUpload = (targetType: string) => {
   };
 
   // ========== 서버 업로드 ==========
-  const upload = async (targetId: number): Promise<FileItem[] | null> => {
+  const upload = async (targetId?: number | null): Promise<FileItem[] | null> => {
     if (localFiles.length === 0) return null;
     try {
       setIsUploading(true);
       const result = await fileApi.uploadFiles({
         targetType,
-        targetId,
+        targetId: targetId || null, // ID가 없어도 업로드 허용
         files: localFiles,
       });
       return Array.isArray(result) ? result : null;
