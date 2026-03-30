@@ -69,16 +69,79 @@ const CareRecordDetailPage: React.FC = () => {
             <CareRecordInfoSections record={record} />
           </section>
 
-          {/* Diary Note Card */}
+          {/* Unified Text Record Card */}
           <section className="bg-white rounded-[28px] lg:rounded-[36px] p-8 lg:p-10 shadow-sm border border-stone-200/60 min-h-[220px]">
-            <h3 className="flex items-center gap-2.5 text-[15px] font-black text-[#2D2D2D] mb-6 tracking-widest uppercase">
-              <span className="text-[18px]">📝</span> Diary Note 
-            </h3>
-            <div className="text-[16px] md:text-[17px] leading-[1.9] md:leading-[2.1] text-stone-700 font-medium whitespace-pre-wrap word-break-keep-all text-justify">
-              {record.note ? record.note : (
-                <span className="text-stone-400 italic font-light tracking-tight">작성된 메모가 없습니다. 증상이나 특별한 관찰 사항을 기록해보세요.</span>
-              )}
-            </div>
+             <div className="flex items-center gap-3 border-b border-stone-100 pb-5 mb-8">
+               <span className="text-[20px]">📝</span>
+               <h3 className="text-[16px] font-black text-[#2D2D2D] tracking-widest uppercase">
+                 {record.recordType === 'MEDICAL' ? 'Clinical ' : 'Diary '}<span className="text-[#FF6B00]">Notes.</span>
+               </h3>
+             </div>
+             
+             <div className="flex flex-col gap-10">
+               {/* Symptoms */}
+               {(() => {
+                 const raw = record as any;
+                 const symptoms = raw.symptoms || raw.medicalDetails?.symptoms || raw.medical_details?.symptoms;
+                 if (!symptoms || symptoms.trim() === '') return null;
+                 return (
+                   <div className="space-y-3">
+                     <h4 className="flex items-center gap-2 text-[12px] font-black text-red-500 uppercase tracking-widest">
+                       <span className="w-1 h-3 bg-red-100 rounded-full" /> 발현 증상
+                     </h4>
+                     <div className="text-[15px] md:text-[16px] leading-[1.9] text-[#2D2D2D] font-medium whitespace-pre-wrap pl-3 border-l-2 border-red-50">
+                       {symptoms}
+                     </div>
+                   </div>
+                 );
+               })()}
+
+               {/* Treatment */}
+               {(() => {
+                 const raw = record as any;
+                 const treatment = raw.treatment || raw.medicalDetails?.treatment || raw.medical_details?.treatment;
+                 if (!treatment || treatment.trim() === '') return null;
+                 return (
+                   <div className="space-y-3">
+                     <h4 className="flex items-center gap-2 text-[12px] font-black text-blue-500 uppercase tracking-widest">
+                        <span className="w-1 h-3 bg-blue-100 rounded-full" /> 처방 및 수의사 소견
+                     </h4>
+                     <div className="text-[15px] md:text-[16px] leading-[1.9] text-[#2D2D2D] font-medium whitespace-pre-wrap pl-3 border-l-2 border-blue-50">
+                       {treatment}
+                     </div>
+                   </div>
+                 );
+               })()}
+
+               {/* Diary Note */}
+               {record.note && record.note.trim() !== '' && (
+                 <div className="space-y-3">
+                   <h4 className="flex items-center gap-2 text-[12px] font-black text-stone-400 uppercase tracking-widest">
+                      <span className="w-1 h-3 bg-stone-200 rounded-full" /> 보호자 메모 (Diary Note)
+                   </h4>
+                   <div className="text-[15px] md:text-[16px] leading-[1.9] text-stone-600 font-medium whitespace-pre-wrap pl-3 border-l-2 border-stone-100">
+                     {record.note}
+                   </div>
+                 </div>
+               )}
+
+               {/* Fallback if ALL are empty */}
+               {(() => {
+                 const raw = record as any;
+                 const symptoms = raw.symptoms || raw.medicalDetails?.symptoms || raw.medical_details?.symptoms;
+                 const treatment = raw.treatment || raw.medicalDetails?.treatment || raw.medical_details?.treatment;
+                 if ((!symptoms || symptoms.trim() === '') && 
+                     (!treatment || treatment.trim() === '') && 
+                     (!record.note || record.note.trim() === '')) {
+                   return (
+                     <div className="py-2 text-stone-400 italic font-light tracking-tight">
+                       작성된 기록 내용이나 메모가 없습니다.
+                     </div>
+                   );
+                 }
+                 return null;
+               })()}
+             </div>
           </section>
 
           {/* Attachment Gallery Card */}

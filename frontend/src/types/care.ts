@@ -12,7 +12,11 @@ export interface CareRecord {
   // Medical Details
   clinicName?: string;
   diagnosis?: string;
+  symptoms?: string;
+  treatment?: string;
   medicationStatus?: 'NONE' | 'ACTIVE' | 'COMPLETED';
+  medicationStartDate?: string | null;
+  medicationDays?: number | null;
   // Common / Expense
   categoryCode?: string;
   amount?: number | null; // 이제 MEDICAL에서도 사용됨
