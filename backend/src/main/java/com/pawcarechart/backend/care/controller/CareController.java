@@ -1,6 +1,7 @@
 package com.pawcarechart.backend.care.controller;
 
 import com.pawcarechart.backend.care.dto.CareRecordCreateRequest;
+import com.pawcarechart.backend.care.dto.CareRecordDetailResponse;
 import com.pawcarechart.backend.care.dto.CareRecordListResponse;
 import com.pawcarechart.backend.care.service.CareService;
 import com.pawcarechart.backend.common.dto.ApiResult;
@@ -43,6 +44,15 @@ public class CareController {
         List<CareRecordListResponse> result = careService.getCareRecords(
                 Long.valueOf(userId), dogId, type, keyword, startDate, endDate);
         return ApiResult.ok(result);
+    }
+
+    @Operation(summary = "통합 케어 기록 상세 조회", description = "기록 ID를 기반으로 통합 케어 기록 상세 정보를 조회합니다.")
+    @GetMapping("/{id}")
+    public ApiResult<CareRecordDetailResponse> getCareRecordDetail(
+            @Parameter(description = "기록 식별자") @PathVariable Long id,
+            @AuthenticationPrincipal String userId) {
+        CareRecordDetailResponse detail = careService.getCareRecordDetail(id, Long.valueOf(userId));
+        return ApiResult.ok(detail);
     }
 
     @Operation(summary = "통합 케어 기록 등록", description = "병원 진료 또는 지출 내역을 통합하여 등록합니다.")

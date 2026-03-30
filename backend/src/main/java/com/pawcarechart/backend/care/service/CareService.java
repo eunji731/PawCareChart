@@ -1,6 +1,8 @@
 package com.pawcarechart.backend.care.service;
 
 import com.pawcarechart.backend.care.dto.CareRecordCreateRequest;
+import com.pawcarechart.backend.care.dto.CareRecordDetailQueryResult;
+import com.pawcarechart.backend.care.dto.CareRecordDetailResponse;
 import com.pawcarechart.backend.care.dto.CareRecordListResponse;
 import com.pawcarechart.backend.care.entity.CareRecord;
 import com.pawcarechart.backend.care.entity.ExpenseDetail;
@@ -92,6 +94,43 @@ public class CareService {
                         fileCountMap.getOrDefault(record.id(), 0) // 매칭되는 개수가 없으면 기본값 0
                 ))
                 .toList();
+    }
+
+    /**
+     * 통합 케어 기록 상세 조회
+     */
+    public CareRecordDetailResponse getCareRecordDetail(Long recordId, Long userId) {
+        // 1. MyBatis로 기본 상세 정보 조회 (SQL 결과 전용 DTO인 QueryResult로 수신)
+        // SQL 결과와 Java Record 생성자 파라미터를 1:1로 맞추기 위해 분리했습니다.
+        CareRecordDetailQueryResult queryResult = careMapper.selectCareRecordDetail(recordId, userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "해당 기록을 찾을 수 없거나 권한이 없습니다."));
+
+        // 2. 첨부파일 목록 별도 조회 (기존의 분리 조회 방식 유지)
+        List<com.pawcarechart.backend.file.dto.FileResponse> attachments = fileService.getFiles(FileTargetType.CARE_RECORD, recordId);
+
+        // 3. 최종 응답 DTO(CareRecordDetailResponse) 조립
+        // attachmentCount는 실제 조회된 파일 목록의 사이즈를 사용합니다.
+        return new CareRecordDetailResponse(
+                queryResult.id(),
+                queryResult.dogId(),
+                queryResult.dogName(),
+                queryResult.dogProfileImageUrl(),
+                queryResult.recordType(),
+                queryResult.recordDate(),
+                queryResult.title(),
+                queryResult.note(),
+                queryResult.clinicName(),
+                queryResult.symptoms(),
+                queryResult.diagnosis(),
+                queryResult.treatment(),
+                queryResult.medicationStatus(),
+                queryResult.medicationStartDate(),
+                queryResult.medicationDays(),
+                queryResult.categoryCode(),
+                queryResult.amount(),
+                attachments.size(),
+                attachments
+        );
     }
 
     /**

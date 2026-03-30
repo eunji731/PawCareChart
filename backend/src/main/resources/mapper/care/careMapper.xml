@@ -58,6 +58,39 @@
         </if>
 
         ORDER BY cr.record_date DESC, cr.created_at DESC
-    </select>
+        </select>
 
-</mapper>
+        <select id="selectCareRecordDetail" resultType="com.pawcarechart.backend.care.dto.CareRecordDetailQueryResult">
+            SELECT
+                cr.id AS id,
+                cr.dog_id AS dogId,
+                d.name AS dogName,
+                d.profile_image_url AS dogProfileImageUrl,
+                cr.record_type_code AS recordType,
+                cr.record_date AS recordDate,
+                cr.title AS title,
+                cr.note AS note,
+                md.clinic_name AS clinicName,
+                md.symptoms AS symptoms,
+                md.diagnosis AS diagnosis,
+                md.treatment AS treatment,
+
+
+                -- 투약 상태 변환
+                CASE
+                WHEN md.care_record_id IS NULL THEN 'NONE'
+                WHEN md.is_medication_completed = true THEN 'COMPLETED'
+                ELSE 'ACTIVE'
+            END AS medicationStatus,
+
+                md.medication_start_date AS medicationStartDate,
+                md.medication_days AS medicationDays,
+                ed.category_code AS categoryCode,
+                COALESCE(md.amount, ed.amount, 0) AS amount
+            FROM public.care_records cr
+            INNER JOIN public.dogs d ON d.id = cr.dog_id
+            LEFT JOIN public.care_record_medical_details md ON md.care_record_id = cr.id
+            LEFT JOIN public.care_record_expense_details ed ON ed.care_record_id = cr.id
+            WHERE cr.id = #{id} AND cr.user_id = #{userId}
+        </select>
+        </mapper>
