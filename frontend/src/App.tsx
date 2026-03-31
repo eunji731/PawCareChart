@@ -25,6 +25,7 @@ function App() {
           <Route path="/dogs/edit/:id" element={<ProtectedRoute><DogFormPage /></ProtectedRoute>} />
           <Route path="/care-records" element={<ProtectedRoute><CareRecordListPage /></ProtectedRoute>} />
           <Route path="/care-records/new" element={<ProtectedRoute><CareRecordFormPage /></ProtectedRoute>} />
+          <Route path="/care-records/edit/:id" element={<ProtectedRoute><CareRecordFormPage /></ProtectedRoute>} />
           <Route path="/care-records/:id" element={<ProtectedRoute><CareRecordDetailPage /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

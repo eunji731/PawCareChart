@@ -21,8 +21,17 @@ const CareRecordFormPage = () => {
     expenseData, setExpenseData,
     fileUploader,
     handleSave,
-    isLoading
-  } = useCareRecordForm();
+    isLoading,
+    isFetching
+  } = useCareRecordForm(id);
+
+  if (isFetching) {
+    return (
+      <div className="min-h-screen bg-[#FCFAF8] flex items-center justify-center">
+        <div className="w-10 h-10 border-4 border-stone-200 border-t-[#FF6B00] rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#FCFAF8]">
@@ -39,8 +48,8 @@ const CareRecordFormPage = () => {
           </div>
           <div className="flex gap-3 pb-1">
             <Button variant="ghost" onClick={() => navigate(-1)} className="px-6 font-bold text-stone-400">취소</Button>
-            <Button onClick={handleSave} disabled={isLoading} className="px-10 h-[64px] text-[16px] shadow-2xl">
-              {isLoading ? '저장 중...' : '기록 완료하기'}
+            <Button onClick={handleSave} disabled={isLoading || isFetching} className="px-10 h-[64px] text-[16px] shadow-2xl">
+              {isLoading ? (isEdit ? '수정 중...' : '저장 중...') : (isEdit ? '기록 수정하기' : '기록 완료하기')}
             </Button>
           </div>
         </header>
@@ -97,10 +106,10 @@ const CareRecordFormPage = () => {
             <Button
               size="lg"
               onClick={handleSave}
-              disabled={isLoading}
+              disabled={isLoading || isFetching}
               className="w-full max-w-sm h-[64px] text-[17px] shadow-2xl"
             >
-              {isLoading ? '저장 중...' : '기록 저장 및 완료'}
+              {isLoading ? (isEdit ? '수정 중...' : '저장 중...') : (isEdit ? '기록 수정 완료' : '기록 저장 및 완료')}
             </Button>
           </div>
         </div>

@@ -37,4 +37,8 @@ export const careApi = {
   createRecord: async (payload: CareRecordCreateRequest) => {
     return apiClient.post('/care-records', payload);
   },
+
+  updateRecord: async (recordId: number, payload: CareRecordCreateRequest) => {
+    return apiClient.put(`/care-records/${recordId}`, payload);
+  },
 };
