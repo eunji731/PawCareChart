@@ -134,6 +134,119 @@ public class CareService {
     }
 
     /**
+     * 통합 케어 기록 삭제
+     */
+    @Transactional
+    public void deleteCareRecord(Long recordId, Long userId) {
+        // 1. 기존 기록 조회 및 권한 체크
+        CareRecord careRecord = careRecordRepository.findById(recordId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "해당 기록을 찾을 수 없습니다."));
+
+        if (!careRecord.getUserId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "삭제 권한이 없습니다.");
+        }
+
+        // 2. 상세 정보 삭제
+        if ("MEDICAL".equals(careRecord.getRecordTypeCode())) {
+            medicalDetailRepository.deleteById(recordId);
+        } else {
+            expenseDetailRepository.deleteById(recordId);
+        }
+
+        // 3. 첨부파일 삭제 (물리 파일 포함)
+        fileService.deleteFilesByTarget(FileTargetType.CARE_RECORD, recordId);
+
+        // 4. 기본 기록 삭제
+        careRecordRepository.delete(careRecord);
+    }
+
+    /**
+     * 통합 케어 기록 수정
+     */
+    @Transactional
+    public void updateCareRecord(Long recordId, CareRecordCreateRequest request, Long userId) {
+        // 1. 기존 기록 조회 및 권한 체크
+        CareRecord careRecord = careRecordRepository.findById(recordId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "해당 기록을 찾을 수 없습니다."));
+
+        if (!careRecord.getUserId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "수정 권한이 없습니다.");
+        }
+
+        // 2. 기본 정보 업데이트 (CareRecord)
+        // 기존 필드들을 업데이트하기 위해 엔티티 내부에서 update 메서드를 제공하거나 여기서 직접 setter/field access를 할 수 있습니다.
+        // 여기서는 기존 필드들을 직접 빌더 패턴이 아닌 방식으로 업데이트하거나 새로 생성하는 방식 대신, 
+        // 기존 엔티티의 필드를 업데이트하는 방향으로 진행합니다. (엔티티에 @Setter가 없으므로 필드 업데이트를 위해 리플렉션이나 별도 메서드가 필요할 수 있으나,
+        // 여기서는 기존 구조를 유지하며 엔티티를 수정하기 위해 CareRecord 클래스에 업데이트 메서드가 있는지 확인하거나 새로 정의해야 할 수 있습니다.)
+        // 일단은 필드가 private final이 아니므로 직접 접근이 가능하다고 가정하거나(하지만 @Getter만 있음), 
+        // CareRecord에 업데이트 메서드를 추가하는 것이 정석입니다.
+        
+        // 일단 엔티티 수정은 잠시 미루고 서비스 로직 흐름부터 잡습니다.
+        // record_type_code가 변경되는지 확인
+        String oldTypeCode = careRecord.getRecordTypeCode();
+        String newTypeCode = request.recordTypeCode();
+
+        // 3. 상세 정보 업데이트
+        if (oldTypeCode.equals(newTypeCode)) {
+            // 동일한 유형인 경우 기존 상세 정보 업데이트
+            if ("MEDICAL".equals(newTypeCode)) {
+                updateMedicalDetail(recordId, request.medicalDetails());
+            } else {
+                updateExpenseDetail(recordId, request.expenseDetails());
+            }
+        } else {
+            // 유형이 변경된 경우: 기존 상세 삭제 후 신규 상세 생성
+            if ("MEDICAL".equals(oldTypeCode)) {
+                medicalDetailRepository.deleteById(recordId);
+                saveExpenseDetail(request.expenseDetails(), careRecord);
+            } else {
+                expenseDetailRepository.deleteById(recordId);
+                saveMedicalDetail(request.medicalDetails(), careRecord);
+            }
+        }
+
+        // 4. CareRecord 필드 업데이트
+        careRecord.update(request.dogId(), newTypeCode, request.recordDate(), request.title(), request.note());
+        
+        // 5. 파일 연결 업데이트
+        fileService.syncFilesToTarget(request.fileIds(), FileTargetType.CARE_RECORD, recordId, userId);
+    }
+
+    private void updateMedicalDetail(Long recordId, CareRecordCreateRequest.MedicalDetailRequest detailRequest) {
+        if (detailRequest == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "병원 상세 정보가 누락되었습니다.");
+        }
+        MedicalDetail medicalDetail = medicalDetailRepository.findById(recordId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "상세 정보를 찾을 수 없습니다."));
+
+        medicalDetail.update(
+                detailRequest.clinicName(),
+                detailRequest.symptoms(),
+                detailRequest.diagnosis(),
+                detailRequest.treatment(),
+                detailRequest.medicationStartDate(),
+                detailRequest.medicationDays(),
+                detailRequest.isMedicationCompleted(),
+                detailRequest.amount()
+        );
+    }
+
+    private void updateExpenseDetail(Long recordId, CareRecordCreateRequest.ExpenseDetailRequest detailRequest) {
+        if (detailRequest == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "지출 상세 정보가 누락되었습니다.");
+        }
+        ExpenseDetail expenseDetail = expenseDetailRepository.findById(recordId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "상세 정보를 찾을 수 없습니다."));
+
+        expenseDetail.update(
+                detailRequest.categoryCode(),
+                detailRequest.amount(),
+                detailRequest.memo(),
+                detailRequest.relatedMedicalRecordId()
+        );
+    }
+
+    /**
      * 통합 케어 기록 등록
      */
     @Transactional

@@ -55,6 +55,25 @@ public class CareController {
         return ApiResult.ok(detail);
     }
 
+    @Operation(summary = "통합 케어 기록 수정", description = "기존 케어 기록과 상세 정보, 첨부파일을 수정합니다.")
+    @PutMapping("/{id}")
+    public ApiResult<Void> updateCareRecord(
+            @Parameter(description = "기록 식별자") @PathVariable Long id,
+            @Valid @RequestBody CareRecordCreateRequest request,
+            @AuthenticationPrincipal String userId) {
+        careService.updateCareRecord(id, request, Long.valueOf(userId));
+        return ApiResult.ok(null);
+    }
+
+    @Operation(summary = "통합 케어 기록 삭제", description = "기존 케어 기록과 상세 정보, 첨부파일을 모두 삭제합니다.")
+    @DeleteMapping("/{id}")
+    public ApiResult<Void> deleteCareRecord(
+            @Parameter(description = "기록 식별자") @PathVariable Long id,
+            @AuthenticationPrincipal String userId) {
+        careService.deleteCareRecord(id, Long.valueOf(userId));
+        return ApiResult.ok(null);
+    }
+
     @Operation(summary = "통합 케어 기록 등록", description = "병원 진료 또는 지출 내역을 통합하여 등록합니다.")
     @PostMapping
     public ApiResult<Long> registerCareRecord(

@@ -30,4 +30,11 @@ public class ExpenseDetail {
 
     @Column(name = "related_medical_record_id")
     private Long relatedMedicalRecordId;
+
+    public void update(String categoryCode, Long amount, String memo, Long relatedMedicalRecordId) {
+        this.categoryCode = categoryCode;
+        this.amount = amount;
+        this.memo = memo;
+        this.relatedMedicalRecordId = relatedMedicalRecordId;
+    }
 }

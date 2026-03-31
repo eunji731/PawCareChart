@@ -123,6 +123,11 @@ public class FileService {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, "파일 매핑 권한이 없습니다.");
             }
 
+            // 중복 매핑 방지
+            if (fileMappingRepository.findByFileId(fileId).isPresent()) {
+                return;
+            }
+
             // 매핑 정보 저장 시 userId는 포함하지 않음
             fileMappingRepository.save(FileMapping.builder()
                     .fileId(fileId)
@@ -130,6 +135,36 @@ public class FileService {
                     .targetId(targetId)
                     .build());
         });
+    }
+
+    /**
+     * 특정 대상의 파일 연결 상태를 최신 상태(fileIds)와 동기화
+     */
+    @Transactional
+    public void syncFilesToTarget(List<Long> fileIds, FileTargetType targetType, Long targetId, Long userId) {
+        // 1. 기존 매핑 정보 조회
+        List<FileMapping> existingMappings = fileMappingRepository.findAllByTargetTypeAndTargetId(targetType, targetId);
+        List<Long> existingFileIds = existingMappings.stream()
+                .map(FileMapping::getFileId)
+                .collect(Collectors.toList());
+
+        // 2. 새로운 파일 리스트가 null이면 빈 리스트로 취급
+        List<Long> newFileIds = (fileIds == null) ? Collections.emptyList() : fileIds;
+
+        // 3. 삭제되어야 할 파일 (기존에는 있었으나 새 리스트에는 없는 것)
+        List<Long> toDeleteIds = existingFileIds.stream()
+                .filter(id -> !newFileIds.contains(id))
+                .collect(Collectors.toList());
+        toDeleteIds.forEach(id -> deleteFile(id, userId));
+
+        // 4. 새로 추가되어야 할 파일 (새 리스트에는 있으나 기존에는 없는 것)
+        List<Long> toAddIds = newFileIds.stream()
+                .filter(id -> !existingFileIds.contains(id))
+                .collect(Collectors.toList());
+        
+        if (!toAddIds.isEmpty()) {
+            connectFilesToTarget(toAddIds, targetType, targetId, userId);
+        }
     }
 
     /**

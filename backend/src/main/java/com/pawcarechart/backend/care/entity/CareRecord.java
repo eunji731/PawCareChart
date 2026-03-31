@@ -42,6 +42,14 @@ public class CareRecord {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    public void update(Long dogId, String recordTypeCode, LocalDate recordDate, String title, String note) {
+        this.dogId = dogId;
+        this.recordTypeCode = recordTypeCode;
+        this.recordDate = recordDate;
+        this.title = title;
+        this.note = note;
+    }
+
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();

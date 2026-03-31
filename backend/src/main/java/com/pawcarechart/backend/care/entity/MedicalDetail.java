@@ -45,4 +45,16 @@ public class MedicalDetail {
 
     @Column(name = "amount")
     private Long amount; // [추가] 병원비
+
+    public void update(String clinicName, String symptoms, String diagnosis, String treatment, 
+                       LocalDate medicationStartDate, Integer medicationDays, Boolean isMedicationCompleted, Long amount) {
+        this.clinicName = clinicName;
+        this.symptoms = symptoms;
+        this.diagnosis = diagnosis;
+        this.treatment = treatment;
+        this.medicationStartDate = medicationStartDate;
+        this.medicationDays = medicationDays;
+        this.isMedicationCompleted = isMedicationCompleted != null && isMedicationCompleted;
+        this.amount = amount;
+    }
 }
