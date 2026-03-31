@@ -82,12 +82,6 @@ export const CareCalendar: React.FC<CareCalendarProps> = ({ records, selectedDat
                   }`} />
                 )}
               </div>
-
-              {!isSelected && isCurrentMonth && (
-                <div className="absolute inset-0 flex items-center justify-center bg-white/95 opacity-0 group-hover:opacity-100 rounded-xl border border-[#FF6B00]/10 transition-all duration-300 text-[#FF6B00] text-xl font-black">
-                  +
-                </div>
-              )}
             </div>
           );
         })}

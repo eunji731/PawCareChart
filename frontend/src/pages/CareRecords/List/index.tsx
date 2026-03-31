@@ -9,12 +9,18 @@ import { CareCalendar } from './components/CareCalendar';
 
 const CareRecordListPage = () => {
   const navigate = useNavigate();
-  const { records, isLoading, filters, updateFilter } = useCareRecords();
+  const { records, calendarRecords, isLoading, filters, updateFilter } = useCareRecords();
   const [selectedDate, setSelectedDate] = useState<string>('');
 
   const handleDateClick = (date: string) => {
-    setSelectedDate(date);
-    updateFilter({ startDate: date, endDate: date });
+    // 이미 선택된 날짜를 다시 누르면 필터 해제 (옵션)
+    if (selectedDate === date) {
+      setSelectedDate('');
+      updateFilter({ startDate: undefined, endDate: undefined });
+    } else {
+      setSelectedDate(date);
+      updateFilter({ startDate: date, endDate: date });
+    }
   };
 
   return (
@@ -30,15 +36,6 @@ const CareRecordListPage = () => {
               반려견의 건강 기록과 지출 흐름을 정교한 타임라인으로 관리하세요.
             </p>
           </div>
-          <div className="pb-1">
-            <Button 
-              size="lg" 
-              className="px-8 h-[56px] text-[15px] shadow-xl"
-              onClick={() => navigate('/care-records/new')}
-            >
-              + 기록 추가
-            </Button>
-          </div>
         </header>
 
         {/* 필터 영역과 메인 사이 간격 축소 (mb-12 -> mb-6) */}
@@ -50,8 +47,8 @@ const CareRecordListPage = () => {
         <main className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start pb-20">
           <div className="lg:col-span-5 xl:col-span-4 lg:sticky lg:top-12">
             <div className="bg-white rounded-3xl p-8 shadow-[0_20px_60px_rgba(0,0,0,0.02)] border border-[#F0F0F0]">
-              <CareCalendar 
-                records={records} 
+              <CareCalendar
+                records={calendarRecords}
                 selectedDate={selectedDate}
                 onDateClick={handleDateClick}
               />
