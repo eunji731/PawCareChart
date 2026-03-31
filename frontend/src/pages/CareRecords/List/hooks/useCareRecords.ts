@@ -42,9 +42,9 @@ export const useCareRecords = () => {
     fetchRecords();
   }, [fetchRecords]);
 
-  const updateFilter = (newFilters: Partial<CareRecordsFilter>) => {
+  const updateFilter = useCallback((newFilters: Partial<CareRecordsFilter>) => {
     setFilters(prev => ({ ...prev, ...newFilters }));
-  };
+  }, []);
 
   return {
     records,

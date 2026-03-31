@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import type { CareRecord } from '@/types/care';
 import { buildCalendarDays, buildMarkersByDate, getMonthLabel, moveMonth } from '@/utils/dateUtils';
 
@@ -6,13 +6,24 @@ interface CareCalendarProps {
   records: CareRecord[];
   selectedDate?: string;
   onDateClick?: (date: string) => void;
+  onMonthChange?: (year: number, month: number) => void;
 }
 
-export const CareCalendar: React.FC<CareCalendarProps> = ({ records, selectedDate, onDateClick }) => {
+export const CareCalendar: React.FC<CareCalendarProps> = ({ 
+  records, 
+  selectedDate, 
+  onDateClick,
+  onMonthChange 
+}) => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const calendarDays = useMemo(() => buildCalendarDays(currentMonth), [currentMonth]);
   const markersByDate = useMemo(() => buildMarkersByDate(records, currentMonth), [records, currentMonth]);
   const monthLabel = getMonthLabel(currentMonth);
+
+  // 달이 변경될 때 부모에게 알림
+  useEffect(() => {
+    onMonthChange?.(currentMonth.getFullYear(), currentMonth.getMonth() + 1);
+  }, [currentMonth, onMonthChange]);
 
   return (
     <div className="select-none text-[#2D2D2D]">

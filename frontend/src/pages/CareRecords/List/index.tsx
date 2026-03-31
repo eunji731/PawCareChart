@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { Button } from '@/components/common/Button';
@@ -12,11 +12,22 @@ const CareRecordListPage = () => {
   const { records, calendarRecords, isLoading, filters, updateFilter } = useCareRecords();
   const [selectedDate, setSelectedDate] = useState<string>('');
 
+  // 달력의 달이 변경될 때 호출 - useCallback으로 안정화
+  const handleMonthChange = useCallback((year: number, month: number) => {
+    const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
+    const lastDay = new Date(year, month, 0).getDate();
+    const endDate = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+
+    // 선택된 날짜 초기화 및 해당 월 전체로 필터링
+    setSelectedDate('');
+    updateFilter({ startDate, endDate });
+  }, [updateFilter]);
+
   const handleDateClick = (date: string) => {
-    // 이미 선택된 날짜를 다시 누르면 필터 해제 (옵션)
     if (selectedDate === date) {
-      setSelectedDate('');
-      updateFilter({ startDate: undefined, endDate: undefined });
+      // 선택 해제 시 다시 현재 달 전체 보기로 복구
+      const d = new Date(date);
+      handleMonthChange(d.getFullYear(), d.getMonth() + 1);
     } else {
       setSelectedDate(date);
       updateFilter({ startDate: date, endDate: date });
@@ -26,7 +37,7 @@ const CareRecordListPage = () => {
   return (
     <div className="min-h-screen bg-[#FCFAF8]">
       <PageLayout title="" maxWidth="max-w-[1500px]">
-        {/* 상단 여백 축소 (pt-12 pb-16 -> pt-8 pb-10) */}
+        {/* 상단 헤더 */}
         <header className="pt-8 pb-10 flex flex-col md:flex-row justify-between items-end gap-6">
           <div className="space-y-3">
             <h1 className="text-[48px] lg:text-[56px] font-black text-[#2D2D2D] leading-[0.95] tracking-tight">
@@ -36,14 +47,23 @@ const CareRecordListPage = () => {
               반려견의 건강 기록과 지출 흐름을 정교한 타임라인으로 관리하세요.
             </p>
           </div>
+          {/* <div className="pb-1">
+            <Button 
+              size="lg" 
+              className="px-8 h-[56px] text-[15px] shadow-xl"
+              onClick={() => navigate('/care-records/new')}
+            >
+              + 기록 추가
+            </Button>
+          </div> */}
         </header>
 
-        {/* 필터 영역과 메인 사이 간격 축소 (mb-12 -> mb-6) */}
+        {/* 필터 영역 */}
         <section className="mb-6">
           <FilterBar filters={filters} onChange={updateFilter} />
         </section>
 
-        {/* 메인 그리드 간격 축소 (gap-12 -> gap-6) */}
+        {/* 메인 그리드 */}
         <main className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start pb-20">
           <div className="lg:col-span-5 xl:col-span-4 lg:sticky lg:top-12">
             <div className="bg-white rounded-3xl p-8 shadow-[0_20px_60px_rgba(0,0,0,0.02)] border border-[#F0F0F0]">
@@ -51,6 +71,7 @@ const CareRecordListPage = () => {
                 records={calendarRecords}
                 selectedDate={selectedDate}
                 onDateClick={handleDateClick}
+                onMonthChange={handleMonthChange}
               />
               <div className="mt-8 pt-6 border-t border-stone-100 flex gap-8 justify-center">
                 <div className="flex items-center gap-2.5 text-[11px] font-black text-stone-400 uppercase tracking-widest">
@@ -78,7 +99,7 @@ const CareRecordListPage = () => {
               <div className="py-32 text-center bg-white rounded-3xl border border-[#F0F0F0] shadow-sm px-10">
                 <h3 className="text-[22px] font-black text-[#2D2D2D] mb-2 tracking-tight">No Records.</h3>
                 <p className="text-stone-400 font-medium mb-8 text-[15px]">아직 기록된 로그가 없습니다.</p>
-                <Button variant="outline" size="lg" className="rounded-xl px-10 border-[#EEEEEE] text-stone-600">기록 시작하기</Button>
+                <Button variant="outline" size="lg" className="rounded-xl px-10 border-[#EEEEEE] text-stone-600" onClick={() => navigate('/care-records/new')}>기록 시작하기</Button>
               </div>
             )}
           </div>
