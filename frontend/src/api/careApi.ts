@@ -45,4 +45,9 @@ export const careApi = {
   deleteRecord: async (recordId: number) => {
     return apiClient.delete(`/care-records/${recordId}`);
   },
+
+  getDashboardSummary: async (params: { dogId?: number; startDate: string; endDate: string }) => {
+    const response = await apiClient.get('/care-records/dashboard/summary', { params });
+    return response.data;
+  },
 };
