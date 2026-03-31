@@ -41,4 +41,8 @@ export const careApi = {
   updateRecord: async (recordId: number, payload: CareRecordCreateRequest) => {
     return apiClient.put(`/care-records/${recordId}`, payload);
   },
+
+  deleteRecord: async (recordId: number) => {
+    return apiClient.delete(`/care-records/${recordId}`);
+  },
 };

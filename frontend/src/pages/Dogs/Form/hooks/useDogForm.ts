@@ -35,8 +35,20 @@ export const useDogForm = (id?: string) => {
             birthDate: dogData.birthDate || '',
             weight: dogData.weight?.toString() || '',
           });
-          // 기존 프로필 이미지를 공통 훅에 세팅
-          photoUploader.setInitialUrls([dogData.profileImageUrl]);
+          // 기존 프로필 이미지를 공통 훅에 세팅 (FileItem 형태의 객체 배열 전달)
+          if (dogData.profileImageUrl) {
+            photoUploader.setInitialFiles([{
+              id: 0, // 프로필 이미지의 경우 단일 URL로 관리되므로 ID는 임시값 0 사용하거나 백엔드 구조에 맞춰 조정
+              fileUrl: dogData.profileImageUrl,
+              originalFileName: 'profile',
+              storedFileName: 'profile',
+              fileSize: 0,
+              fileType: 'image/jpeg',
+              targetType: 'DOG',
+              targetId: Number(id),
+              createdAt: ''
+            }]);
+          }
         } catch (err: any) {
           alert('정보를 불러오지 못했습니다.');
           navigate('/dogs');
@@ -60,7 +72,7 @@ export const useDogForm = (id?: string) => {
       let currentDogId = Number(id);
 
       // 1단계: 신규 파일이 있다면 먼저 서버에 업로드하여 URL 확보
-      let finalProfileImageUrl: string | null = photoUploader.existingUrls[0] || null;
+      let finalProfileImageUrl: string | null = photoUploader.existingFiles[0]?.fileUrl || null;
 
       if (photoUploader.hasNewFiles) {
         try {
