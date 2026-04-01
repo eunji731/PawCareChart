@@ -1,7 +1,8 @@
-package com.pawcarechart.backend.care.entity;
+package com.pawcarechart.backend.symptom.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import java.time.LocalDateTime;
 
 @Getter
 @Entity
@@ -19,10 +20,10 @@ public class SymptomMaster {
     private String name;
 
     @Column(name = "created_at", nullable = false, updatable = false)
-    private java.time.LocalDateTime createdAt;
+    private LocalDateTime createdAt;
 
     @PrePersist
     protected void onCreate() {
-        this.createdAt = java.time.LocalDateTime.now();
+        this.createdAt = LocalDateTime.now();
     }
 }

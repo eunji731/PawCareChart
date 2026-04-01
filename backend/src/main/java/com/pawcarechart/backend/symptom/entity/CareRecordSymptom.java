@@ -1,4 +1,4 @@
-package com.pawcarechart.backend.care.entity;
+package com.pawcarechart.backend.symptom.entity;
 
 import jakarta.persistence.*;
 import lombok.*;

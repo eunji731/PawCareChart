@@ -1,6 +1,6 @@
-package com.pawcarechart.backend.care.repository;
+package com.pawcarechart.backend.symptom.repository;
 
-import com.pawcarechart.backend.care.entity.CareRecordSymptom;
+import com.pawcarechart.backend.symptom.entity.CareRecordSymptom;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
