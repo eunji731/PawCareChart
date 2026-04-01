@@ -9,7 +9,7 @@ import { useSchedules } from './hooks/useSchedules';
 import { dogApi } from '@/api/dogApi';
 import type { Dog } from '@/types/dog';
 
-const SchedulePage: React.FC = () => {
+const ScheduleListPage: React.FC = () => {
   const navigate = useNavigate();
   const { schedules, isLoading, filters, updateFilter } = useSchedules();
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
@@ -22,8 +22,6 @@ const SchedulePage: React.FC = () => {
 
   const handleDateClick = useCallback((date: string) => {
     setSelectedDate(date);
-    // 필요한 경우 해당 날짜로 필터를 업데이트할 수 있지만, 
-    // 달력 전체 마커를 유지하기 위해 필터는 월 단위로 두는 것이 일반적입니다.
   }, []);
 
   const handleMonthChange = useCallback((year: number, month: number) => {
@@ -139,7 +137,7 @@ const SchedulePage: React.FC = () => {
               <Calendar 
                 markers={markers}
                 selectedDate={selectedDate}
-                onDateClick={setSelectedDate}
+                onDateClick={handleDateClick}
                 onMonthChange={handleMonthChange}
               />
               <div className="mt-10 pt-6 border-t border-stone-100 flex gap-6 justify-center">
@@ -199,4 +197,4 @@ const SchedulePage: React.FC = () => {
   );
 };
 
-export default SchedulePage;
+export default ScheduleListPage;

@@ -5,12 +5,13 @@ import { ConfirmModal } from '@/components/common/ConfirmModal';
 import { useScheduleDetail } from './hooks/useScheduleDetail';
 import { ScheduleDetailHeader } from './components/ScheduleDetailHeader';
 import { ScheduleDetailInfo } from './components/ScheduleDetailInfo';
+import { CareRecordAttachmentGallery } from '@/pages/CareRecords/Detail/components/CareRecordAttachmentGallery';
 import { scheduleApi } from '@/api/scheduleApi';
 
 const ScheduleDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { schedule, isLoading, error, refetch } = useScheduleDetail(id);
+  const { schedule, files, isLoading, error, refetch } = useScheduleDetail(id);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -116,6 +117,13 @@ const ScheduleDetailPage: React.FC = () => {
               </div>
             </div>
           </section>
+
+          {/* Attachment Gallery Card */}
+          {files && files.length > 0 && (
+            <section className="bg-white rounded-[28px] lg:rounded-[36px] p-8 lg:p-10 shadow-sm border border-stone-200/60">
+              <CareRecordAttachmentGallery files={files} />
+            </section>
+          )}
 
           {/* Action Bar */}
           <div className="pt-10 flex flex-col sm:flex-row items-center justify-end gap-3 border-t border-stone-100">

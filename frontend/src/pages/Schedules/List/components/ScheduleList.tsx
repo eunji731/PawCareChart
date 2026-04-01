@@ -30,11 +30,11 @@ export const ScheduleList: React.FC<ScheduleListProps> = ({ schedules, onSelect,
         return (
           <div 
             key={schedule.id}
-            onClick={() => onSelect(schedule.id)}
-            className={`group flex items-center justify-between p-5 rounded-[24px] border transition-all cursor-pointer
+            onClick={() => navigate(`/schedules/${schedule.id}`)}
+            className={`group flex items-center justify-between p-5 rounded-[24px] border transition-all cursor-pointer hover:border-[#FF6B00] hover:shadow-lg hover:shadow-orange-500/5 active:scale-[0.99]
               ${activeId === schedule.id 
                 ? 'bg-white border-[#FF6B00] shadow-xl shadow-orange-500/5' 
-                : 'bg-white border-stone-100 hover:border-stone-200 shadow-sm'
+                : 'bg-white border-stone-100 shadow-sm'
               }`}
           >
             <div className="flex items-center gap-5">
@@ -46,7 +46,7 @@ export const ScheduleList: React.FC<ScheduleListProps> = ({ schedules, onSelect,
                 <span className="text-[12px] font-black text-stone-400 uppercase tracking-tighter">
                   {new Date(schedule.scheduleDate).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' })}
                 </span>
-                <span className={`text-[15px] font-black transition-colors ${activeId === schedule.id ? 'text-[#FF6B00]' : 'text-[#2D2D2D]'}`}>
+                <span className={`text-[15px] font-black transition-colors ${activeId === schedule.id ? 'text-[#FF6B00]' : 'text-[#2D2D2D] group-hover:text-[#FF6B00]'}`}>
                   {schedule.title}
                 </span>
               </div>
@@ -63,16 +63,9 @@ export const ScheduleList: React.FC<ScheduleListProps> = ({ schedules, onSelect,
                 }`}>
                 D{dDayLabel}
               </span>
-              <button 
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigate(`/schedules/${schedule.id}`);
-                }}
-                className={`w-10 h-10 flex items-center justify-center rounded-full transition-all hover:bg-stone-100 ${activeId === schedule.id ? 'text-[#FF6B00]' : 'text-stone-300'}`}
-              >
+              <div className={`w-10 h-10 flex items-center justify-center rounded-full transition-all ${activeId === schedule.id ? 'text-[#FF6B00]' : 'text-stone-300 group-hover:text-[#FF6B00] group-hover:bg-stone-50'}`}>
                 <span className="text-xl font-bold">→</span>
-              </button>
+              </div>
             </div>
           </div>
         );

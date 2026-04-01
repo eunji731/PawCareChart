@@ -1,9 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { scheduleApi } from '@/api/scheduleApi';
+import { fileApi } from '@/api/fileApi'; // 추가
 import type { Schedule } from '@/types/schedule';
+import type { FileItem } from '@/types/file'; // 추가
 
 export const useScheduleDetail = (id?: string) => {
   const [schedule, setSchedule] = useState<Schedule | null>(null);
+  const [files, setFiles] = useState<FileItem[]>([]); // 추가
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -11,8 +14,14 @@ export const useScheduleDetail = (id?: string) => {
     if (!id) return;
     try {
       setIsLoading(true);
-      const data = await scheduleApi.getScheduleDetail(Number(id));
-      setSchedule(data);
+      
+      const [scheduleData, scheduleFiles] = await Promise.all([
+        scheduleApi.getScheduleDetail(Number(id)),
+        fileApi.getFiles('SCHEDULE', Number(id))
+      ]);
+
+      setSchedule(scheduleData);
+      setFiles(scheduleFiles);
     } catch (err: any) {
       console.error('Failed to fetch schedule detail:', err);
       setError('일정 정보를 불러오는데 실패했습니다.');
@@ -42,5 +51,5 @@ export const useScheduleDetail = (id?: string) => {
     fetchDetail();
   }, [fetchDetail]);
 
-  return { schedule, isLoading, error, refetch: fetchDetail };
+  return { schedule, files, isLoading, error, refetch: fetchDetail }; // files 추가
 };

@@ -8,6 +8,7 @@ import { Textarea } from '@/components/common/Textarea';
 import { Select } from '@/components/common/Select';
 import { TagInput } from '@/components/common/TagInput';
 import { useScheduleForm } from './hooks/useScheduleForm';
+import { FileUploader } from '@/components/common/FileUploader';
 
 const ScheduleFormPage: React.FC = () => {
   const { id } = useParams();
@@ -18,6 +19,7 @@ const ScheduleFormPage: React.FC = () => {
     formData,
     setFormData,
     dogs,
+    fileUploader, // 추가
     handleSave,
     isLoading,
     isFetching
@@ -53,7 +55,7 @@ const ScheduleFormPage: React.FC = () => {
         </header>
 
         <div className="space-y-12 pb-32 animate-in fade-in slide-in-from-bottom-4 duration-700">
-          
+
           {/* 2. 대상 및 유형 선택 */}
           <Section title="기본 정보" description="누구의 어떤 일정인가요?">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -123,6 +125,21 @@ const ScheduleFormPage: React.FC = () => {
                 value={formData.memo}
                 onChange={(e) => setFormData({ ...formData, memo: e.target.value })}
                 rows={5}
+              />
+            </div>
+          </Section>
+
+          {/* 5. 파일 업로드 영역 추가 */}
+          <Section title="참조 파일" description="진료 예약증, 이전 처방전, 미용 참고 사진 등을 첨부하세요.">
+            <div className="pt-2">
+              <FileUploader
+                variant="grid"
+                mode="multiple"
+                maxCount={5}
+                displayUrls={fileUploader.displayUrls}
+                onFileSelect={(files) => fileUploader.handleSelect(files, 5)}
+                onFileDelete={fileUploader.handleDelete}
+                loading={fileUploader.isUploading}
               />
             </div>
           </Section>
