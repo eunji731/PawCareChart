@@ -159,14 +159,15 @@ const SchedulePage: React.FC = () => {
               </div>
 
               {/* GROUP 4: ACTION BUTTON */}
-              <div className="flex-shrink-0">
-                <button
-                  className="w-full h-[56px] px-8 bg-[#2D2D2D] text-white rounded-xl font-black text-[15px] shadow-lg shadow-stone-200 active:scale-95 transition-all"
-                  onClick={() => { }}
+              <div className="pb-1">
+                <button 
+                  className="px-8 h-[56px] bg-[#2D2D2D] text-white rounded-2xl font-black text-[15px] shadow-xl shadow-stone-200 active:scale-95 transition-all"
+                  onClick={() => navigate('/schedules/new')}
                 >
-                  + 일정 등록
+                  + 일정 추가
                 </button>
               </div>
+
             </div>
           </div>
         </section>
