@@ -1,5 +1,6 @@
 import React from 'react';
 import type { Schedule } from '@/types/schedule';
+import { calculateDDay } from '@/utils/dateUtils';
 
 interface ScheduleListProps {
   schedules: Schedule[];
@@ -9,7 +10,7 @@ interface ScheduleListProps {
 
 export const ScheduleList: React.FC<ScheduleListProps> = ({ schedules, onSelect, activeId }) => {
   const getTypeIcon = (type: string) => {
-    switch (type) {
+    switch(type) {
       case 'MEDICAL': return '🏥';
       case 'GROOMING': return '✂️';
       case 'MEDICATION': return '💊';
@@ -19,42 +20,54 @@ export const ScheduleList: React.FC<ScheduleListProps> = ({ schedules, onSelect,
 
   return (
     <div className="space-y-3">
-      {schedules.map(schedule => (
-        <div
-          key={schedule.id}
-          onClick={() => onSelect(schedule.id)}
-          className={`group flex items-center justify-between p-5 rounded-[24px] border transition-all cursor-pointer
-            ${activeId === schedule.id
-              ? 'bg-white border-[#FF6B00] shadow-xl shadow-orange-500/5'
-              : 'bg-white border-stone-100 hover:border-stone-200 shadow-sm'
-            }`}
-        >
-          <div className="flex items-center gap-5">
-            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-[20px] transition-colors
-              ${activeId === schedule.id ? 'bg-[#FF6B00]/10' : 'bg-stone-50 group-hover:bg-stone-100'}`}>
-              {getTypeIcon(schedule.type)}
-            </div>
-            <div className="flex flex-col gap-0.5">
-              <span className="text-[12px] font-black text-stone-400 uppercase tracking-tighter">
-                {new Date(schedule.date).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' })}
-              </span>
-              <span className={`text-[15px] font-black transition-colors ${activeId === schedule.id ? 'text-[#FF6B00]' : 'text-[#2D2D2D]'}`}>
-                {schedule.title}
-              </span>
-            </div>
-          </div>
+      {schedules.map(schedule => {
+        const dDay = calculateDDay(schedule.scheduleDate);
+        const dDayLabel = dDay === 0 ? 'Day' : dDay > 0 ? `-${dDay}` : `+${Math.abs(dDay)}`;
+        const isPast = dDay < 0;
 
-          <div className="flex items-center gap-4">
-            <span className={`text-[11px] font-black px-2 py-1 rounded-lg border tabular-nums
-              ${activeId === schedule.id ? 'bg-[#FF6B00] text-white border-none' : 'text-stone-300 border-stone-100'}`}>
-              D-{schedule.dDay}
-            </span>
-            <span className={`text-xl transition-transform group-hover:translate-x-1 ${activeId === schedule.id ? 'text-[#FF6B00]' : 'text-stone-300'}`}>
-              →
-            </span>
+        return (
+          <div 
+            key={schedule.id}
+            onClick={() => onSelect(schedule.id)}
+            className={`group flex items-center justify-between p-5 rounded-[24px] border transition-all cursor-pointer
+              ${activeId === schedule.id 
+                ? 'bg-white border-[#FF6B00] shadow-xl shadow-orange-500/5' 
+                : 'bg-white border-stone-100 hover:border-stone-200 shadow-sm'
+              }`}
+          >
+            <div className="flex items-center gap-5">
+              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-[20px] transition-colors
+                ${activeId === schedule.id ? 'bg-[#FF6B00]/10' : 'bg-stone-50 group-hover:bg-stone-100'}`}>
+                {getTypeIcon(schedule.scheduleTypeCode)}
+              </div>
+              <div className="flex flex-col gap-0.5">
+                <span className="text-[12px] font-black text-stone-400 uppercase tracking-tighter">
+                  {new Date(schedule.scheduleDate).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' })}
+                </span>
+                <span className={`text-[15px] font-black transition-colors ${activeId === schedule.id ? 'text-[#FF6B00]' : 'text-[#2D2D2D]'}`}>
+                  {schedule.title}
+                </span>
+              </div>
+            </div>
+
+
+            <div className="flex items-center gap-4">
+              <span className={`text-[11px] font-black px-2 py-1 rounded-lg border tabular-nums
+                ${activeId === schedule.id 
+                  ? 'bg-[#FF6B00] text-white border-none' 
+                  : isPast 
+                    ? 'text-stone-300 border-stone-100' 
+                    : 'text-[#FF6B00] border-[#FF6B00]/20 bg-orange-50'
+                }`}>
+                D{dDayLabel}
+              </span>
+              <span className={`text-xl transition-transform group-hover:translate-x-1 ${activeId === schedule.id ? 'text-[#FF6B00]' : 'text-stone-300'}`}>
+                →
+              </span>
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 };

@@ -1,6 +1,7 @@
 import React from 'react';
 import type { Schedule } from '@/types/schedule';
 import { Badge } from '@/components/common/Badge';
+import { calculateDDay } from '@/utils/dateUtils';
 
 interface ScheduleHeroCardProps {
   schedule: Schedule;
@@ -9,7 +10,9 @@ interface ScheduleHeroCardProps {
 export const ScheduleHeroCard: React.FC<ScheduleHeroCardProps> = ({ schedule }) => {
   if (!schedule) return null;
 
-  const isMedical = schedule.type === 'MEDICAL';
+  const dDay = calculateDDay(schedule.scheduleDate);
+  const dDayLabel = dDay === 0 ? 'Day' : dDay > 0 ? `-${dDay}` : `+${Math.abs(dDay)}`;
+  const isPast = dDay < 0;
 
   const typeIcon = {
     MEDICAL: '🏥',
@@ -17,7 +20,7 @@ export const ScheduleHeroCard: React.FC<ScheduleHeroCardProps> = ({ schedule }) 
     MEDICATION: '💊',
     CHECKUP: '🩺',
     ETC: '📅'
-  }[schedule.type];
+  }[schedule.scheduleTypeCode];
 
   return (
     <div className="bg-[#2D2D2D] rounded-[32px] p-8 md:p-10 shadow-2xl shadow-stone-300 relative overflow-hidden group">
@@ -27,8 +30,10 @@ export const ScheduleHeroCard: React.FC<ScheduleHeroCardProps> = ({ schedule }) 
       <div className="relative z-10 space-y-8">
         {/* Top: D-Day & Icon */}
         <div className="flex items-center justify-between">
-          <span className="px-4 py-2 rounded-full bg-red-500 text-white text-[13px] font-black tracking-widest uppercase shadow-lg shadow-red-500/30 animate-pulse">
-            🚨 D-{schedule.dDay}
+          <span className={`px-4 py-2 rounded-full text-white text-[13px] font-black tracking-widest uppercase shadow-lg
+            ${isPast ? 'bg-stone-500 shadow-stone-500/20' : 'bg-red-500 shadow-red-500/30 animate-pulse'}
+          `}>
+            🚨 D{dDayLabel}
           </span>
           <span className="text-4xl drop-shadow-lg">{typeIcon}</span>
         </div>
@@ -40,14 +45,13 @@ export const ScheduleHeroCard: React.FC<ScheduleHeroCardProps> = ({ schedule }) 
           </h2>
           <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 text-stone-400 font-bold text-[15px]">
             <span className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 bg-[#FF6B00] rounded-full"></span>
-              {new Date(schedule.date).toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' })}
+               <span className="w-1.5 h-1.5 bg-[#FF6B00] rounded-full"></span>
+               {new Date(schedule.scheduleDate).toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' })}
             </span>
             <span className="text-stone-600 hidden md:block">|</span>
-            <span>{new Date(schedule.date).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}</span>
+            <span>{new Date(schedule.scheduleDate).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}</span>
           </div>
         </div>
-
         {/* Memo Block */}
         {schedule.memo && (
           <div className="p-5 bg-white/5 rounded-2xl border border-white/10 backdrop-blur-sm">
@@ -59,9 +63,9 @@ export const ScheduleHeroCard: React.FC<ScheduleHeroCardProps> = ({ schedule }) 
         )}
 
         {/* Tags */}
-        {schedule.tags.length > 0 && (
+        {schedule.symptomTags && schedule.symptomTags.length > 0 && (
           <div className="flex flex-wrap gap-2 pt-2">
-            {schedule.tags.map(tag => (
+            {schedule.symptomTags.map(tag => (
               <Badge
                 key={tag}
                 className="!bg-white/10 !text-white !border-none !px-4 !py-2 !text-[12px] !rounded-xl"

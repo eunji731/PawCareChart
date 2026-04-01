@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { scheduleApi } from '@/api/scheduleApi'; // 실제 API 임포트
 import { dogApi } from '@/api/dogApi';
-import { careApi } from '@/api/careApi'; // 스케줄 API가 여기에 통합되어 있다고 가정
 import type { ScheduleType } from '@/types/schedule';
 import type { Dog } from '@/types/dog';
 
@@ -27,8 +27,28 @@ export const useScheduleForm = (id?: string) => {
 
   useEffect(() => {
     if (!id) return;
-    // 수정 모드 시 상세 데이터 로드 로직 (필요 시 구현)
-  }, [id]);
+    const loadDetail = async () => {
+      try {
+        setIsFetching(true);
+        const data = await scheduleApi.getScheduleDetail(Number(id));
+        setFormData({
+          dogId: data.dogId.toString(),
+          title: data.title,
+          scheduleDate: data.scheduleDate.split('T')[0],
+          scheduleTime: data.scheduleDate.split('T')[1].substring(0, 5),
+          scheduleTypeCode: data.scheduleTypeCode,
+          memo: data.memo || '',
+          symptomTags: data.symptomTags || []
+        });
+      } catch (err) {
+        console.error('Failed to load schedule:', err);
+        navigate('/schedules');
+      } finally {
+        setIsFetching(false);
+      }
+    };
+    loadDetail();
+  }, [id, navigate]);
 
   const handleSave = async () => {
     if (!formData.dogId) return alert('반려견을 선택해주세요.');
@@ -37,12 +57,20 @@ export const useScheduleForm = (id?: string) => {
     try {
       setIsLoading(true);
       const payload = {
-        ...formData,
-        scheduleDate: `${formData.scheduleDate}T${formData.scheduleTime}:00`
+        dogId: Number(formData.dogId),
+        title: formData.title.trim(),
+        scheduleDate: `${formData.scheduleDate}T${formData.scheduleTime}:00`,
+        scheduleTypeCode: formData.scheduleTypeCode,
+        memo: formData.memo.trim() || undefined,
+        symptomTags: formData.symptomTags
       };
-      
-      // API 호출 (현재 careApi에 schedule 관련 메소드가 정의되어 있지 않다면 추후 추가 필요)
-      console.log('Schedule Payload:', payload);
+
+      if (id) {
+        await scheduleApi.updateSchedule(Number(id), payload);
+      } else {
+        await scheduleApi.createSchedule(payload);
+      }
+
       alert('일정이 성공적으로 저장되었습니다! ✨');
       navigate('/schedules');
     } catch (err) {

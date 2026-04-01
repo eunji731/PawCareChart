@@ -10,10 +10,22 @@ import {
   addMonths,
   subMonths,
   parseISO,
-  getDate
+  getDate,
+  differenceInCalendarDays
 } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import type { CareRecord } from '@/types/care';
+
+/**
+ * 특정 날짜의 D-Day를 계산합니다.
+ * @param targetDate 일정 날짜 (ISO 문자열 또는 Date)
+ * @returns 오늘 기준 남은 일수 (오늘이면 0, 내일이면 1, 어제면 -1)
+ */
+export const calculateDDay = (targetDate: string | Date): number => {
+  const target = typeof targetDate === 'string' ? parseISO(targetDate) : targetDate;
+  const today = new Date();
+  return differenceInCalendarDays(target, today);
+};
 
 /**
  * 달력에 표시할 날짜 정보 타입

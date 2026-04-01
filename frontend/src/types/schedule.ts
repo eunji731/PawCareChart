@@ -2,10 +2,30 @@ export type ScheduleType = 'MEDICAL' | 'GROOMING' | 'MEDICATION' | 'CHECKUP' | '
 
 export interface Schedule {
   id: number;
-  type: ScheduleType;
+  dogId: number;
+  dogName: string;
   title: string;
-  date: string;
+  scheduleDate: string; // ISO-8601
+  scheduleTypeCode: ScheduleType;
+  isCompleted: boolean;
   memo?: string;
-  tags: string[];
-  dDay?: number;
+  symptomTags: string[];
+  dDay: number;
+}
+
+export interface ScheduleFilters {
+  dogId?: number;
+  type?: ScheduleType | 'ALL';
+  keyword?: string;
+  startDate?: string;
+  endDate?: string;
+}
+
+export interface ScheduleCreateRequest {
+  dogId: number;
+  title: string;
+  scheduleDate: string;
+  scheduleTypeCode: ScheduleType;
+  memo?: string;
+  symptomTags?: string[];
 }

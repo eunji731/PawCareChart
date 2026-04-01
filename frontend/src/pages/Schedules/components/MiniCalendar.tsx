@@ -19,12 +19,12 @@ export const MiniCalendar: React.FC<MiniCalendarProps> = ({ selectedDate, onDate
 
   const getDots = (day: number) => {
     const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    const daySchedules = schedules.filter(s => s.date.startsWith(dateStr));
+    const daySchedules = schedules.filter(s => s.scheduleDate && s.scheduleDate.startsWith(dateStr));
 
     return daySchedules.map(s => {
-      if (s.type === 'MEDICAL') return 'bg-[#FF6B00]';
-      if (s.type === 'GROOMING') return 'bg-blue-400';
-      if (s.type === 'MEDICATION') return 'bg-green-400';
+      if (s.scheduleTypeCode === 'MEDICAL') return 'bg-[#FF6B00]';
+      if (s.scheduleTypeCode === 'GROOMING') return 'bg-blue-400';
+      if (s.scheduleTypeCode === 'MEDICATION') return 'bg-green-400';
       return 'bg-stone-300';
     }).slice(0, 3); // 최대 3개까지만 표시
   };
