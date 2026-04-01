@@ -13,6 +13,7 @@ export interface CareRecord {
   clinicName?: string;
   diagnosis?: string;
   symptoms?: string;
+  symptomTags?: string[]; // 추가됨
   treatment?: string;
   medicationStatus?: 'NONE' | 'ACTIVE' | 'COMPLETED';
   medicationStartDate?: string | null;
@@ -35,6 +36,7 @@ export interface CareRecordsFilter {
 export interface MedicalDetailRequest {
   clinicName?: string;
   symptoms?: string;
+  symptomTags?: string[]; // 추가됨
   diagnosis?: string;
   treatment?: string;
   amount?: number | null; // 추가됨

@@ -23,9 +23,10 @@ export const useCareRecordForm = (id?: string) => {
   const [medicalData, setMedicalData] = useState({
     clinicName: '',
     symptoms: '',
+    symptomTags: [] as string[], // 추가됨
     diagnosis: '',
     treatment: '',
-    amount: '', // 추가됨
+    amount: '',
     hasMedication: false,
     medicationStartDate: new Date().toISOString().split('T')[0],
     medicationDays: '',
@@ -112,6 +113,7 @@ export const useCareRecordForm = (id?: string) => {
         setMedicalData({
           clinicName: getField('clinicName', 'clinic_name') || '',
           symptoms: getField('symptoms', 'symptoms') || '',
+          symptomTags: record.symptomTags || getField('symptomTags', 'symptom_tags') || [], // 추가됨
           diagnosis: getField('diagnosis', 'diagnosis') || '',
           treatment: getField('treatment', 'treatment') || '',
           amount: recordAmount,
@@ -153,9 +155,10 @@ export const useCareRecordForm = (id?: string) => {
       medicalDetails: recordType === 'MEDICAL' ? {
         clinicName: medicalData.clinicName.trim() || undefined,
         symptoms: medicalData.symptoms.trim() || undefined,
+        symptomTags: medicalData.symptomTags.length > 0 ? medicalData.symptomTags : undefined, // 추가됨
         diagnosis: medicalData.diagnosis.trim() || undefined,
         treatment: medicalData.treatment.trim() || undefined,
-        amount: medicalData.amount ? Number(medicalData.amount) : null, // 추가됨
+        amount: medicalData.amount ? Number(medicalData.amount) : null,
         medicationStartDate: medicalData.hasMedication ? medicalData.medicationStartDate : null,
         medicationDays: medicalData.hasMedication && medicalData.medicationDays ? Number(medicalData.medicationDays) : null,
         isMedicationCompleted: medicalData.isMedicationCompleted
