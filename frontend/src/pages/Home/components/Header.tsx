@@ -22,6 +22,7 @@ export const Header = () => {
     { label: '홈', path: '/' },
     { label: '반려견', path: '/dogs' },
     { label: '케어기록', path: '/care-records' },
+    { label: '일정/예약', path: '/schedules' },
   ];
 
   const isActive = (path: string) => {

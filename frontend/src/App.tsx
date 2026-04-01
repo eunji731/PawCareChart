@@ -8,6 +8,7 @@ import DogFormPage from '@/pages/Dogs/Form';
 import CareRecordListPage from '@/pages/CareRecords/List';
 import CareRecordFormPage from '@/pages/CareRecords/Form';
 import CareRecordDetailPage from '@/pages/CareRecords/Detail';
+import SchedulePage from '@/pages/Schedules'; // Default import
 import { AuthProvider } from '@/context/AuthContext';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 
@@ -27,6 +28,7 @@ function App() {
           <Route path="/care-records/new" element={<ProtectedRoute><CareRecordFormPage /></ProtectedRoute>} />
           <Route path="/care-records/edit/:id" element={<ProtectedRoute><CareRecordFormPage /></ProtectedRoute>} />
           <Route path="/care-records/:id" element={<ProtectedRoute><CareRecordDetailPage /></ProtectedRoute>} />
+          <Route path="/schedules" element={<ProtectedRoute><SchedulePage /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

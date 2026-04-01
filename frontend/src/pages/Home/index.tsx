@@ -5,6 +5,7 @@ import { KpiCards } from '@/pages/Home/components/KpiCards';
 import { MainDataTable } from '@/pages/Home/components/MainDataTable';
 import { ExpenseChart } from '@/pages/Home/components/ExpenseChart';
 import { HealthWidgets } from '@/pages/Home/components/HealthWidgets';
+import { careApi } from '@/api/careApi';
 
 export const HomePage = () => {
   const [filters, setFilters] = useState<{ dogId?: number; startDate: string; endDate: string }>({
