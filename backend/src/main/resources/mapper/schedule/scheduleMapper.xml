@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.pawcarechart.backend.schedule.mapper.ScheduleMapper">
+
+    <select id="selectSchedules" resultType="com.pawcarechart.backend.schedule.dto.ScheduleResponse">
+        SELECT
+            s.id,
+            s.dog_id AS dogId,
+            s.title,
+            s.schedule_date AS scheduleDate,
+            s.schedule_type_code AS scheduleTypeCode,
+            s.is_completed AS isCompleted,
+            s.memo
+        FROM public.schedules s
+        JOIN public.dogs d ON s.dog_id = d.id
+        WHERE d.user_id = #{userId}
+        <if test="dogId != null">
+            AND s.dog_id = #{dogId}
+        </if>
+        <if test="type != null and type != ''">
+            AND s.schedule_type_code = #{type}
+        </if>
+        <if test="keyword != null and keyword != ''">
+            AND (s.title LIKE '%' || #{keyword} || '%' OR s.memo LIKE '%' || #{keyword} || '%')
+        </if>
+        <if test="startDate != null">
+            AND s.schedule_date >= CAST(#{startDate} AS TIMESTAMP)
+        </if>
+        <if test="endDate != null">
+            AND s.schedule_date &lt;= CAST(#{endDate} || ' 23:59:59' AS TIMESTAMP)
+        </if>
+        ORDER BY s.schedule_date ASC
+    </select>
+
+</mapper>

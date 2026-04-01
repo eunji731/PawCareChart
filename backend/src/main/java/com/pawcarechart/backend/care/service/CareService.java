@@ -14,6 +14,7 @@ import com.pawcarechart.backend.file.constant.FileTargetType;
 import com.pawcarechart.backend.file.dto.FileCountResponse;
 import com.pawcarechart.backend.file.repository.FileMappingRepository;
 import com.pawcarechart.backend.file.service.FileService;
+import com.pawcarechart.backend.symptom.service.SymptomService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
