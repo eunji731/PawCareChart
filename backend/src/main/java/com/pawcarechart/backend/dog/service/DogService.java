@@ -37,11 +37,11 @@ public class DogService {
     public DogResponse registerDog(DogCreateRequest request, Long userId) {
         Dog dog = Dog.builder()
                 .userId(userId)
-                .name(request.name())
-                .breed(request.breed())
-                .birthDate(request.birthDate())
-                .weight(request.weight())
-                .profileImageUrl(request.profileImageUrl())
+                .name(request.getName())
+                .breed(request.getBreed())
+                .birthDate(request.getBirthDate())
+                .weight(request.getWeight())
+                .profileImageUrl(request.getProfileImageUrl())
                 .build();
         
         return DogResponse.from(dogRepository.save(dog));
@@ -53,11 +53,11 @@ public class DogService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "수정 권한이 없거나 존재하지 않는 반려견입니다."));
         
         dog.update(
-            request.name(),
-            request.breed(),
-            request.birthDate(),
-            request.weight(),
-            request.profileImageUrl()
+            request.getName(),
+            request.getBreed(),
+            request.getBirthDate(),
+            request.getWeight(),
+            request.getProfileImageUrl()
         );
         
         return DogResponse.from(dog);

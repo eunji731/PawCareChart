@@ -1,4 +1,13 @@
 package com.pawcarechart.backend.file.dto;
 
-public record FileCountResponse(Long targetId, Long count) {
+import lombok.*;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class FileCountResponse {
+    private Long targetId;
+    private Long count;
 }

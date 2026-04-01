@@ -74,6 +74,8 @@
                 md.symptoms AS symptoms,
                 md.diagnosis AS diagnosis,
                 md.treatment AS treatment,
+                md.medication_start_date AS medicationStartDate,
+                md.medication_days AS medicationDays,
 
 
                 -- 투약 상태 변환
@@ -83,8 +85,6 @@
                 ELSE 'ACTIVE'
             END AS medicationStatus,
 
-                md.medication_start_date AS medicationStartDate,
-                md.medication_days AS medicationDays,
                 ed.category_code AS categoryCode,
                 COALESCE(md.amount, ed.amount, 0) AS amount
             FROM public.care_records cr

@@ -103,7 +103,7 @@ public class AuthController {
     private ResponseEntity<ApiResult<Void>> createAuthResponse(AuthResponse response, String message) {
         boolean isSecure = Arrays.asList(env.getActiveProfiles()).contains("prod");
 
-        ResponseCookie accessCookie = ResponseCookie.from("accessToken", response.accessToken())
+        ResponseCookie accessCookie = ResponseCookie.from("accessToken", response.getAccessToken())
                 .httpOnly(true)
                 .secure(isSecure)
                 .path("/")
@@ -111,7 +111,7 @@ public class AuthController {
                 .sameSite("Lax")
                 .build();
 
-        ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", response.refreshToken())
+        ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", response.getRefreshToken())
                 .httpOnly(true)
                 .secure(isSecure)
                 .path("/api/auth") // 리프레시와 로그아웃에서 모두 접근 가능하도록 경로 조정

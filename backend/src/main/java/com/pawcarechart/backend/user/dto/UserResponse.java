@@ -1,26 +1,32 @@
 package com.pawcarechart.backend.user.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.*;
+
 import java.time.LocalDateTime;
 
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Schema(description = "사용자 정보 응답")
-public record UserResponse(
-        @Schema(description = "사용자 식별자", example = "1")
-        Long id,
+public class UserResponse {
+    @Schema(description = "사용자 식별자", example = "1")
+    private Long id;
 
-        @Schema(description = "이메일", example = "hong@example.com")
-        String email,
+    @Schema(description = "이메일", example = "hong@example.com")
+    private String email;
 
-        @Schema(description = "이름", example = "홍길동")
-        String name,
+    @Schema(description = "이름", example = "홍길동")
+    private String name;
 
-        @Schema(description = "역할 코드", example = "ROLE_USER")
-        String roleCode,
+    @Schema(description = "역할 코드", example = "ROLE_USER")
+    private String roleCode;
 
-        @Schema(description = "가입 일시")
-        LocalDateTime createdAt,
+    @Schema(description = "가입 일시")
+    private LocalDateTime createdAt;
 
-        @Schema(description = "정보 수정 일시")
-        LocalDateTime updatedAt
-) {
+    @Schema(description = "정보 수정 일시")
+    private LocalDateTime updatedAt;
 }

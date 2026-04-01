@@ -33,26 +33,26 @@ public class AuthService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."));
 
-        return new UserResponse(
-                user.getId(),
-                user.getEmail(),
-                user.getName(),
-                user.getRoleCode(),
-                user.getCreatedAt(),
-                user.getUpdatedAt()
-        );
+        return UserResponse.builder()
+                .id(user.getId())
+                .email(user.getEmail())
+                .name(user.getName())
+                .roleCode(user.getRoleCode())
+                .createdAt(user.getCreatedAt())
+                .updatedAt(user.getUpdatedAt())
+                .build();
     }
 
     @Transactional
     public AuthResponse signup(SignupRequest request) {
-        if (userRepository.existsByEmail(request.email())) {
+        if (userRepository.existsByEmail(request.getEmail())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 사용 중인 이메일입니다.");
         }
 
         User user = userRepository.save(User.builder()
-                .email(request.email())
-                .password(passwordEncoder.encode(request.password()))
-                .name(request.name())
+                .email(request.getEmail())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .name(request.getName())
                 .roleCode("ROLE_USER")
                 .build());
 
@@ -61,10 +61,10 @@ public class AuthService {
 
     @Transactional
     public AuthResponse login(LoginRequest request) {
-        User user = userRepository.findByEmail(request.email())
+        User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "이메일 또는 비밀번호가 올바르지 않습니다."));
 
-        if (!passwordEncoder.matches(request.password(), user.getPassword())) {
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "이메일 또는 비밀번호가 올바르지 않습니다.");
         }
 
@@ -122,14 +122,14 @@ public class AuthService {
                 .expiryDate(LocalDateTime.now().plusSeconds(jwtTokenProvider.refreshTokenExpireSeconds()))
                 .build());
 
-        return new AuthResponse(
-                accessToken,
-                refreshToken,
-                "Bearer",
-                jwtTokenProvider.accessTokenExpireSeconds(),
-                user.getId(),
-                user.getEmail(),
-                user.getName()
-        );
+        return AuthResponse.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .tokenType("Bearer")
+                .expiresIn(jwtTokenProvider.accessTokenExpireSeconds())
+                .userId(user.getId())
+                .email(user.getEmail())
+                .name(user.getName())
+                .build();
     }
 }
