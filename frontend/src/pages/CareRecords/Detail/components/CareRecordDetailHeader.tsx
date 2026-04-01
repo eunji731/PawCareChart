@@ -8,38 +8,10 @@ interface CareRecordDetailHeaderProps {
 }
 
 export const CareRecordDetailHeader: React.FC<CareRecordDetailHeaderProps> = ({ record, onDelete }) => {
-  const navigate = useNavigate();
   const isMedical = record.recordType === 'MEDICAL';
 
   return (
-    <header className="flex flex-col gap-8 pb-4">
-      
-      {/* Top Bar: Back & Actions */}
-      <div className="flex items-center justify-between">
-        <button 
-          onClick={() => navigate(-1)}
-          className="w-11 h-11 rounded-[16px] bg-white flex items-center justify-center text-stone-600 hover:text-[#FF6B00] transition-all shadow-sm border border-stone-200/60 hover:border-[#FF6B00]"
-        >
-          <span className="text-xl leading-none -mt-0.5">←</span>
-        </button>
-
-        <div className="flex items-center gap-2">
-          <button 
-            onClick={() => navigate(`/care-records/edit/${record.id}`)}
-            className="px-5 h-11 rounded-[14px] bg-white border border-stone-200/60 text-stone-600 font-bold text-[14px] hover:border-stone-400 transition-all shadow-sm"
-          >
-            수정
-          </button>
-          <button 
-            onClick={onDelete}
-            className="w-11 h-11 rounded-[14px] bg-white border border-red-100 text-red-400 font-bold text-[16px] hover:bg-red-50 hover:border-red-200 transition-all shadow-sm flex items-center justify-center"
-            title="삭제"
-          >
-            🗑️
-          </button>
-        </div>
-      </div>
-
+    <header className="pb-2">
       {/* Main Title & Tags */}
       <div className="space-y-4">
         <div className="flex items-center gap-2">

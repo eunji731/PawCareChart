@@ -59,14 +59,14 @@ const CareRecordDetailPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#F7F8F9] pb-32">
+    <div className="min-h-screen bg-[#F7F8F9]">
       {/* 
         App-like Narrow Container: 
         Max-width 760px prevents the "PC Blog Layout" text spreading out too far, 
         giving a focused, native mobile/tablet application feel.
       */}
-      <PageLayout title="" maxWidth="max-w-[760px]">
-        <div className="animate-in fade-in slide-in-from-bottom-6 duration-700 pt-6 lg:pt-8 pb-16 space-y-8 lg:space-y-10">
+      <PageLayout title="" maxWidth="max-w-[760px]" noPaddingTop>
+        <div className="animate-in fade-in slide-in-from-bottom-6 duration-700 pt-2 pb-16 space-y-8 lg:space-y-10">
 
           {/* Header Block */}
           <CareRecordDetailHeader
@@ -160,6 +160,29 @@ const CareRecordDetailPage: React.FC = () => {
               <CareRecordAttachmentGallery files={files} />
             </section>
           )}
+
+          {/* Action Bar (at the bottom of content) */}
+          <div className="pt-10 flex items-center justify-end gap-3 border-t border-stone-100">
+            <button 
+              onClick={() => navigate('/care-records')}
+              className="px-6 h-[52px] rounded-xl border border-stone-200 text-stone-600 font-bold text-[14px] hover:border-stone-400 transition-all active:scale-95"
+            >
+              목록
+            </button>
+            <button 
+              onClick={() => setIsDeleteModalOpen(true)}
+              className="px-6 h-[52px] rounded-xl border border-stone-200 text-stone-400 font-bold text-[14px] hover:bg-red-50 hover:text-red-500 hover:border-red-100 transition-all active:scale-95"
+            >
+              삭제
+            </button>
+            <button 
+              onClick={() => navigate(`/care-records/edit/${record.id}`)}
+              className="px-10 h-[52px] bg-[#FF6B00] text-white rounded-xl font-black text-[14px] shadow-lg shadow-orange-500/20 hover:shadow-orange-500/30 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+            >
+              기록 수정하기
+            </button>
+          </div>
+
 
         </div>
       </PageLayout>
