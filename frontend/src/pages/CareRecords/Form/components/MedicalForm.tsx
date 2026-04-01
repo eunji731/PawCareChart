@@ -2,14 +2,16 @@ import React from 'react';
 import { Section } from '@/components/common/Section';
 import { Input } from '@/components/common/Input';
 import { Textarea } from '@/components/common/Textarea';
+import { TagInput } from '@/components/common/TagInput';
 
 interface MedicalFormProps {
   data: {
     clinicName: string;
-    symptoms: string;
+    symptoms: string; // 기존 서술형 텍스트 필드 유지
+    symptomTags: string[]; // 새롭게 추가된 태그 필드
     diagnosis: string;
     treatment: string;
-    amount: string | number; // 추가됨
+    amount: string | number;
     hasMedication: boolean;
     medicationStartDate: string;
     medicationDays: string | number;
@@ -19,6 +21,9 @@ interface MedicalFormProps {
 }
 
 export const MedicalForm: React.FC<MedicalFormProps> = ({ data, onChange }) => {
+  // 임시 추천 태그
+  const commonSymptoms = ['구토', '설사', '무기력', '식욕부진', '가려움', '눈물과다', '기침', '콧물'];
+
   return (
     <div className="space-y-10">
       <Section title="진료 상세" description="병원에서 확인한 내용을 꼼꼼히 기록하세요.">
@@ -41,10 +46,21 @@ export const MedicalForm: React.FC<MedicalFormProps> = ({ data, onChange }) => {
               <span className="absolute right-5 bottom-4 text-[13px] font-black text-stone-300 uppercase">원</span>
             </div>
           </div>
+          
+          <div className="grid grid-cols-1 gap-6">
+            <TagInput 
+              label="주요 증상 태그" 
+              placeholder="아이가 보인 핵심 증상을 태그로 입력하세요 (예: 구토, 설사)"
+              tags={data.symptomTags || []}
+              suggestions={commonSymptoms}
+              onChange={(tags) => onChange({ ...data, symptomTags: tags })}
+            />
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Textarea 
-              label="주요 증상" 
-              placeholder="아이가 어떤 점이 불편해 보였나요?" 
+              label="증상 및 진료 소견 (상세)" 
+              placeholder="아이가 어떤 점이 불편해 보였는지 구체적으로 적어주세요." 
               value={data.symptoms} 
               onChange={(e) => onChange({ ...data, symptoms: e.target.value })} 
             />
