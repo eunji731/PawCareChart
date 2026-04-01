@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom'; // 추가
 import type { Schedule } from '@/types/schedule';
 import { calculateDDay } from '@/utils/dateUtils';
 
@@ -9,6 +10,7 @@ interface ScheduleListProps {
 }
 
 export const ScheduleList: React.FC<ScheduleListProps> = ({ schedules, onSelect, activeId }) => {
+  const navigate = useNavigate(); // 추가
   const getTypeIcon = (type: string) => {
     switch(type) {
       case 'MEDICAL': return '🏥';
@@ -61,9 +63,16 @@ export const ScheduleList: React.FC<ScheduleListProps> = ({ schedules, onSelect,
                 }`}>
                 D{dDayLabel}
               </span>
-              <span className={`text-xl transition-transform group-hover:translate-x-1 ${activeId === schedule.id ? 'text-[#FF6B00]' : 'text-stone-300'}`}>
-                →
-              </span>
+              <button 
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/schedules/${schedule.id}`);
+                }}
+                className={`w-10 h-10 flex items-center justify-center rounded-full transition-all hover:bg-stone-100 ${activeId === schedule.id ? 'text-[#FF6B00]' : 'text-stone-300'}`}
+              >
+                <span className="text-xl font-bold">→</span>
+              </button>
             </div>
           </div>
         );

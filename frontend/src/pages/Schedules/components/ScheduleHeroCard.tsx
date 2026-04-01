@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom'; // 추가
 import type { Schedule } from '@/types/schedule';
 import { Badge } from '@/components/common/Badge';
 import { calculateDDay } from '@/utils/dateUtils';
@@ -8,8 +9,9 @@ interface ScheduleHeroCardProps {
 }
 
 export const ScheduleHeroCard: React.FC<ScheduleHeroCardProps> = ({ schedule }) => {
+  const navigate = useNavigate(); // 추가
   if (!schedule) return null;
-
+  
   const dDay = calculateDDay(schedule.scheduleDate);
   const dDayLabel = dDay === 0 ? 'Day' : dDay > 0 ? `-${dDay}` : `+${Math.abs(dDay)}`;
   const isPast = dDay < 0;
@@ -23,7 +25,10 @@ export const ScheduleHeroCard: React.FC<ScheduleHeroCardProps> = ({ schedule }) 
   }[schedule.scheduleTypeCode];
 
   return (
-    <div className="bg-[#2D2D2D] rounded-[32px] p-8 md:p-10 shadow-2xl shadow-stone-300 relative overflow-hidden group">
+    <div 
+      onClick={() => navigate(`/schedules/${schedule.id}`)} // 전체 카드 클릭 시 상세 이동
+      className="bg-[#2D2D2D] rounded-[32px] p-8 md:p-10 shadow-2xl shadow-stone-300 relative overflow-hidden group cursor-pointer hover:ring-4 hover:ring-[#FF6B00]/20 transition-all active:scale-[0.99]"
+    >
       {/* Background Decor */}
       <div className="absolute top-0 right-0 w-64 h-64 bg-[#FF6B00]/10 rounded-full blur-[80px] -mr-32 -mt-32 transition-all group-hover:bg-[#FF6B00]/20 duration-700"></div>
 

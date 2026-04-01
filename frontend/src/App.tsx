@@ -12,6 +12,7 @@ import SchedulePage from '@/pages/Schedules';
 import ScheduleFormPage from '@/pages/Schedules/Form'; // 신규 추가
 import { AuthProvider } from '@/context/AuthContext';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import ScheduleDetailPage from '@/pages/Schedules/Detail';
 
 function App() {
   return (
@@ -32,6 +33,7 @@ function App() {
           <Route path="/schedules" element={<ProtectedRoute><SchedulePage /></ProtectedRoute>} />
           <Route path="/schedules/new" element={<ProtectedRoute><ScheduleFormPage /></ProtectedRoute>} />
           <Route path="/schedules/edit/:id" element={<ProtectedRoute><ScheduleFormPage /></ProtectedRoute>} />
+          <Route path="/schedules/:id" element={<ProtectedRoute><ScheduleDetailPage /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
