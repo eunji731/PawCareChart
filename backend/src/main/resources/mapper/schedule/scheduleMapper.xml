@@ -11,7 +11,8 @@
             s.schedule_date AS scheduleDate,
             s.schedule_type_code AS scheduleTypeCode,
             s.is_completed AS isCompleted,
-            s.memo
+            s.memo,
+            0 AS attachmentCount
         FROM public.schedules s
         JOIN public.dogs d ON s.dog_id = d.id
         WHERE d.user_id = #{userId}

@@ -104,37 +104,49 @@ public class FileService {
      */
     @Transactional
     public void connectFilesToTarget(List<Long> fileIds, FileTargetType targetType, Long targetId, Long userId) {
-        if (fileIds == null || fileIds.isEmpty()) return;
+        log.info("[FileService] Start connecting. targetType={}, targetId={}, userId={}, fileIds={}", targetType, targetId, userId, fileIds);
+        
+        if (fileIds == null || fileIds.isEmpty()) {
+            log.info("[FileService] No fileIds provided. Skipping mapping.");
+            return;
+        }
 
         if (targetId == null) {
+            log.error("[FileService] targetId is null!");
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "대상 ID가 없습니다.");
         }
 
         fileIds.forEach(fileId -> {
+            if (fileId == null) return;
 
-            if (fileId == null) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "파일 ID가 null 입니다.");
-            }
-            // 소유권 확인: 업로드한 사용자 본인만 매핑 가능 (FileEntity 기준)
             FileEntity fileEntity = fileRepository.findById(fileId)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "파일 정보를 찾을 수 없습니다. ID: " + fileId));
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "파일을 찾을 수 없습니다. ID: " + fileId));
 
+            // 소유권 확인: 업로드한 사용자와 현재 매핑하려는 사용자가 같은지 확인
             if (!fileEntity.getUserId().equals(userId)) {
+                log.error("[FileService] Ownership mismatch. fileOwner={}, currentUser={}", fileEntity.getUserId(), userId);
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, "파일 매핑 권한이 없습니다.");
             }
 
-            // 중복 매핑 방지
+            // 중복 매핑 확인
             if (fileMappingRepository.findByFileId(fileId).isPresent()) {
+                log.info("[FileService] File {} already has a mapping. Skipping.", fileId);
                 return;
             }
 
-            // 매핑 정보 저장 시 userId는 포함하지 않음
-            fileMappingRepository.save(FileMapping.builder()
+            // 매핑 정보 저장
+            FileMapping mapping = FileMapping.builder()
                     .fileId(fileId)
                     .targetType(targetType)
                     .targetId(targetId)
-                    .build());
+                    .build();
+            
+            fileMappingRepository.save(mapping);
+            log.info("[FileService] Mapping saved. fileId={}, targetId={}", fileId, targetId);
         });
+        
+        // 즉시 반영을 위해 flush 호출 (MyBatis 조회 등과 섞여있을 때를 대비)
+        fileMappingRepository.flush();
     }
 
     /**

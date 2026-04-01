@@ -1,5 +1,6 @@
 package com.pawcarechart.backend.schedule.dto;
 
+import com.pawcarechart.backend.file.dto.FileResponse;
 import lombok.*;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -20,8 +21,10 @@ public class ScheduleResponse {
     private String memo;
     private List<String> symptomTags;
     private Long dDay;
+    private Integer attachmentCount;
+    private List<FileResponse> attachments;
 
-    public static ScheduleResponse of(com.pawcarechart.backend.schedule.entity.Schedule schedule, List<String> symptomTags) {
+    public static ScheduleResponse of(com.pawcarechart.backend.schedule.entity.Schedule schedule, List<String> symptomTags, List<FileResponse> attachments) {
         LocalDateTime now = LocalDateTime.now();
         long dDay = ChronoUnit.DAYS.between(now.toLocalDate(), schedule.getScheduleDate().toLocalDate());
 
@@ -35,6 +38,8 @@ public class ScheduleResponse {
                 .memo(schedule.getMemo())
                 .symptomTags(symptomTags)
                 .dDay(dDay)
+                .attachmentCount(attachments != null ? attachments.size() : 0)
+                .attachments(attachments)
                 .build();
     }
 }
