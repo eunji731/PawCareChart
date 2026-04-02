@@ -25,6 +25,7 @@ public class ScheduleRequest {
 
     private String scheduleTypeCode;
     private String memo;
+    private String location;
     private List<String> symptomTags;
 
     @JsonProperty("fileIds")

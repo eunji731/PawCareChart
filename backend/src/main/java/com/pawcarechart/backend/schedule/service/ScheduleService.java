@@ -79,7 +79,6 @@ public class ScheduleService {
      */
     @Transactional
     public Long registerSchedule(ScheduleRequest request, Long userId) {
-        // [강력 로깅] 어떤 상황에서도 찍히도록 System.out 사용
         System.out.println(">>> [DEBUG] registerSchedule START");
         System.out.println(">>> [DEBUG] fileIds from request: " + request.getFileIds());
 
@@ -91,6 +90,7 @@ public class ScheduleService {
                 .scheduleDate(request.getScheduleDate())
                 .scheduleTypeCode(request.getScheduleTypeCode())
                 .memo(request.getMemo())
+                .location(request.getLocation()) // 장소 추가
                 .build();
 
         Schedule saved = scheduleRepository.save(schedule);
@@ -100,8 +100,6 @@ public class ScheduleService {
         if (fileIds != null && !fileIds.isEmpty()) {
             System.out.println(">>> [DEBUG] Calling connectFilesToTarget with " + fileIds.size() + " files");
             fileService.connectFilesToTarget(fileIds, FileTargetType.SCHEDULE, saved.getId(), userId);
-        } else {
-            System.out.println(">>> [DEBUG] fileIds is NULL or EMPTY. Skipping mapping.");
         }
 
         return saved.getId();
@@ -113,12 +111,10 @@ public class ScheduleService {
     @Transactional
     public void updateSchedule(Long id, ScheduleRequest request, Long userId) {
         System.out.println(">>> [DEBUG] updateSchedule START. id: " + id);
-        System.out.println(">>> [DEBUG] fileIds from request: " + request.getFileIds());
-
         Schedule schedule = findAndValidateSchedule(id, userId);
         validateDogOwnership(request.getDogId(), userId);
 
-        schedule.update(request.getTitle(), request.getScheduleDate(), request.getScheduleTypeCode(), request.getMemo());
+        schedule.update(request.getTitle(), request.getScheduleDate(), request.getScheduleTypeCode(), request.getMemo(), request.getLocation());
         symptomService.syncScheduleSymptoms(id, request.getSymptomTags());
         
         fileService.syncFilesToTarget(request.getFileIds(), FileTargetType.SCHEDULE, id, userId);
@@ -167,13 +163,13 @@ public class ScheduleService {
         if ("MEDICAL".equals(schedule.getScheduleTypeCode())) {
             builder.setRecordTypeCode("MEDICAL");
             builder.setMedicalDetails(CareRecordCreateRequest.MedicalDetailRequest.builder()
-                    .clinicName("일정 기반 등록")
+                    .clinicName(schedule.getLocation() != null ? schedule.getLocation() : "일정 기반 등록") // location이 있으면 병원명으로 활용
                     .symptomTags(tags)
                     .build());
         } else {
             builder.setRecordTypeCode("MEDICAL");
             builder.setMedicalDetails(CareRecordCreateRequest.MedicalDetailRequest.builder()
-                    .clinicName("일정 기반 등록")
+                    .clinicName(schedule.getLocation() != null ? schedule.getLocation() : "일정 기반 등록")
                     .symptoms(schedule.getMemo())
                     .symptomTags(tags)
                     .build());

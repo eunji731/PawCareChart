@@ -35,6 +35,9 @@ public class Schedule {
     @Column(name = "memo", columnDefinition = "TEXT")
     private String memo;
 
+    @Column(name = "location", length = 255)
+    private String location;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -52,11 +55,12 @@ public class Schedule {
         this.updatedAt = LocalDateTime.now();
     }
 
-    public void update(String title, LocalDateTime scheduleDate, String scheduleTypeCode, String memo) {
+    public void update(String title, LocalDateTime scheduleDate, String scheduleTypeCode, String memo, String location) {
         this.title = title;
         this.scheduleDate = scheduleDate;
         this.scheduleTypeCode = scheduleTypeCode;
         this.memo = memo;
+        this.location = location;
     }
 
     public void toggleCompletion(boolean isCompleted) {

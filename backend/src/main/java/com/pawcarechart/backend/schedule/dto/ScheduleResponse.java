@@ -19,6 +19,7 @@ public class ScheduleResponse {
     private String scheduleTypeCode;
     private boolean isCompleted;
     private String memo;
+    private String location;
     private List<String> symptomTags;
     private Long dDay;
     private Integer attachmentCount;
@@ -36,6 +37,7 @@ public class ScheduleResponse {
                 .scheduleTypeCode(schedule.getScheduleTypeCode())
                 .isCompleted(schedule.getIsCompleted())
                 .memo(schedule.getMemo())
+                .location(schedule.getLocation())
                 .symptomTags(symptomTags)
                 .dDay(dDay)
                 .attachmentCount(attachments != null ? attachments.size() : 0)

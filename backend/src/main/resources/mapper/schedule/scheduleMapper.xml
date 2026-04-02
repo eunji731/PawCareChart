@@ -12,6 +12,7 @@
             s.schedule_type_code AS scheduleTypeCode,
             s.is_completed AS isCompleted,
             s.memo,
+            s.location,
             0 AS attachmentCount
         FROM public.schedules s
         JOIN public.dogs d ON s.dog_id = d.id
