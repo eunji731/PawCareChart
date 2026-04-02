@@ -77,20 +77,51 @@
                 md.medication_start_date AS medicationStartDate,
                 md.medication_days AS medicationDays,
 
-
                 -- 투약 상태 변환
                 CASE
-                WHEN md.care_record_id IS NULL THEN 'NONE'
-                WHEN md.is_medication_completed = true THEN 'COMPLETED'
-                ELSE 'ACTIVE'
-            END AS medicationStatus,
+                    WHEN md.care_record_id IS NULL THEN 'NONE'
+                    WHEN md.is_medication_completed = true THEN 'COMPLETED'
+                    ELSE 'ACTIVE'
+                END AS medicationStatus,
 
                 ed.category_code AS categoryCode,
-                COALESCE(md.amount, ed.amount, 0) AS amount
+                COALESCE(md.amount, ed.amount, 0) AS amount,
+
+                -- 연관 병원 기록 Self-Join 정보
+                rmr.id AS relatedMedicalId,
+                rmr.title AS relatedMedicalTitle,
+                rmr.record_date AS relatedMedicalDate,
+                rmd.clinic_name AS relatedMedicalClinicName
+
             FROM public.care_records cr
             INNER JOIN public.dogs d ON d.id = cr.dog_id
             LEFT JOIN public.care_record_medical_details md ON md.care_record_id = cr.id
             LEFT JOIN public.care_record_expense_details ed ON ed.care_record_id = cr.id
+            -- Self-Join for related medical record
+            LEFT JOIN public.care_records rmr ON ed.related_medical_record_id = rmr.id
+            LEFT JOIN public.care_record_medical_details rmd ON rmr.id = rmd.care_record_id
             WHERE cr.id = #{id} AND cr.user_id = #{userId}
+        </select>
+
+        <select id="selectMedicalCandidates" resultType="com.pawcarechart.backend.care.dto.MedicalCandidateResponse">
+            SELECT
+                cr.id,
+                cr.title,
+                cr.record_date AS recordDate,
+                md.clinic_name AS clinicName,
+                md.diagnosis AS diagnosis
+            FROM public.care_records cr
+            INNER JOIN public.care_record_medical_details md ON cr.id = md.care_record_id
+            WHERE cr.dog_id = #{dogId}
+              AND cr.record_type_code = 'MEDICAL'
+            <if test="keyword != null and keyword != ''">
+              AND (
+                cr.title LIKE CONCAT('%', #{keyword}, '%')
+                OR md.clinic_name LIKE CONCAT('%', #{keyword}, '%')
+                OR md.diagnosis LIKE CONCAT('%', #{keyword}, '%')
+              )
+            </if>
+            ORDER BY cr.record_date DESC, cr.created_at DESC
+            LIMIT #{size} OFFSET #{offset}
         </select>
         </mapper>

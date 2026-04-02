@@ -55,6 +55,19 @@ public class CareController {
         return ApiResult.ok(detail);
     }
 
+    @Operation(summary = "연결 가능한 병원 기록 후보 조회", description = "특정 강아지의 지출 기록과 연결할 수 있는 병원 진료 기록 목록을 가져옵니다 (페이징 지원).")
+    @GetMapping("/medical-candidates")
+    public ApiResult<List<com.pawcarechart.backend.care.dto.MedicalCandidateResponse>> getMedicalCandidates(
+            @Parameter(description = "반려견 식별자") @RequestParam Long dogId,
+            @Parameter(description = "검색어 (제목, 병원명, 진단명)") @RequestParam(required = false) String keyword,
+            @Parameter(description = "페이지 번호 (0부터 시작)") @RequestParam(required = false, defaultValue = "0") Integer page,
+            @Parameter(description = "페이지당 개수 (기본 20)") @RequestParam(required = false, defaultValue = "20") Integer size,
+            @AuthenticationPrincipal String userId) {
+        List<com.pawcarechart.backend.care.dto.MedicalCandidateResponse> candidates = 
+                careService.getMedicalCandidates(dogId, keyword, page, size, Long.valueOf(userId));
+        return ApiResult.ok(candidates);
+    }
+
     @Operation(summary = "통합 케어 기록 수정", description = "기존 케어 기록과 상세 정보, 첨부파일을 수정합니다.")
     @PutMapping("/{id}")
     public ApiResult<Void> updateCareRecord(

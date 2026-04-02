@@ -29,4 +29,10 @@ public class CareRecordDetailQueryResult {
     private String medicationStatus;
     private String categoryCode;
     private Long amount;
+
+    // 연관된 병원 기록 정보 (Join 결과)
+    private Long relatedMedicalId;
+    private String relatedMedicalTitle;
+    private java.time.LocalDate relatedMedicalDate;
+    private String relatedMedicalClinicName;
 }

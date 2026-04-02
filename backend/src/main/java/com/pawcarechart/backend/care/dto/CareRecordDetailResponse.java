@@ -75,4 +75,19 @@ public class CareRecordDetailResponse {
 
     @Schema(description = "첨부파일 목록")
     private List<FileResponse> attachments;
+
+    @Schema(description = "연관된 병원 기록 정보 (지출 타입일 때만 포함)")
+    private RelatedMedicalRecordInfo relatedMedicalRecord;
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class RelatedMedicalRecordInfo {
+        private Long id;
+        private String title;
+        private java.time.LocalDate recordDate;
+        private String clinicName;
+    }
 }

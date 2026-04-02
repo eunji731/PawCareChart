@@ -100,7 +100,7 @@ public class CareService {
         List<String> symptomTags = symptomService.getSymptomNamesByCareRecordId(recordId);
         List<com.pawcarechart.backend.file.dto.FileResponse> attachments = fileService.getFiles(FileTargetType.CARE_RECORD, recordId);
 
-        return CareRecordDetailResponse.builder()
+        CareRecordDetailResponse.CareRecordDetailResponseBuilder responseBuilder = CareRecordDetailResponse.builder()
                 .id(queryResult.getId())
                 .dogId(queryResult.getDogId())
                 .dogName(queryResult.getDogName())
@@ -120,8 +120,37 @@ public class CareService {
                 .categoryCode(queryResult.getCategoryCode())
                 .amount(queryResult.getAmount())
                 .attachmentCount(attachments.size())
-                .attachments(attachments)
-                .build();
+                .attachments(attachments);
+
+        // 연관 병원 기록 정보가 있는 경우 조립
+        if (queryResult.getRelatedMedicalId() != null) {
+            responseBuilder.relatedMedicalRecord(CareRecordDetailResponse.RelatedMedicalRecordInfo.builder()
+                    .id(queryResult.getRelatedMedicalId())
+                    .title(queryResult.getRelatedMedicalTitle())
+                    .recordDate(queryResult.getRelatedMedicalDate())
+                    .clinicName(queryResult.getRelatedMedicalClinicName())
+                    .build());
+        }
+
+        return responseBuilder.build();
+    }
+
+    /**
+     * 지출 기록 연동을 위한 병원 기록 후보 목록 조회 (페이징 지원)
+     */
+    public List<com.pawcarechart.backend.care.dto.MedicalCandidateResponse> getMedicalCandidates(Long dogId, String keyword, Integer page, Integer size, Long userId) {
+        // 권한 체크
+        dogRepository.findByIdAndUserId(dogId, userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "반려견 권한이 없습니다."));
+
+        // 기본값 설정
+        int pageNum = (page == null || page < 0) ? 0 : page;
+        int pageSize = (size == null || size <= 0) ? 20 : size;
+        int offset = pageNum * pageSize;
+        
+        String searchKeyword = (keyword == null || keyword.isBlank()) ? null : keyword.trim();
+
+        return careMapper.selectMedicalCandidates(dogId, searchKeyword, offset, pageSize);
     }
 
     /**
