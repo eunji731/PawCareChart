@@ -11,117 +11,103 @@ export const TimelineItem: React.FC<{ record: CareRecord }> = ({ record }) => {
     navigate(`/care-records/${record.id}`);
   };
 
-  // [공통] 강아지 식별 정보 (인라인 메타 스타일)
-  const DogIdentity = (
-    <div className="flex items-center gap-2.5">
-      <div className="w-8 h-8 lg:w-9 lg:h-9 rounded-full overflow-hidden bg-stone-50 border border-stone-100 shrink-0 flex items-center justify-center shadow-sm">
-        {record.dogProfileImageUrl ? (
-          <img src={record.dogProfileImageUrl} alt={record.dogName} className="w-full h-full object-cover" />
-        ) : (
-          <span className="text-[10px] grayscale opacity-40">🐕</span>
-        )}
-      </div>
-      <span className="text-[14px] lg:text-[15px] font-black text-[#2D2D2D] tracking-tight">
-        {record.dogName}
-      </span>
-    </div>
-  );
-
-  // [공통] 카테고리/진료처 정보 배지
-  const CategoryBadge = isMedical ? (
-    <div className="flex items-center gap-2 text-[13px] lg:text-[14px] text-stone-500 font-bold bg-[#FCFAF8] px-3 lg:px-4 py-1.5 rounded-xl border border-[#F5F5F5]">
-      <span className="text-base">🏥</span> {record.clinicName || 'Clinic'}
-      {record.diagnosis && <span className="text-[#FF6B00] ml-1 hidden sm:inline">/ {record.diagnosis}</span>}
-    </div>
-  ) : (
-    <div className="flex items-center gap-2 text-[13px] lg:text-[14px] text-stone-500 font-bold bg-[#FCFAF8] px-3 lg:px-4 py-1.5 rounded-xl border border-[#F5F5F5]">
-      <span className="text-base">🏷️</span> {record.categoryCode}
-    </div>
-  );
-
-  // [공통] 첨부파일 메타 정보
-  const AttachmentMeta = record.attachmentCount > 0 && (
-    <div className="flex items-center gap-1.5 text-stone-300">
-      <span className="text-base leading-none">📎</span>
-      <span className="text-[12px] font-black tabular-nums tracking-wider">{record.attachmentCount}</span>
-    </div>
-  );
-
   return (
-    <div className="group flex gap-8 lg:gap-12 items-start relative">
-      {/* 타임라인 인디케이터 */}
-      <div className="flex flex-col items-center flex-shrink-0 pt-6 relative z-10">
-        <div className={`w-4 h-4 rounded-full border-[3px] border-white shadow-lg transition-all duration-500 group-hover:scale-125 
+    <div className="group flex gap-4 md:gap-8 lg:gap-10 items-stretch relative">
+      
+      {/* 타임라인 축 Indicator */}
+      <div className="flex flex-col items-center flex-shrink-0 pt-6 relative z-10 w-4 md:w-6">
+        <div className={`w-3.5 h-3.5 md:w-4 md:h-4 rounded-full border-[3px] border-white shadow-md transition-all duration-500 group-hover:scale-125 
           ${isMedical ? 'bg-[#FF6B00]' : 'bg-[#FFB380]'}`} 
         />
-        <div className="w-px h-full min-h-[140px] bg-[#F0F0F0] mt-4 group-last:hidden" />
+        <div className="w-px h-full min-h-[60px] bg-stone-200 mt-4 group-last:hidden opacity-60" />
       </div>
 
+      {/* 실제 카드 영역 */}
       <Card 
         onClick={handleCardClick}
-        className="flex-grow p-6 lg:p-8 transition-all duration-500 hover:translate-x-2 hover:shadow-[0_20px_50px_rgba(0,0,0,0.03)] border-none ring-1 ring-[#F0F0F0] cursor-pointer"
+        className="flex-grow p-5 md:p-6 lg:p-7 mb-6 group-last:mb-0 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-stone-200/50 border-stone-100 cursor-pointer overflow-hidden relative"
       >
-        <div className="flex flex-col xl:flex-row justify-between items-start gap-8">
-          
-          {/* MAIN CONTENT AREA */}
-          <div className="flex-grow space-y-4 xl:space-y-6">
-            
-            {/* 1. TOP META (Common) */}
-            <div className="flex items-center gap-3 lg:gap-4">
-              <span className={`text-[9px] lg:text-[10px] font-black tracking-[0.2em] px-3 lg:px-4 py-1 rounded-md uppercase
-                ${isMedical ? 'bg-[#FF6B00] text-white' : 'bg-stone-100 text-stone-500'}`}>
-                {record.recordType}
+        {/* 상단: 타입 + 날짜 | (모바일) 금액 */}
+        <div className="flex justify-between items-start md:items-center mb-3">
+          <div className="flex items-center gap-3">
+            <span className={`text-[9px] md:text-[10px] font-black tracking-widest px-2.5 py-1 rounded-md uppercase
+              ${isMedical ? 'bg-[#FF6B00] text-white' : 'bg-stone-100 text-stone-500'}`}>
+              {record.recordType}
+            </span>
+            <span className="text-[13px] md:text-[14px] font-bold text-stone-400 tabular-nums tracking-tight">
+              {record.recordDate}
+            </span>
+          </div>
+
+          {/* 데스크탑 및 태블릿용 금액 우측 상단 표시 */}
+          {record.amount !== undefined && record.amount !== null && (
+            <div className="text-right hidden sm:block">
+              <span className="text-[18px] md:text-[22px] font-black text-[#2D2D2D] tabular-nums tracking-tighter">
+                {record.amount.toLocaleString()} 
+                <span className="text-[13px] ml-0.5 text-stone-400 font-bold tracking-normal">원</span>
               </span>
-              <span className="text-[13px] lg:text-[14px] font-black text-stone-300 tabular-nums">{record.recordDate}</span>
             </div>
+          )}
+        </div>
 
-            {/* 2. TITLE (Common) */}
-            <h4 className="text-[22px] lg:text-[28px] font-black text-[#2D2D2D] tracking-tight leading-tight">
-              {record.title}
-            </h4>
+        {/* 본문: 제목 */}
+        <h4 className="text-[18px] md:text-[22px] font-black text-[#2D2D2D] tracking-tight leading-snug mb-5 pr-2 md:pr-0">
+          {record.title}
+        </h4>
 
-            {/* 3-A. DESKTOP ONLY FOOTER (Dog + Category) */}
-            <div className="hidden xl:flex items-center gap-6 pt-2">
-              {DogIdentity}
-              {CategoryBadge}
-            </div>
-
-            {/* 3-B. MOBILE ONLY FOOTER (Dog, Amount, Category, Attachment) */}
-            <div className="xl:hidden space-y-5 pt-5 border-t border-stone-100">
-              {/* Row 3: Dog Identity (Left) & Amount (Right) */}
-              <div className="flex justify-between items-center gap-4">
-                {DogIdentity}
-                {record.amount !== undefined && record.amount !== null && (
-                  <div className="text-right">
-                    <span className="text-[18px] font-black text-[#2D2D2D] tabular-nums tracking-tighter">
-                      {record.amount.toLocaleString()}<span className="text-[12px] ml-0.5 text-stone-400 font-bold">원</span>
-                    </span>
-                  </div>
+        {/* 하단: 강아지 정보 | 카테고리/진료태그 | 첨부파일 | (모바일) 금액 */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4 border-t border-stone-100/80">
+          
+          {/* 강아지, 태그들 */}
+          <div className="flex flex-wrap items-center gap-3 md:gap-4">
+            
+            {/* 강아지 아바타 & 이름 */}
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-full overflow-hidden bg-stone-50 border border-stone-100 shrink-0 flex items-center justify-center">
+                {record.dogProfileImageUrl ? (
+                  <img src={record.dogProfileImageUrl} alt={record.dogName} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-[8px] grayscale opacity-40">🐕</span>
                 )}
               </div>
-              
-              {/* Row 4: Category (Left) & Attachment (Right) */}
-              <div className="flex justify-between items-center gap-4">
-                {CategoryBadge}
-                {AttachmentMeta}
-              </div>
+              <span className="text-[13px] font-bold text-stone-600 tracking-tight">
+                {record.dogName}
+              </span>
+            </div>
+
+            <div className="hidden sm:block w-px h-3 bg-stone-200" />
+
+            {/* 태그 정보 */}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[12px] font-bold text-stone-500 bg-stone-50/80 border border-stone-100 px-2.5 py-1 rounded-lg flex items-center gap-1.5 shadow-sm">
+                {isMedical ? '🏥' : '🏷️'} {isMedical ? (record.clinicName || 'Clinic') : record.categoryCode}
+              </span>
+
+              {record.relatedMedicalRecordId && (
+                <span className="text-[11px] font-black text-[#FF6B00] bg-orange-50/50 border border-orange-100 px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 shadow-sm">
+                  <span className="text-[12px] opacity-80">🔗</span> 진료 연동
+                </span>
+              )}
             </div>
           </div>
 
-          {/* DESKTOP ONLY SIDEBAR: Amount Box & Attachment (xl 이상) */}
-          <div className="hidden xl:flex flex-col items-end gap-4 min-w-[200px]">
+          {/* 모바일용 금액 & 첨부파일 (우측 정렬) */}
+          <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto mt-2 sm:mt-0 gap-4">
+            {/* 모바일에서만 아래로 내려오는 금액 */}
             {record.amount !== undefined && record.amount !== null && (
-              <div className="text-right py-4 px-8 bg-[#FCFAF8] rounded-2xl border border-[#F5F5F5] w-full shadow-inner">
-                <p className="text-[10px] font-black text-stone-300 uppercase tracking-widest mb-1">Amount</p>
-                <span className="text-[28px] font-black text-[#2D2D2D] tabular-nums tracking-tighter">
+              <div className="sm:hidden flex items-baseline gap-1">
+                <span className="text-[18px] font-black text-[#2D2D2D] tabular-nums tracking-tighter">
                   {record.amount.toLocaleString()}
-                  <span className="text-[16px] ml-1 text-stone-400 font-bold">원</span>
                 </span>
+                <span className="text-[12px] text-stone-400 font-bold">원</span>
               </div>
             )}
-            {AttachmentMeta && (
-              <div className="pr-2">
-                {AttachmentMeta}
+
+            {/* 첨부파일 아이콘 */}
+            {record.attachmentCount > 0 && (
+              <div className="flex items-center gap-1.5 text-stone-400 ml-auto sm:ml-0 bg-stone-50 px-2 py-1 rounded-lg border border-stone-100">
+                <span className="text-[12px]">📎</span>
+                <span className="text-[11px] font-black tabular-nums tracking-wider">{record.attachmentCount}</span>
               </div>
             )}
           </div>
