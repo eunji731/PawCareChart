@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { CareRecord } from '@/types/care';
 import { Badge } from '@/components/common/Badge';
 
@@ -7,17 +8,30 @@ interface CareRecordInfoSectionsProps {
 }
 
 export const CareRecordInfoSections: React.FC<CareRecordInfoSectionsProps> = ({ record }) => {
+  const navigate = useNavigate();
   const isMedical = record.recordType === 'MEDICAL';
+  const isExpense = record.recordType === 'EXPENSE';
+  
   const rawRecord = record as any;
   const getField = (camelField: string, snakeField: string) => 
-    rawRecord[camelField] || rawRecord[snakeField] || rawRecord.medicalDetails?.[camelField] || rawRecord.medical_details?.[snakeField];
+    rawRecord[camelField] ?? 
+    rawRecord[snakeField] ?? 
+    rawRecord.medicalDetails?.[camelField] ?? 
+    rawRecord.medical_details?.[snakeField] ??
+    rawRecord.medicalDetails?.[snakeField] ??
+    rawRecord.medical_details?.[camelField] ??
+    rawRecord.expenseDetails?.[camelField] ??
+    rawRecord.expense_details?.[snakeField];
 
   const medDays = getField('medicationDays', 'medication_days');
   const medStart = getField('medicationStartDate', 'medication_start_date');
   const symptomTags = record.symptomTags || getField('symptomTags', 'symptom_tags') || [];
   
+  // 연관 진료 정보 추출
+  const relatedMedical = record.relatedMedicalRecord || rawRecord.related_medical_record || rawRecord.expenseDetails?.relatedMedicalRecord || rawRecord.expense_details?.related_medical_record;
+
   let medStatus = record.medicationStatus;
-  const isMedCompletedRaw = rawRecord.is_medication_completed ?? rawRecord.medicalDetails?.is_medication_completed;
+  const isMedCompletedRaw = rawRecord.is_medication_completed ?? rawRecord.medicalDetails?.is_medication_completed ?? rawRecord.medical_details?.is_medication_completed;
   if (!medStatus && isMedCompletedRaw !== undefined && isMedCompletedRaw !== null) {
       medStatus = isMedCompletedRaw ? 'COMPLETED' : 'ACTIVE';
   } else if (!medStatus && medDays) {
@@ -27,7 +41,7 @@ export const CareRecordInfoSections: React.FC<CareRecordInfoSectionsProps> = ({ 
   return (
     <div className="flex flex-col gap-4">
       
-      {/* 1. 상단 KPI 카드 (이전 스타일 복구) */}
+      {/* 1. 상단 KPI 카드 */}
       <div className={`flex flex-col md:grid gap-3 lg:gap-4 ${isMedical ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}>
         
         {/* Amount Card */}
@@ -64,7 +78,30 @@ export const CareRecordInfoSections: React.FC<CareRecordInfoSectionsProps> = ({ 
         )}
       </div>
 
-      {/* 2. 증상 태그 (심플 스타일) */}
+      {/* 2. 연관 진료 기록 카드 (지출 기록인 경우 노출) */}
+      {isExpense && relatedMedical && (
+        <div 
+          onClick={() => navigate(`/care-records/${relatedMedical.id}`)}
+          className="group bg-white rounded-[24px] p-6 shadow-sm border border-stone-200/60 cursor-pointer hover:border-[#FF6B00] transition-all"
+        >
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <span className="text-stone-400 text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5">
+                <span className="w-1 h-1 bg-[#FF6B00] rounded-full" /> 연관된 진료 정보
+              </span>
+              <h4 className="text-[16px] font-black text-stone-800 group-hover:text-[#FF6B00] transition-colors">
+                [{relatedMedical.recordDate}] {relatedMedical.title || relatedMedical.clinicName || '진료 기록'}
+              </h4>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-bold text-stone-300 uppercase tracking-tighter group-hover:text-[#FF6B00]">상세보기</span>
+              <span className="text-stone-300 group-hover:text-[#FF6B00] transition-colors text-xl">→</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 3. 증상 태그 (심플 스타일) */}
       {isMedical && symptomTags.length > 0 && (
         <div className="px-2 py-1">
           <div className="flex flex-wrap gap-2">
@@ -81,7 +118,7 @@ export const CareRecordInfoSections: React.FC<CareRecordInfoSectionsProps> = ({ 
         </div>
       )}
 
-      {/* 3. 복약 상태 카드 (이전 스타일 복구) */}
+      {/* 4. 복약 상태 카드 */}
       {isMedical && medStatus && medStatus !== 'NONE' && (
         <div className={`rounded-[24px] p-5 lg:p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 md:gap-5 border shadow-sm
           ${medStatus === 'ACTIVE' ? 'bg-[#FF6B00]/5 border-[#FF6B00]/20' : 'bg-green-50/50 border-green-200/50'}

@@ -50,4 +50,12 @@ export const careApi = {
     const response = await apiClient.get('/care-records/dashboard/summary', { params });
     return response.data;
   },
+
+  // 연관 진료 기록 후보 조회 (지출 기록 등록용 - 서버 측 검색 지원)
+  getMedicalRecordCandidates: async (dogId: number, keyword?: string): Promise<CareRecord[]> => {
+    const response = await apiClient.get(`/care-records/medical-candidates`, {
+      params: { dogId, keyword }
+    });
+    return response.data;
+  },
 };

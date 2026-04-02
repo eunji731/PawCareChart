@@ -1,27 +1,85 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Section } from '@/components/common/Section';
 import { Input } from '@/components/common/Input';
 import { Select } from '@/components/common/Select';
 import { Textarea } from '@/components/common/Textarea';
+import { careApi } from '@/api/careApi';
+import type { CareRecord } from '@/types/care';
+import { RelatedMedicalRecordModal } from './RelatedMedicalRecordModal';
 
 interface ExpenseFormProps {
   data: {
     categoryCode: string;
     amount: string | number;
     memo: string;
-    relatedMedicalRecordId: string | number;
+    relatedMedicalRecordId: string | number | null;
   };
+  dogId?: string | number;
+  onDogChange?: (dogId: string) => void;
   onChange: (data: any) => void;
 }
 
-export const ExpenseForm: React.FC<ExpenseFormProps> = ({ data, onChange }) => {
+export const ExpenseForm: React.FC<ExpenseFormProps> = ({ data, dogId, onDogChange, onChange }) => {
+  const [medicalCandidates, setMedicalCandidates] = useState<CareRecord[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [selectedRecordInfo, setSelectedRecordInfo] = useState<CareRecord | null>(null);
+  
+  const debounceTimerRef = useRef<number | null>(null);
+
   const categoryOptions = [
-    { value: 'FEED', label: '사료/간식' },
-    { value: 'SUPPLIES', label: '용품' },
-    { value: 'MEDICAL', label: '진료비' },
-    { value: 'GROOMING', label: '미용' },
+    { value: 'CONSULTATION', label: '🩺 진료비' },
+    { value: 'MEDICINE', label: '💊 약값' },
+    { value: 'EXAM', label: '🔬 검사비' },
+    { value: 'VACCINE', label: '💉 예방접종' },
+    { value: 'GROOMING', label: '✂️ 미용' },
+    { value: 'FEED', label: '🍖 사료/간식' },
+    { value: 'SUPPLIES', label: '🧸 용품' },
     { value: 'ETC', label: '기타' },
   ];
+
+  const fetchCandidates = useCallback(async (id: number, keyword: string) => {
+    try {
+      setIsLoading(true);
+      const results = await careApi.getMedicalRecordCandidates(id, keyword);
+      setMedicalCandidates(results);
+    } catch (err) {
+      console.error('Failed to search medical records:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const handleSearch = useCallback((keyword: string) => {
+    if (!dogId) return;
+    if (debounceTimerRef.current) window.clearTimeout(debounceTimerRef.current);
+    debounceTimerRef.current = window.setTimeout(() => {
+      fetchCandidates(Number(dogId), keyword);
+    }, 300);
+  }, [dogId, fetchCandidates]);
+
+  useEffect(() => {
+    if (dogId) fetchCandidates(Number(dogId), '');
+  }, [dogId, fetchCandidates]);
+
+  useEffect(() => {
+    if (data.relatedMedicalRecordId && medicalCandidates.length > 0) {
+      const found = medicalCandidates.find(m => m.id.toString() === data.relatedMedicalRecordId?.toString());
+      if (found) setSelectedRecordInfo(found);
+    } else if (!data.relatedMedicalRecordId) {
+      setSelectedRecordInfo(null);
+    }
+  }, [data.relatedMedicalRecordId, medicalCandidates]);
+
+  const handleSelectRecord = (record: CareRecord) => {
+    onChange({ ...data, relatedMedicalRecordId: record.id });
+    setSelectedRecordInfo(record);
+  };
+
+  const handleDogChangeInModal = (newDogId: string) => {
+    if (onDogChange) onDogChange(newDogId);
+    onChange({ ...data, relatedMedicalRecordId: null }); // 아이가 바뀌면 연관 기록 초기화
+  };
 
   return (
     <div className="space-y-10">
@@ -54,18 +112,43 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ data, onChange }) => {
 
       <Section title="연관 정보" description="병원 진료와 관련된 지출인가요?">
         <div className="space-y-4">
-          {/* TODO: 최근 병원 기록 목록을 가져와서 매핑 예정 */}
-          <Select 
-            label="병원 기록 연결 (선택)" 
-            options={[{ value: '', label: '연결할 기록 없음' }]} 
-            value={data.relatedMedicalRecordId} 
-            onChange={(e) => onChange({ ...data, relatedMedicalRecordId: e.target.value })} 
-          />
-          <p className="text-[12px] text-stone-400 font-medium ml-1">
-            진료비 지출인 경우 해당 병원 기록을 연결하면 나중에 한꺼번에 모아보기 편해요.
-          </p>
+          {selectedRecordInfo ? (
+            <div className="p-6 bg-[#FF6B00]/5 border-2 border-[#FF6B00]/20 rounded-[24px] flex items-center justify-between group">
+              <div className="space-y-1">
+                <span className="text-[#FF6B00] text-[10px] font-black uppercase tracking-widest">연결된 진료 기록</span>
+                <h4 className="text-[16px] font-bold text-stone-800">
+                  [{selectedRecordInfo.recordDate}] {selectedRecordInfo.title || selectedRecordInfo.clinicName || '진료 기록'}
+                </h4>
+              </div>
+              <div className="flex gap-2">
+                <button type="button" onClick={() => setIsModalOpen(true)} className="px-4 py-2 bg-white border border-stone-200 rounded-xl text-[12px] font-bold text-stone-600 hover:border-[#FF6B00] transition-all">변경</button>
+                <button type="button" onClick={() => onChange({ ...data, relatedMedicalRecordId: null })} className="px-4 py-2 bg-white border border-stone-200 rounded-xl text-[12px] font-bold text-red-400 hover:border-red-200 transition-all">해제</button>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setIsModalOpen(true)}
+              className="w-full p-8 border-2 border-dashed border-stone-200 rounded-[24px] text-stone-400 hover:border-[#FF6B00] hover:text-[#FF6B00] hover:bg-orange-50/30 transition-all flex flex-col items-center gap-2 group"
+            >
+              <span className="text-2xl group-hover:scale-110 transition-transform">🔍</span>
+              <span className="font-bold text-[14px]">연관된 병원 진료 기록 찾기</span>
+              <span className="text-[12px] opacity-60 font-medium">지출과 관련된 진료 내역이 있다면 선택해 주세요.</span>
+            </button>
+          )}
         </div>
       </Section>
+
+      <RelatedMedicalRecordModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        candidates={medicalCandidates}
+        isLoading={isLoading}
+        selectedDogId={dogId}
+        onDogChange={handleDogChangeInModal}
+        onSearch={handleSearch}
+        onSelect={handleSelectRecord}
+      />
     </div>
   );
 };

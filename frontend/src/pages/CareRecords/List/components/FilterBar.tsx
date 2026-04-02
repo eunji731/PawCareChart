@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/common/Button';
 import { dogApi } from '@/api/dogApi';
 import type { Dog } from '@/types/dog';
 import type { CareRecordsFilter } from '@/types/care';
-
-import { useNavigate } from 'react-router-dom';
 
 interface FilterBarProps {
   filters: CareRecordsFilter;

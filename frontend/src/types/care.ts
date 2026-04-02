@@ -1,4 +1,4 @@
-export type RecordType = 'MEDICAL' | 'EXPENSE';
+export type RecordType = 'MEDICAL' | 'EXPENSE' | 'MEMO';
 
 export interface CareRecord {
   id: number;
@@ -13,14 +13,17 @@ export interface CareRecord {
   clinicName?: string;
   diagnosis?: string;
   symptoms?: string;
-  symptomTags?: string[]; // 추가됨
+  symptomTags?: string[];
   treatment?: string;
   medicationStatus?: 'NONE' | 'ACTIVE' | 'COMPLETED';
   medicationStartDate?: string | null;
   medicationDays?: number | null;
   // Common / Expense
   categoryCode?: string;
-  amount?: number | null; // 이제 MEDICAL에서도 사용됨
+  amount?: number | null;
+  // Expense Specific
+  relatedMedicalRecordId?: number | null;
+  relatedMedicalRecord?: { id: number; title: string; recordDate: string; clinicName?: string } | null;
   // Common
   attachmentCount: number;
 }
@@ -36,10 +39,10 @@ export interface CareRecordsFilter {
 export interface MedicalDetailRequest {
   clinicName?: string;
   symptoms?: string;
-  symptomTags?: string[]; // 추가됨
+  symptomTags?: string[];
   diagnosis?: string;
   treatment?: string;
-  amount?: number | null; // 추가됨
+  amount?: number | null;
   medicationStartDate?: string | null;
   medicationDays?: number | null;
   isMedicationCompleted?: boolean;

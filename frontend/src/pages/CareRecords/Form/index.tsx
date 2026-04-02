@@ -25,6 +25,11 @@ const CareRecordFormPage = () => {
     isFetching
   } = useCareRecordForm(id);
 
+  // 강아지 상태 변경 핸들러 정의
+  const handleDogChange = (dogId: string) => {
+    setCommonData(prev => ({ ...prev, dogId }));
+  };
+
   if (isFetching) {
     return (
       <div className="min-h-screen bg-[#FCFAF8] flex items-center justify-center">
@@ -82,7 +87,12 @@ const CareRecordFormPage = () => {
             {recordType === 'MEDICAL' ? (
               <MedicalForm data={medicalData} onChange={setMedicalData} />
             ) : (
-              <ExpenseForm data={expenseData} onChange={setExpenseData} />
+              <ExpenseForm 
+                data={expenseData} 
+                dogId={commonData.dogId} 
+                onDogChange={handleDogChange} // 추가
+                onChange={setExpenseData} 
+              />
             )}
           </div>
 
