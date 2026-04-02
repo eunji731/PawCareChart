@@ -20,7 +20,7 @@ export const CareRecordDetailHeader: React.FC<CareRecordDetailHeaderProps> = ({ 
             {record.recordType}
           </span>
           <span className="text-[13px] font-black text-stone-400 tabular-nums ml-1 tracking-widest">
-            {record.recordDate}
+            {new Date(record.recordDate).toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'short' }).replace(/\. /g, '.').replace(/\.$/, '')}
           </span>
         </div>
         

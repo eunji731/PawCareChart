@@ -20,7 +20,7 @@ export const ScheduleDetailHeader: React.FC<ScheduleDetailHeaderProps> = ({ sche
             {schedule.scheduleTypeCode}
           </span>
           <span className="text-[13px] font-black text-stone-400 tabular-nums ml-1 tracking-widest">
-            {new Date(schedule.scheduleDate).toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'short' })}
+            {new Date(schedule.scheduleDate).toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'short' }).replace(/\. /g, '.').replace(/\.$/, '')}
           </span>
         </div>
         
