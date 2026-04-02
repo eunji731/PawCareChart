@@ -53,6 +53,9 @@ public class CareRecordListResponse {
     @Schema(description = "금액")
     private Long amount;
 
+    @Schema(description = "연동된 병원 기록 ID (지출 타입일 때 존재)")
+    private Long relatedMedicalRecordId;
+
     @Schema(description = "첨부파일 개수")
     private Integer attachmentCount;
 }

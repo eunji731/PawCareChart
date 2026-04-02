@@ -84,6 +84,7 @@ public class CareService {
                         .medicationStatus(record.getMedicationStatus())
                         .categoryCode(record.getCategoryCode())
                         .amount(record.getAmount())
+                        .relatedMedicalRecordId(record.getRelatedMedicalRecordId())
                         .attachmentCount(fileCountMap.getOrDefault(record.getId(), 0))
                         .build()
                 )

@@ -24,6 +24,7 @@
 
         ed.category_code AS categoryCode,
         COALESCE(md.amount, ed.amount) AS amount,
+        ed.related_medical_record_id AS relatedMedicalRecordId,
 
         -- TODO: 실제 첨부파일 테이블 조인 카운트로 변경 필요 (일단 에러 안 나게 0으로 처리)
         0 AS attachmentCount
