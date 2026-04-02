@@ -30,7 +30,7 @@ public class FileEntity {
     @Column(name = "file_size")
     private Long fileSize;
 
-    @Column(name = "file_type", length = 50)
+    @Column(name = "file_type", length = 500)
     private String fileType;
 
     @Column(name = "created_at", nullable = false, updatable = false)
