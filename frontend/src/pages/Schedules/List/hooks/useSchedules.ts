@@ -18,19 +18,9 @@ export const useSchedules = () => {
       setSchedules(data);
     } catch (err: any) {
       console.error('Failed to fetch schedules:', err);
-      
-      // 백엔드가 준비되지 않았거나 403/404 에러 시 임시 데이터 노출 (개발용)
-      if (err.response?.status === 403 || err.response?.status === 404 || !err.response) {
-        console.warn('Backend API not ready or forbidden. Using mock data for development.');
-        const mockSchedules: Schedule[] = [
-          { id: 1, dogId: 1, dogName: '봉봉', title: '튼튼동물병원 피부염 재진', scheduleDate: '2026-04-04T14:00:00', scheduleTypeCode: 'MEDICAL', isCompleted: false, memo: '약 먹고 구토한 증상 문의', symptomTags: ['피부염', '구토'], dDay: 3 },
-          { id: 2, dogId: 1, dogName: '봉봉', title: '멍멍살롱 썸머컷', scheduleDate: '2026-04-15T11:00:00', scheduleTypeCode: 'GROOMING', isCompleted: false, memo: '3mm, 얼굴 가위컷', symptomTags: ['미용'], dDay: 14 },
-          { id: 3, dogId: 1, dogName: '봉봉', title: '넥스가드 스펙트라', scheduleDate: '2026-04-21T09:00:00', scheduleTypeCode: 'MEDICATION', isCompleted: false, memo: '심장사상충 예방', symptomTags: [], dDay: 20 }
-        ];
-        setSchedules(mockSchedules);
-      }
+      setSchedules([]); // 에러 시 빈 배열로 초기화
     } finally {
-      setIsLoading(false); // 어떤 경우에도 로딩은 종료
+      setIsLoading(false); 
     }
   }, [filters]);
 

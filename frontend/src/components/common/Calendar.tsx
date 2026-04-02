@@ -52,18 +52,24 @@ export const Calendar: React.FC<CalendarProps> = ({
         <h3 className="text-[36px] md:text-[44px] font-black tracking-tighter leading-none">
           {monthLabel}
         </h3>
-        <div className="flex gap-2">
+        <div className="flex gap-2 bg-stone-100/50 p-1.5 rounded-[20px]">
           <button 
             onClick={() => setCurrentMonth(prev => moveMonth(prev, -1))} 
-            className="w-11 h-11 flex items-center justify-center rounded-xl border border-[#EEEEEE] hover:bg-stone-50 transition-all active:scale-90 cursor-pointer"
+            className="w-10 h-10 flex items-center justify-center rounded-[14px] bg-white border border-stone-100 text-stone-400 hover:text-[#FF6B00] hover:border-[#FF6B00]/30 shadow-sm transition-all active:scale-90 cursor-pointer"
+            title="이전 달"
           >
-            <span className="text-stone-400">←</span>
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" />
+            </svg>
           </button>
           <button 
             onClick={() => setCurrentMonth(prev => moveMonth(prev, 1))} 
-            className="w-11 h-11 flex items-center justify-center rounded-xl border border-[#EEEEEE] hover:bg-stone-50 transition-all active:scale-90 cursor-pointer"
+            className="w-10 h-10 flex items-center justify-center rounded-[14px] bg-white border border-stone-100 text-stone-400 hover:text-[#FF6B00] hover:border-[#FF6B00]/30 shadow-sm transition-all active:scale-90 cursor-pointer"
+            title="다음 달"
           >
-            <span className="text-stone-400">→</span>
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" />
+            </svg>
           </button>
         </div>
       </header>

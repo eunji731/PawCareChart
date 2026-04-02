@@ -1,16 +1,30 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { Button } from '@/components/common/Button';
 import { useCareRecords } from './hooks/useCareRecords';
 import { TimelineItem } from './components/TimelineItem';
 import { FilterBar } from './components/FilterBar';
-import { CareCalendar } from './components/CareCalendar';
+import { Calendar } from '@/components/common/Calendar';
+import type { CalendarMarkers } from '@/components/common/Calendar';
 
 const CareRecordListPage = () => {
   const navigate = useNavigate();
   const { records, calendarRecords, isLoading, filters, updateFilter } = useCareRecords();
   const [selectedDate, setSelectedDate] = useState<string>('');
+
+  // 달력 마커 데이터 변환 (CareRecord -> CalendarMarkers)
+  const calendarMarkers = useMemo(() => {
+    const markers: CalendarMarkers = {};
+    calendarRecords.forEach(record => {
+      const date = record.recordDate;
+      if (!markers[date]) markers[date] = [];
+      markers[date].push({
+        type: record.recordType as any
+      });
+    });
+    return markers;
+  }, [calendarRecords]);
 
   // 달력의 달이 변경될 때 호출 - useCallback으로 안정화
   const handleMonthChange = useCallback((year: number, month: number) => {
@@ -67,8 +81,8 @@ const CareRecordListPage = () => {
         <main className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start pb-20">
           <div className="lg:col-span-5 xl:col-span-4 lg:sticky lg:top-12">
             <div className="bg-white rounded-3xl p-8 shadow-[0_20px_60px_rgba(0,0,0,0.02)] border border-[#F0F0F0]">
-              <CareCalendar
-                records={calendarRecords}
+              <Calendar
+                markers={calendarMarkers}
                 selectedDate={selectedDate}
                 onDateClick={handleDateClick}
                 onMonthChange={handleMonthChange}
