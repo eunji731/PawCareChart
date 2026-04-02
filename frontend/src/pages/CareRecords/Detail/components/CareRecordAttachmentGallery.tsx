@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import type { FileItem } from '@/types/file';
+import { isImageFile, getFileIcon, getFileExtension } from '@/utils/fileUtils';
 
 interface CareRecordAttachmentGalleryProps {
   files: FileItem[];
@@ -10,36 +11,61 @@ export const CareRecordAttachmentGallery: React.FC<CareRecordAttachmentGalleryPr
 
   if (files.length === 0) return null;
 
+  const handleFileClick = (file: FileItem) => {
+    const isImage = isImageFile(file.fileUrl) || file.fileType.startsWith('image/');
+    if (isImage) {
+      setSelectedFile(file);
+    } else {
+      // 비이미지 파일은 즉시 새 탭에서 열기 (브라우저 기본 동작: PDF 미리보기 또는 다운로드)
+      window.open(file.fileUrl, '_blank');
+    }
+  };
+
   return (
     <section>
       <div className="flex justify-between items-center mb-8">
         <h2 className="text-[15px] font-black text-[#2D2D2D] tracking-widest uppercase flex items-center gap-2.5">
-          <span className="text-[18px]">📷</span> Attachment Gallery
+          <span className="text-[18px]">📁</span> Attachment Gallery
         </h2>
         <span className="text-[12px] font-black text-stone-400 uppercase tracking-widest">{files.length} Files</span>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 lg:gap-5">
-        {files.map((file) => (
-          <div 
-            key={file.id}
-            onClick={() => setSelectedFile(file)}
-            className="aspect-square rounded-[20px] overflow-hidden cursor-pointer group border border-stone-100 bg-stone-50 transition-all hover:border-[#FF6B00]/30 hover:shadow-xl hover:shadow-orange-500/5 focus:outline-none"
-          >
-            {file.fileType.startsWith('image/') ? (
-              <img 
-                src={file.fileUrl} 
-                alt={file.originalFileName} 
-                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
-              />
-            ) : (
-              <div className="w-full h-full flex flex-col items-center justify-center gap-3">
-                <span className="text-4xl grayscale opacity-30 group-hover:opacity-100 group-hover:grayscale-0 transition-all transform group-hover:scale-110">📄</span>
-                <span className="text-[10px] font-bold text-stone-400 px-4 text-center line-clamp-1">{file.originalFileName}</span>
+        {files.map((file) => {
+          const isImage = isImageFile(file.fileUrl) || file.fileType.startsWith('image/');
+          const extension = getFileExtension(file.fileUrl);
+
+          return (
+            <div 
+              key={file.id}
+              onClick={() => handleFileClick(file)}
+              className="flex flex-col gap-2 group cursor-pointer"
+            >
+              <div className="aspect-square rounded-[20px] overflow-hidden border border-stone-100 bg-stone-50 transition-all hover:border-[#FF6B00]/30 hover:shadow-xl hover:shadow-orange-500/5 focus:outline-none relative">
+                {isImage ? (
+                  <img 
+                    src={file.fileUrl} 
+                    alt={file.originalFileName} 
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                  />
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center gap-2 p-4">
+                    <span className="text-4xl transition-all transform group-hover:scale-110">
+                      {getFileIcon(extension)}
+                    </span>
+                    <span className="text-[10px] font-black text-stone-400 uppercase tracking-tighter">{extension}</span>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-        ))}
+              <span 
+                className="text-[11px] font-bold text-stone-500 text-center truncate px-1 group-hover:text-[#FF6B00] transition-colors" 
+                title={file.originalFileName}
+              >
+                {file.originalFileName}
+              </span>
+            </div>
+          );
+        })}
       </div>
 
       {/* Image Viewer Modal */}
@@ -56,31 +82,23 @@ export const CareRecordAttachmentGallery: React.FC<CareRecordAttachmentGalleryPr
               ✕
             </button>
             
-            {selectedFile.fileType.startsWith('image/') ? (
-              <img 
-                src={selectedFile.fileUrl} 
-                alt={selectedFile.originalFileName} 
-                className="max-w-full max-h-[80vh] object-contain rounded-3xl shadow-2xl"
-              />
-            ) : (
-              <div className="bg-white p-12 rounded-[40px] flex flex-col items-center gap-10 shadow-2xl">
-                <span className="text-8xl">📄</span>
-                <div className="text-center">
-                  <p className="text-[#2D2D2D] font-black text-2xl mb-3 tracking-tight">{selectedFile.originalFileName}</p>
-                  <p className="text-stone-400 text-sm font-medium">이 파일은 미리보기를 지원하지 않습니다.</p>
-                </div>
-                <a 
-                  href={selectedFile.fileUrl} 
-                  download 
-                  className="bg-stone-900 text-white px-12 py-5 rounded-[24px] font-black text-[16px] shadow-2xl active:scale-95 transition-all"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  파일 다운로드
-                </a>
-              </div>
-            )}
+            <img 
+              src={selectedFile.fileUrl} 
+              alt={selectedFile.originalFileName} 
+              className="max-w-full max-h-[80vh] object-contain rounded-3xl shadow-2xl"
+            />
             
-            <p className="mt-8 text-white/30 text-[13px] font-bold tracking-widest uppercase">{selectedFile.originalFileName}</p>
+            <div className="mt-8 flex flex-col items-center gap-2">
+              <p className="text-white/80 text-[14px] font-black tracking-tight">{selectedFile.originalFileName}</p>
+              <a 
+                href={selectedFile.fileUrl} 
+                download={selectedFile.originalFileName}
+                className="text-[11px] font-black text-[#FF6B00] bg-white px-4 py-1.5 rounded-full uppercase tracking-widest hover:bg-orange-50 transition-colors"
+                onClick={(e) => e.stopPropagation()}
+              >
+                Download Image
+              </a>
+            </div>
           </div>
         </div>
       )}

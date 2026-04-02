@@ -136,7 +136,7 @@ const ScheduleFormPage: React.FC = () => {
                 variant="grid"
                 mode="multiple"
                 maxCount={5}
-                displayUrls={fileUploader.displayUrls}
+                fileInfos={fileUploader.fileInfos} // displayUrls 대신 fileInfos 사용
                 onFileSelect={(files) => fileUploader.handleSelect(files, 5)}
                 onFileDelete={fileUploader.handleDelete}
                 loading={fileUploader.isUploading}

@@ -102,23 +102,32 @@ export const useFileUpload = (targetType: string) => {
     setExistingFiles([]);
   }, [revokeAllPreviews]);
 
-  // ========== 표시용 URL 목록 ==========
-  const displayUrls = [
-    ...existingFiles.map(f => f.fileUrl), 
-    ...previewUrls
+  // ========== 표시용 파일 정보 목록 ==========
+  const fileInfos = [
+    ...existingFiles.map(f => ({
+      url: f.fileUrl,
+      name: f.originalFileName,
+      isExisting: true
+    })),
+    ...localFiles.map((f, i) => ({
+      url: previewUrls[i],
+      name: f.name,
+      isExisting: false
+    }))
   ];
 
   // ========== 기존 파일의 ID 목록 ==========
   const existingFileIds = existingFiles.map(f => f.id);
 
   return {
-    displayUrls,
+    fileInfos, // displayUrls 대신 사용 권장
+    //displayUrls, // 하위 호환성 유지
     localFiles,
     existingFiles,
     existingFileIds,
     isUploading,
     hasNewFiles: localFiles.length > 0,
-    setInitialFiles, // URL 대신 FileItem 객체 배열을 받도록 변경
+    setInitialFiles,
     handleSelect,
     handleDelete,
     upload,

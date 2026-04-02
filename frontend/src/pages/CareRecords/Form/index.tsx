@@ -93,7 +93,7 @@ const CareRecordFormPage = () => {
                 variant="grid"
                 mode="multiple"
                 maxCount={10}
-                displayUrls={fileUploader.displayUrls}
+                fileInfos={fileUploader.fileInfos} // displayUrls 대신 fileInfos 사용
                 onFileSelect={(files) => fileUploader.handleSelect(files, 10)}
                 onFileDelete={fileUploader.handleDelete}
                 loading={fileUploader.isUploading}

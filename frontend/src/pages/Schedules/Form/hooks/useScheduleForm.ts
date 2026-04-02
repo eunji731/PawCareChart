@@ -45,24 +45,27 @@ export const useScheduleForm = (id?: string) => {
           })
         ]);
 
-        console.log('Loaded schedule data:', data);
-        console.log('Loaded schedule files:', files);
+        if (data) {
+          const datePart = data.scheduleDate ? data.scheduleDate.split('T')[0] : new Date().toISOString().split('T')[0];
+          const timePart = data.scheduleDate && data.scheduleDate.includes('T') 
+            ? data.scheduleDate.split('T')[1].substring(0, 5) 
+            : '10:00';
 
-        setFormData({
-          dogId: data.dogId.toString(),
-          title: data.title,
-          scheduleDate: data.scheduleDate.split('T')[0],
-          scheduleTime: data.scheduleDate.split('T')[1].substring(0, 5),
-          scheduleTypeCode: data.scheduleTypeCode,
-          memo: data.memo || '',
-          symptomTags: data.symptomTags || []
-        });
+          setFormData({
+            dogId: data.dogId?.toString() || '',
+            title: data.title || '',
+            scheduleDate: datePart,
+            scheduleTime: timePart,
+            scheduleTypeCode: data.scheduleTypeCode || 'MEDICAL',
+            memo: data.memo || '',
+            symptomTags: data.symptomTags || []
+          });
 
-        // 기존 첨부파일 로드
-        if (files && files.length > 0) {
-          fileUploader.setInitialFiles(files);
+          // 기존 첨부파일 로드
+          if (files && files.length > 0) {
+            fileUploader.setInitialFiles(files);
+          }
         }
-
       } catch (err) {
         console.error('Failed to load schedule:', err);
         alert('일정 정보를 불러오는데 실패했습니다.');
@@ -81,16 +84,21 @@ export const useScheduleForm = (id?: string) => {
     try {
       setIsLoading(true);
 
-      // 1. 로컬 파일 먼저 업로드 (CareRecord와 동일 로직)
+      // 1. 로컬 파일 먼저 업로드
       let uploadedFileIds: number[] = [];
       if (fileUploader.localFiles.length > 0) {
-        const uploadedFiles = await fileUploader.upload();
-        if (uploadedFiles) {
-          uploadedFileIds = uploadedFiles.map(f => f.id);
+        try {
+          const uploadedFiles = await fileUploader.upload();
+          if (uploadedFiles) {
+            uploadedFileIds = uploadedFiles.map(f => f.id);
+          }
+        } catch (uploadErr: any) {
+          console.error('File Upload Error:', uploadErr);
+          throw new Error(uploadErr.response?.data?.message || '파일 업로드 중 오류가 발생했습니다. 허용되지 않는 파일 형식이거나 용량이 너무 큽니다.');
         }
       }
 
-      // 2. 최종 파일 ID 목록 생성 (기존 유지 파일 + 새로 업로드된 파일)
+      // 2. 최종 파일 ID 목록 생성
       const combinedFileIds = [...fileUploader.existingFileIds, ...uploadedFileIds];
 
       const payload = {
@@ -114,7 +122,8 @@ export const useScheduleForm = (id?: string) => {
       navigate('/schedules');
     } catch (err: any) {
       console.error('Save Error:', err);
-      alert(err.response?.data?.message || '저장 중 오류가 발생했습니다.');
+      // 구체적인 에러 메시지가 있으면 보여주고, 없으면 기본 메시지 출력
+      alert(err.message || err.response?.data?.message || '저장 중 오류가 발생했습니다.');
     } finally {
       setIsLoading(false);
     }
