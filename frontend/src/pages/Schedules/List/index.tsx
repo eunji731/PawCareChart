@@ -3,11 +3,22 @@ import { useNavigate } from 'react-router-dom';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { Calendar } from '@/components/common/Calendar';
 import type { CalendarMarkers } from '@/components/common/Calendar';
+import { FilterBar } from '@/components/common/FilterBar';
+import type { FilterOption } from '@/components/common/FilterBar';
 import { ScheduleHeroCard } from './components/ScheduleHeroCard';
 import { ScheduleList } from './components/ScheduleList';
 import { useSchedules } from './hooks/useSchedules';
 import { dogApi } from '@/api/dogApi';
 import type { Dog } from '@/types/dog';
+
+const filterOptions: FilterOption[] = [
+  { label: '전체 일정', value: 'ALL' },
+  { label: '병원 진료', value: 'MEDICAL' },
+  { label: '미용 예약', value: 'GROOMING' },
+  { label: '복약 알림', value: 'MEDICATION' },
+  { label: '정기 검진', value: 'CHECKUP' },
+  { label: '기타 일정', value: 'ETC' },
+];
 
 const ScheduleListPage: React.FC = () => {
   const navigate = useNavigate();
@@ -20,43 +31,57 @@ const ScheduleListPage: React.FC = () => {
     dogApi.getDogs().then(setDogs).catch(() => setDogs([]));
   }, []);
 
+  // 날짜순으로 정렬된 일정 목록
+  const sortedSchedules = useMemo(() => {
+    return [...schedules].sort((a, b) =>
+      new Date(a.scheduleDate).getTime() - new Date(b.scheduleDate).getTime()
+    );
+  }, [schedules]);
+
   const handleDateClick = useCallback((date: string) => {
     setSelectedDate(date);
+    setActiveScheduleId(null);
   }, []);
 
   const handleMonthChange = useCallback((year: number, month: number) => {
     const start = `${year}-${String(month).padStart(2, '0')}-01`;
     const lastDay = new Date(year, month, 0).getDate();
     const end = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
-    
     updateFilter({ startDate: start, endDate: end });
   }, [updateFilter]);
 
   const markers = useMemo(() => {
     const m: CalendarMarkers = {};
-    schedules.forEach(s => {
+    sortedSchedules.forEach(s => {
       const date = s.scheduleDate.split('T')[0];
       if (!m[date]) m[date] = [];
       m[date].push({ type: s.scheduleTypeCode as any });
     });
     return m;
-  }, [schedules]);
+  }, [sortedSchedules]);
 
   const selectedDateSchedules = useMemo(() => {
-    return schedules.filter(s => s.scheduleDate.startsWith(selectedDate));
-  }, [selectedDate, schedules]);
+    return sortedSchedules.filter(s => s.scheduleDate.startsWith(selectedDate));
+  }, [selectedDate, sortedSchedules]);
 
   const heroSchedule = useMemo(() => {
     if (activeScheduleId) {
-      return schedules.find(s => s.id === activeScheduleId) || null;
+      const found = sortedSchedules.find(s => s.id === activeScheduleId);
+      if (found) return found;
     }
-    return selectedDateSchedules.length > 0 ? selectedDateSchedules[0] : (schedules[0] || null);
-  }, [selectedDateSchedules, schedules, activeScheduleId]);
+    if (selectedDateSchedules.length > 0) {
+      return selectedDateSchedules[0];
+    }
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    const upcoming = sortedSchedules.find(s => new Date(s.scheduleDate) >= now);
+    return upcoming || sortedSchedules[0] || null;
+  }, [selectedDateSchedules, sortedSchedules, activeScheduleId]);
 
   return (
     <div className="min-h-screen bg-[#FCFAF8]">
       <PageLayout title="" maxWidth="max-w-[1500px]">
-        
+
         <header className="pt-8 pb-10 flex flex-col md:flex-row justify-between items-end gap-6">
           <div className="space-y-3">
             <h1 className="text-[48px] lg:text-[56px] font-black text-[#2D2D2D] leading-[0.95] tracking-tight">
@@ -71,7 +96,7 @@ const ScheduleListPage: React.FC = () => {
         <section className="mb-10">
           <div className="bg-white rounded-2xl p-6 shadow-[0_20px_60px_rgba(0,0,0,0.02)] border border-[#F0F0F0]">
             <div className="flex flex-col xl:flex-row gap-6 items-stretch xl:items-center">
-              
+
               <div className="flex-grow flex flex-col sm:flex-row gap-3">
                 <div className="relative flex-grow group">
                   <input
@@ -83,7 +108,8 @@ const ScheduleListPage: React.FC = () => {
                   <span className="absolute left-5 top-1/2 -translate-y-1/2 text-lg opacity-20 group-focus-within:opacity-100 transition-opacity">🔍</span>
                 </div>
 
-                <div className="relative sm:w-56 group">
+                {/* 반려견 선택 */}
+                <div className="relative sm:w-48 group">
                   <select
                     value={filters.dogId || ''}
                     onChange={(e) => updateFilter({ dogId: e.target.value ? Number(e.target.value) : undefined })}
@@ -96,35 +122,52 @@ const ScheduleListPage: React.FC = () => {
                   </select>
                   <span className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-stone-300 font-bold group-hover:text-[#FF6B00] transition-colors">▼</span>
                 </div>
-              </div>
 
-              <div className="flex p-1.5 bg-[#F5F5F5] rounded-xl shadow-inner">
-                {[
-                  { label: 'Total', value: 'ALL' },
-                  { label: 'Medical', value: 'MEDICAL' },
-                  { label: 'Grooming', value: 'GROOMING' },
-                  { label: 'Meds', value: 'MEDICATION' },
-                ].map((option) => (
-                  <button
-                    key={option.value}
-                    onClick={() => updateFilter({ type: option.value as any })}
-                    className={`px-8 h-[44px] rounded-lg text-[13px] font-black transition-all duration-300 active:scale-95 ${
-                      filters.type === option.value
-                        ? 'bg-white text-[#FF6B00] shadow-sm'
-                        : 'text-stone-400 hover:text-stone-600'
-                    }`}
+                {/* 일정 유형 선택 */}
+                <div className="relative sm:w-40 group">
+                  <select
+                    value={filters.type || 'ALL'}
+                    onChange={(e) => updateFilter({ type: e.target.value as any })}
+                    className="w-full h-[56px] px-6 rounded-xl bg-[#F9F9F9] border border-transparent focus:border-[#FF6B00] focus:bg-white text-[14px] font-bold appearance-none outline-none cursor-pointer transition-all duration-300 shadow-inner"
                   >
-                    {option.label}
-                  </button>
-                ))}
+                    {filterOptions.map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                  <span className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-stone-300 font-bold group-hover:text-[#FF6B00] transition-colors">▼</span>
+                </div>
               </div>
 
+              {/* 기간 필터 추가 */}
+              <div className="flex items-center gap-4 px-6 border-l border-stone-100 hidden xl:flex">
+                <div className="space-y-1">
+                  <p className="text-[9px] font-black text-stone-300 uppercase tracking-widest leading-none">Date Range</p>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="date"
+                      value={filters.startDate || ''}
+                      onChange={(e) => updateFilter({ startDate: e.target.value })}
+                      className="bg-transparent border-none outline-none text-[13px] font-black text-[#2D2D2D] cursor-pointer hover:text-[#FF6B00] transition-colors"
+                    />
+                    <span className="text-stone-200 font-light">/</span>
+                    <input
+                      type="date"
+                      value={filters.endDate || ''}
+                      onChange={(e) => updateFilter({ endDate: e.target.value })}
+                      className="bg-transparent border-none outline-none text-[13px] font-black text-[#2D2D2D] cursor-pointer hover:text-[#FF6B00] transition-colors"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* 일정 등록 버튼 (주황색으로 통일) */}
               <div className="flex-shrink-0">
                 <button 
-                  className="w-full h-[56px] px-8 bg-[#2D2D2D] text-white rounded-xl font-black text-[15px] shadow-lg shadow-stone-200 active:scale-95 transition-all"
+                  className="w-full h-[56px] px-8 bg-[#FF6B00] text-white rounded-xl font-black text-[15px] shadow-lg shadow-orange-500/20 active:scale-95 transition-all flex items-center justify-center gap-2"
                   onClick={() => navigate('/schedules/new')}
                 >
-                  + 일정 등록
+                  <span className="text-lg">+</span>
+                  일정 등록
                 </button>
               </div>
             </div>
@@ -134,13 +177,13 @@ const ScheduleListPage: React.FC = () => {
         <main className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start pb-20">
           <div className="lg:col-span-5 xl:col-span-4 lg:sticky lg:top-12">
             <div className="bg-white rounded-3xl p-8 shadow-[0_20px_60px_rgba(0,0,0,0.02)] border border-[#F0F0F0]">
-              <Calendar 
+              <Calendar
                 markers={markers}
                 selectedDate={selectedDate}
                 onDateClick={handleDateClick}
                 onMonthChange={handleMonthChange}
               />
-              <div className="mt-10 pt-6 border-t border-stone-100 flex gap-6 justify-center">
+              <div className="mt-10 pt-6 border-t border-stone-100 grid grid-cols-3 gap-y-4 gap-x-2">
                 <div className="flex items-center gap-2 text-[10px] font-black text-stone-400 uppercase tracking-widest">
                   <span className="w-2 h-2 rounded-full bg-[#FF6B00]"></span> Medical
                 </div>
@@ -149,6 +192,12 @@ const ScheduleListPage: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-2 text-[10px] font-black text-stone-400 uppercase tracking-widest">
                   <span className="w-2 h-2 rounded-full bg-green-400"></span> Meds
+                </div>
+                <div className="flex items-center gap-2 text-[10px] font-black text-stone-400 uppercase tracking-widest">
+                  <span className="w-2 h-2 rounded-full bg-purple-400"></span> Checkup
+                </div>
+                <div className="flex items-center gap-2 text-[10px] font-black text-stone-400 uppercase tracking-widest">
+                  <span className="w-2 h-2 rounded-full bg-stone-400"></span> Etc
                 </div>
               </div>
             </div>
@@ -176,9 +225,9 @@ const ScheduleListPage: React.FC = () => {
 
                 <div className="space-y-6">
                   <h3 className="text-[13px] font-black text-stone-400 uppercase tracking-widest px-2">Upcoming List</h3>
-                  {schedules.length > 0 ? (
-                    <ScheduleList 
-                      schedules={schedules} 
+                  {sortedSchedules.length > 0 ? (
+                    <ScheduleList
+                      schedules={sortedSchedules}
                       onSelect={setActiveScheduleId}
                       activeId={heroSchedule?.id || 0}
                     />

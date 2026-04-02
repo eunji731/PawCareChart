@@ -40,6 +40,8 @@ export const Calendar: React.FC<CalendarProps> = ({
       case 'EXPENSE': return 'bg-stone-300';
       case 'GROOMING': return 'bg-blue-400';
       case 'MEDICATION': return 'bg-green-400';
+      case 'CHECKUP': return 'bg-purple-400'; // 추가
+      case 'ETC': return 'bg-stone-400'; // 추가
       default: return 'bg-stone-200';
     }
   };
