@@ -58,4 +58,14 @@ export const careApi = {
     });
     return response.data;
   },
+
+  // 증상 마스터 목록 검색 (자동완성용)
+  searchSymptomMasters: async (keyword: string): Promise<string[]> => {
+    const response = await apiClient.get('/symptoms/search', {
+      params: { keyword }
+    });
+    // apiClient 인터셉터에서 이미 response.data.data를 리턴했으므로 response.data는 배열입니다.
+    const symptomList = response.data || [];
+    return symptomList.map((item: { id: number; name: string }) => item.name);
+  },
 };
