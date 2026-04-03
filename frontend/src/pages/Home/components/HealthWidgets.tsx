@@ -1,82 +1,113 @@
-import { useState } from 'react';
-import { Button } from '@/components/common/Button';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
-export const HealthWidgets = () => {
-  const [memo, setMemo] = useState('');
+interface Symptom {
+  name: string;
+  count: number;
+}
+
+interface Schedule {
+  id: number;
+  title: string;
+  scheduleDate: string;
+  location?: string;
+  dDay: number;
+}
+
+interface HealthWidgetsProps {
+  symptoms?: Symptom[];
+  schedules?: Schedule[];
+}
+
+export const HealthWidgets: React.FC<HealthWidgetsProps> = ({ symptoms = [], schedules = [] }) => {
+  const navigate = useNavigate();
+
+  // 월 이름 변환용
+  const getMonthName = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleString('en-US', { month: 'short' }).toUpperCase();
+  };
+
+  const getDayNumber = (dateStr: string) => {
+    return new Date(dateStr).getDate();
+  };
 
   return (
-    <div className="flex flex-col gap-12">
-      
-      {/* 1. UPCOMING APPOINTMENTS */}
-      <section className="space-y-6">
-        <h3 className="text-[11px] font-black text-stone-300 uppercase tracking-[0.2em] flex items-center gap-3">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#FF6B00]"></span>
-          Upcoming Events
-        </h3>
-        <ul className="space-y-5">
-          <li className="group cursor-pointer">
-            <p className="text-[11px] font-black text-[#FF6B00] mb-1">APR 15 · THIS WEEK</p>
-            <h4 className="text-[15px] font-bold text-[#2D2D2D] group-hover:text-[#FF6B00] transition-colors leading-snug">
-              심장사상충 예방약 복용
-            </h4>
-          </li>
-          <li className="group cursor-pointer">
-            <p className="text-[11px] font-black text-stone-300 mb-1">APR 20 · NEXT WEEK</p>
-            <h4 className="text-[15px] font-bold text-[#2D2D2D] group-hover:text-[#FF6B00] transition-colors leading-snug">
-              튼튼동물병원 피부염 2차 재진
-            </h4>
-          </li>
-        </ul>
-      </section>
-
-      {/* 2. QUICK NOTES */}
-      <section className="space-y-6">
-        <h3 className="text-[11px] font-black text-stone-300 uppercase tracking-[0.2em] flex items-center gap-3">
-          <span className="w-1.5 h-1.5 rounded-full bg-stone-200"></span>
-          Quick Observation
-        </h3>
-        <div className="space-y-4">
-          <textarea 
-            value={memo}
-            onChange={(e) => setMemo(e.target.value)}
-            placeholder="이상 증상을 기록하세요..." 
-            className="w-full h-32 text-[14px] font-medium text-[#2D2D2D] bg-[#F9F9F9] border border-transparent rounded-2xl p-4 focus:outline-none focus:border-[#FF6B00] focus:bg-white transition-all resize-none shadow-inner"
-          />
-          <Button 
-             variant="primary" size="md"
-             className="w-full h-[52px] shadow-lg shadow-amber-100"
-             disabled={!memo.trim()}
+    <div className="space-y-12">
+      {/* 1. UPCOMING SCHEDULES */}
+      <section>
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-[18px] font-black text-[#2D2D2D] tracking-tight">Upcoming</h3>
+          <button 
+            onClick={() => navigate('/schedules')}
+            className="text-[12px] font-black text-stone-300 hover:text-[#FF6B00] transition-colors uppercase tracking-widest"
           >
-            기록 저장하기
-          </Button>
+            View All
+          </button>
         </div>
-      </section>
-
-      {/* 3. TOP SYMPTOMS */}
-      <section className="space-y-6">
-        <h3 className="text-[11px] font-black text-stone-300 uppercase tracking-[0.2em] flex items-center gap-3">
-          <span className="w-1.5 h-1.5 rounded-full bg-stone-200"></span>
-          Symptom Rank
-        </h3>
+        
         <div className="space-y-4">
-          {[
-            { rank: 1, name: '피부염 (가려움증)', count: 4, color: 'bg-red-50 text-red-500' },
-            { rank: 2, name: '외이염 (귀 염증)', count: 2, color: 'bg-orange-50 text-orange-500' },
-            { rank: 3, name: '설사 / 무른변', count: 1, color: 'bg-stone-50 text-stone-500' },
-          ].map((item) => (
-            <div key={item.rank} className="flex items-center justify-between p-4 bg-[#F9F9F9] rounded-2xl border border-transparent hover:border-[#F0F0F0] transition-all group cursor-default">
-              <div className="flex items-center gap-4">
-                <span className={`w-6 h-6 rounded-lg flex items-center justify-center text-[11px] font-black ${item.color}`}>
-                  {item.rank}
-                </span>
-                <span className="text-[14px] font-bold text-[#2D2D2D] group-hover:text-[#FF6B00] transition-colors">{item.name}</span>
+          {schedules.length > 0 ? (
+            schedules.map((schedule) => (
+              <div 
+                key={schedule.id} 
+                onClick={() => navigate(`/schedules/${schedule.id}`)}
+                className="flex items-center gap-4 p-4 rounded-2xl bg-stone-50/50 border border-transparent hover:border-orange-100 hover:bg-white transition-all cursor-pointer group"
+              >
+                <div className="w-12 h-12 rounded-xl bg-white border border-stone-100 flex flex-col items-center justify-center shadow-sm shrink-0">
+                  <span className="text-[9px] font-black text-stone-400 leading-none mb-1">{getMonthName(schedule.scheduleDate)}</span>
+                  <span className="text-[16px] font-black text-[#2D2D2D] leading-none">{getDayNumber(schedule.scheduleDate)}</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h4 className="text-[14px] font-bold text-[#2D2D2D] truncate">{schedule.title}</h4>
+                  <p className="text-[12px] font-medium text-stone-400 flex items-center gap-1.5 mt-0.5">
+                    <span className="w-1 h-1 rounded-full bg-stone-200"></span> {schedule.location || '장소 미정'}
+                  </p>
+                </div>
+                <div className={`px-3 py-1 rounded-lg text-[10px] font-black tracking-tighter ${schedule.dDay <= 3 ? 'bg-red-50 text-red-500' : 'bg-stone-100 text-stone-400'}`}>
+                  D-{schedule.dDay === 0 ? 'Day' : schedule.dDay}
+                </div>
               </div>
-              <span className="text-[11px] font-black text-stone-300 uppercase">{item.count} times</span>
-            </div>
-          ))}
+            ))
+          ) : (
+            <div className="py-8 text-center text-stone-300 text-[13px] font-medium">예정된 일정이 없습니다.</div>
+          )}
         </div>
       </section>
 
+      {/* 2. SYMPTOM RANKING */}
+      <section>
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-[18px] font-black text-[#2D2D2D] tracking-tight">Symptom Rank</h3>
+          <span className="text-[11px] font-black text-stone-300 uppercase tracking-widest">Selected Period</span>
+        </div>
+        
+        <div className="space-y-4">
+          {symptoms.length > 0 ? (
+            symptoms.map((symptom, idx) => {
+              const maxCount = symptoms[0].count; // 가장 높은 빈도수 기준
+              const percentage = (symptom.count / maxCount) * 100;
+              
+              return (
+                <div key={idx} className="space-y-2">
+                  <div className="flex justify-between text-[13px] font-bold">
+                    <span className="text-[#2D2D2D]">{symptom.name}</span>
+                    <span className="text-[#FF6B00] tabular-nums">{symptom.count}회</span>
+                  </div>
+                  <div className="h-2 w-full bg-stone-100 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-[#FF6B00] rounded-full transition-all duration-1000" 
+                      style={{ width: `${percentage}%` }}
+                    ></div>
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <div className="py-8 text-center text-stone-300 text-[13px] font-medium">등록된 증상 데이터가 없습니다.</div>
+          )}
+        </div>
+      </section>
     </div>
   );
 };

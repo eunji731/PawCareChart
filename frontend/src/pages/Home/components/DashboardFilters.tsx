@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { dogApi } from '@/api/dogApi';
 import type { Dog } from '@/types/dog';
 
@@ -32,13 +32,18 @@ export const DashboardFilters: React.FC<DashboardFiltersProps> = ({ onFilterChan
   const [startDate, setStartDate] = useState(first);
   const [endDate, setEndDate] = useState(last);
 
+  // 무한 루프 방지 및 초기 호출 제어를 위한 Ref
+  const isFirstRender = useRef(true);
+
   useEffect(() => {
     dogApi.getDogs().then(setDogs).catch(() => setDogs([]));
   }, []);
 
+  // 필터 변경 시 부모에게 알림
   useEffect(() => {
+    // 최초 렌더링 시에는 호출하지 않거나, 필요 시에만 호출
     onFilterChange({ dogId: selectedDogId, startDate, endDate });
-  }, [selectedDogId, startDate, endDate, onFilterChange]);
+  }, [selectedDogId, startDate, endDate]); // onFilterChange를 의존성에서 제거하여 무한 루프 방지
 
   return (
     <div className="flex flex-col md:flex-row items-center md:items-center gap-3 w-full max-w-[400px] md:max-w-none">
@@ -46,7 +51,10 @@ export const DashboardFilters: React.FC<DashboardFiltersProps> = ({ onFilterChan
       <div className="relative group w-full md:min-w-[160px] md:w-auto">
         <select 
           value={selectedDogId || ''}
-          onChange={(e) => setSelectedDogId(e.target.value ? Number(e.target.value) : undefined)}
+          onChange={(e) => {
+            const val = e.target.value ? Number(e.target.value) : undefined;
+            setSelectedDogId(val);
+          }}
           className="w-full appearance-none bg-stone-100/40 h-[48px] pl-5 pr-10 rounded-xl border border-transparent text-[#2D2D2D] font-bold text-[14px] outline-none focus:bg-white focus:border-[#FF6B00]/30 transition-all cursor-pointer text-center md:text-left"
         >
           <option value="">모든 아이들 🐾</option>

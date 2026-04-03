@@ -2,66 +2,64 @@ import React from 'react';
 
 interface KpiCardsProps {
   data?: {
-    totalExpenses: number;
+    totalExpense: number;
     medicalCount: number;
-    activeMedications: number;
+    activeMedicationCount: number;
+    upcomingScheduleCount: number;
   };
-  isLoading?: boolean;
+  isLoading: boolean;
 }
 
 export const KpiCards: React.FC<KpiCardsProps> = ({ data, isLoading }) => {
-  const kpis = [
+  const cards = [
     {
-      label: 'Monthly Expense',
-      value: data ? `${data.totalExpenses.toLocaleString()}` : '0',
-      unit: '원',
-      icon: '💸'
+      label: 'Total Expenses',
+      value: `${data?.totalExpense?.toLocaleString() || 0}원`,
+      icon: '💳',
+      color: 'bg-orange-50',
+      textColor: 'text-orange-600',
     },
     {
-      label: 'Medical Records',
-      value: data ? `${data.medicalCount}` : '0',
-      unit: '건',
-      icon: '🏥'
+      label: 'Medical Visits',
+      value: `${data?.medicalCount || 0}회`,
+      icon: '🏥',
+      color: 'bg-blue-50',
+      textColor: 'text-blue-600',
     },
     {
-      label: 'Active Medications',
-      value: data ? `${data.activeMedications}` : '0',
-      unit: '건',
+      label: 'Active Medication',
+      value: `${data?.activeMedicationCount || 0}건`,
       icon: '💊',
-      description: '이번 달 복용 일정'
-    }
+      color: 'bg-green-50',
+      textColor: 'text-green-600',
+    },
+    {
+      label: 'Upcoming',
+      value: `${data?.upcomingScheduleCount || 0}건`,
+      icon: '📅',
+      color: 'bg-purple-50',
+      textColor: 'text-purple-600',
+    },
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10 py-4">
-      {kpis.map((kpi, index) => (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      {cards.map((card, index) => (
         <div 
           key={index}
-          className="relative flex flex-col items-center md:items-start gap-2 group text-center md:text-left"
+          className="bg-white p-8 rounded-[32px] border border-stone-100 shadow-sm hover:shadow-md transition-all group"
         >
-          {/* Label Area */}
-          <div className="flex items-center gap-2">
-            <span className="text-base opacity-60 grayscale group-hover:grayscale-0 transition-all">{kpi.icon}</span>
-            <p className="text-[12px] font-black text-stone-500 uppercase tracking-[0.15em]">{kpi.label}</p>
+          <div className="flex flex-col gap-4">
+            <div className={`w-12 h-12 ${card.color} rounded-2xl flex items-center justify-center text-xl shadow-inner group-hover:scale-110 transition-transform`}>
+              {card.icon}
+            </div>
+            <div className="space-y-1">
+              <span className="text-[12px] font-black text-stone-400 uppercase tracking-widest">{card.label}</span>
+              <h2 className={`text-[28px] font-black ${isLoading ? 'animate-pulse text-stone-200' : 'text-[#2D2D2D]'} tracking-tight tabular-nums`}>
+                {isLoading ? '---' : card.value}
+              </h2>
+            </div>
           </div>
-
-          {/* Value Area */}
-          <div className="flex items-baseline gap-1.5">
-            <h3 className="text-[32px] md:text-[36px] font-black text-[#2D2D2D] tracking-tighter tabular-nums leading-none">
-              {isLoading ? (
-                <div className="h-9 w-24 bg-stone-50 animate-pulse rounded-md" />
-              ) : kpi.value}
-            </h3>
-            {!isLoading && <span className="text-[15px] md:text-[16px] font-bold text-stone-400">{kpi.unit}</span>}
-          </div>
-
-          {/* Description */}
-          {kpi.description && !isLoading && (
-            <p className="text-[11px] md:text-[12px] font-bold text-stone-400 tracking-tight">{kpi.description}</p>
-          )}
-
-          {/* Subtle Accent Line */}
-          <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 md:left-0 md:translate-x-0 w-8 h-[2px] bg-stone-100 group-hover:w-16 md:group-hover:w-full group-hover:bg-[#FF6B00]/30 transition-all duration-500" />
         </div>
       ))}
     </div>

@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.pawcarechart.backend.dashboard.mapper.DashboardMapper">
+
+    <!-- 1. 핵심 지표 -->
+    <select id="selectStats" resultType="com.pawcarechart.backend.dashboard.dto.DashboardResponse$Stats">
+        SELECT
+            COALESCE(SUM(ed.amount), 0) AS totalExpense,
+            COUNT(CASE WHEN cr.record_type_code = 'MEDICAL' THEN 1 END) AS medicalCount,
+            (
+                SELECT COUNT(*)
+                FROM public.care_record_medical_details md2
+                JOIN public.care_records cr2 ON md2.care_record_id = cr2.id
+                WHERE cr2.user_id = #{userId}
+                <if test="dogId != null">AND cr2.dog_id = #{dogId}</if>
+                AND md2.medication_start_date <![CDATA[<=]]> #{today}
+                AND (md2.medication_start_date + (md2.medication_days || ' days')::interval) <![CDATA[>=]]> #{today}
+                AND md2.is_medication_completed = false
+            ) AS activeMedicationCount,
+            (
+                SELECT COUNT(*)
+                FROM public.schedules s
+                JOIN public.dogs d2 ON s.dog_id = d2.id
+                WHERE d2.user_id = #{userId}
+                <if test="dogId != null">AND s.dog_id = #{dogId}</if>
+                AND s.schedule_date <![CDATA[>=]]> #{today}
+            ) AS upcomingScheduleCount
+        FROM public.care_records cr
+        LEFT JOIN public.care_record_expense_details ed ON cr.id = ed.care_record_id
+        WHERE cr.user_id = #{userId}
+        <if test="dogId != null">AND cr.dog_id = #{dogId}</if>
+        AND cr.record_date BETWEEN #{startDate} AND #{endDate}
+    </select>
+
+    <!-- 2. 진행 중인 복약 (최대 3개) -->
+    <select id="selectActiveMedications" resultType="com.pawcarechart.backend.dashboard.dto.DashboardResponse$ActiveMedication">
+        SELECT
+            d.name AS dogName,
+            cr.title AS title,
+            md.medication_start_date AS startDate,
+            (md.medication_start_date + (md.medication_days || ' days')::interval)::date AS endDate,
+            (EXTRACT(DAY FROM (md.medication_start_date + (md.medication_days || ' days')::interval) - #{today}::timestamp))::int AS remainingDays
+        FROM public.care_record_medical_details md
+        JOIN public.care_records cr ON md.care_record_id = cr.id
+        JOIN public.dogs d ON cr.dog_id = d.id
+        WHERE cr.user_id = #{userId}
+        <if test="dogId != null">AND cr.dog_id = #{dogId}</if>
+        AND md.medication_start_date <![CDATA[<=]]> #{today}
+        AND (md.medication_start_date + (md.medication_days || ' days')::interval) <![CDATA[>=]]> #{today}
+        AND md.is_medication_completed = false
+        ORDER BY endDate ASC
+        LIMIT 3
+    </select>
+
+    <!-- 3. 증상 랭킹 (Top 5) -->
+    <select id="selectTopSymptoms" resultType="com.pawcarechart.backend.dashboard.dto.DashboardResponse$SymptomRanking">
+        SELECT
+            sm.name AS name,
+            COUNT(crs.symptom_id) AS count
+        FROM public.care_record_symptoms crs
+        JOIN public.symptoms_master sm ON crs.symptom_id = sm.id
+        JOIN public.care_records cr ON crs.care_record_id = cr.id
+        WHERE cr.user_id = #{userId}
+        <if test="dogId != null">AND cr.dog_id = #{dogId}</if>
+        AND cr.record_date BETWEEN #{startDate} AND #{endDate}
+        GROUP BY sm.name
+        ORDER BY count DESC, sm.name ASC
+        LIMIT 5
+    </select>
+
+    <!-- 4. 다가오는 일정 (3~5개) -->
+    <select id="selectUpcomingSchedules" resultType="com.pawcarechart.backend.dashboard.dto.DashboardResponse$UpcomingSchedule">
+        SELECT
+            s.id,
+            s.title,
+            s.schedule_date AS scheduleDate,
+            s.location,
+            (EXTRACT(DAY FROM s.schedule_date - #{today}::timestamp))::bigint AS dDay
+        FROM public.schedules s
+        JOIN public.dogs d ON s.dog_id = d.id
+        WHERE d.user_id = #{userId}
+        <if test="dogId != null">AND s.dog_id = #{dogId}</if>
+        AND s.schedule_date <![CDATA[>=]]> #{today}
+        ORDER BY s.schedule_date ASC
+        LIMIT 5
+    </select>
+
+    <!-- 5. 최근 활동 (전체 조회) -->
+    <select id="selectRecentRecords" resultType="com.pawcarechart.backend.dashboard.dto.DashboardResponse$RecentRecord">
+        SELECT
+            cr.id,
+            cr.record_type_code AS type,
+            cr.record_date AS date,
+            cr.title,
+            COALESCE(md.amount, ed.amount, 0) AS amount
+        FROM public.care_records cr
+        LEFT JOIN public.care_record_medical_details md ON cr.id = md.care_record_id
+        LEFT JOIN public.care_record_expense_details ed ON cr.id = ed.care_record_id
+        WHERE cr.user_id = #{userId}
+        <if test="dogId != null">AND cr.dog_id = #{dogId}</if>
+        AND cr.record_date BETWEEN #{startDate} AND #{endDate}
+        ORDER BY cr.record_date DESC, cr.created_at DESC
+    </select>
+
+</mapper>

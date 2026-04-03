@@ -1,44 +1,36 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Header } from '@/pages/Home/components/Header';
 import { DashboardFilters } from '@/pages/Home/components/DashboardFilters';
 import { KpiCards } from '@/pages/Home/components/KpiCards';
 import { MainDataTable } from '@/pages/Home/components/MainDataTable';
 import { ExpenseChart } from '@/pages/Home/components/ExpenseChart';
 import { HealthWidgets } from '@/pages/Home/components/HealthWidgets';
-import { careApi } from '@/api/careApi';
+import { QuickLogFeed } from '@/pages/Home/components/QuickLogFeed';
+import { dashboardApi } from '@/api/dashboardApi';
+import type { DashboardSummary } from '@/api/dashboardApi';
 
 export const HomePage = () => {
-  const [filters, setFilters] = useState<{ dogId?: number; startDate: string; endDate: string }>({
-    startDate: '',
-    endDate: ''
-  });
-
-  const [dashboardData, setDashboardData] = useState<{
-    totalExpenses: number;
-    medicalCount: number;
-    activeMedications: number;
-  }>({
-    totalExpenses: 0,
-    medicalCount: 0,
-    activeMedications: 0
-  });
-
+  const [filters, setFilters] = useState<{ dogId?: number; startDate: string; endDate: string } | null>(null);
+  const [dashboardData, setDashboardData] = useState<DashboardSummary | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleFilterChange = useCallback(async (newFilters: { dogId?: number; startDate: string; endDate: string }) => {
-    setFilters(newFilters);
-
+  // 데이터 페칭 함수
+  const fetchDashboardData = async (f: { dogId?: number; startDate: string; endDate: string }) => {
     try {
       setIsLoading(true);
-      // 실제 API 호출 시점
-      const data = await careApi.getDashboardSummary(newFilters);
+      const data = await dashboardApi.getSummary(f);
       setDashboardData(data);
     } catch (err) {
       console.error('Dashboard Data Load Failed:', err);
-      // 에러 시 초기값 유지 또는 Mock 처리
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // 필터가 변경될 때마다 호출되는 콜백
+  const handleFilterChange = useCallback((newFilters: { dogId?: number; startDate: string; endDate: string }) => {
+    setFilters(newFilters);
+    fetchDashboardData(newFilters);
   }, []);
 
   return (
@@ -52,7 +44,7 @@ export const HomePage = () => {
           <header className="mb-10 flex flex-col md:flex-row justify-between items-center md:items-end gap-8 border-b border-stone-100 pb-10 text-center md:text-left">
             <div className="space-y-4">
               <h1 className="text-[42px] lg:text-[64px] font-black text-[#2D2D2D] leading-[0.95] tracking-tight">
-                Monthly <span className="text-[#FF6B00]">Briefing.</span>
+                Dashboard <span className="text-[#FF6B00]">Insight.</span>
               </h1>
             </div>
             <div className="flex w-full md:w-auto justify-center">
@@ -60,28 +52,36 @@ export const HomePage = () => {
             </div>
           </header>
 
-          <KpiCards data={dashboardData} isLoading={isLoading} />
+          <KpiCards 
+            data={dashboardData?.stats} 
+            isLoading={isLoading} 
+          />
         </section>
 
-        {/* 2. MAIN DASHBOARD CONTENT: 2단 에디토리얼 레이아웃 */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start mt-4">
+        {/* 2. MAIN DASHBOARD CONTENT */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start mt-4">
 
-          {/* LEFT CONTENT: 분석 및 상세 기록 (8/12) */}
-          <div className="lg:col-span-8 flex flex-col gap-12">
+          {/* LEFT CONTENT */}
+          <div className="lg:col-span-8 flex flex-col gap-10">
             <div className="bg-white rounded-[32px] p-1 border border-[#F0F0F0] shadow-[0_30px_80px_rgba(0,0,0,0.02)]">
               <ExpenseChart />
             </div>
 
             <div className="bg-white rounded-[32px] p-1 border border-[#F0F0F0] shadow-[0_30px_80px_rgba(0,0,0,0.02)]">
-              <MainDataTable />
+              <MainDataTable records={dashboardData?.recentRecords} isLoading={isLoading} />
             </div>
           </div>
 
-          {/* RIGHT SIDE PANEL: 일정 및 이상 징후 (4/12) */}
-          <div className="lg:col-span-4 lg:sticky lg:top-24">
+          {/* RIGHT SIDE PANEL */}
+          <div className="lg:col-span-4 flex flex-col gap-8 lg:sticky lg:top-24">
             <div className="bg-white rounded-[40px] p-10 shadow-[0_30px_80px_rgba(0,0,0,0.03)] border border-[#F0F0F0]">
-              <HealthWidgets />
+              <HealthWidgets 
+                symptoms={dashboardData?.topSymptoms} 
+                schedules={dashboardData?.upcomingSchedules} 
+              />
             </div>
+
+            <QuickLogFeed selectedDogId={filters?.dogId} />
           </div>
 
         </div>
