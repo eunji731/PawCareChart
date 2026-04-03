@@ -14,6 +14,8 @@
         cr.note AS note,
         md.clinic_name AS clinicName,
         md.diagnosis AS diagnosis,
+        md.medication_start_date AS medicationStartDate,
+        md.medication_days AS medicationDays,
 
         -- 투약 상태 변환 (프론트엔드 medicationStatus 포맷에 맞춤)
         CASE

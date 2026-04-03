@@ -46,6 +46,13 @@ public class CareRecordListResponse {
     @Schema(description = "투약 상태 (NONE, ACTIVE, COMPLETED)")
     private String medicationStatus;
 
+    @Schema(description = "투약 시작일")
+    private LocalDate medicationStartDate;
+
+    @Schema(description = "투약 기간")
+    private Integer medicationDays;
+
+
     // 공통/지출 관련 필드
     @Schema(description = "지출 카테고리")
     private String categoryCode;

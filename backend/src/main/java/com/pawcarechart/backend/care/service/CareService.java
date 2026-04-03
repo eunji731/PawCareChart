@@ -82,6 +82,8 @@ public class CareService {
                         .clinicName(record.getClinicName())
                         .diagnosis(record.getDiagnosis())
                         .medicationStatus(record.getMedicationStatus())
+                        .medicationStartDate(record.getMedicationStartDate())
+                        .medicationDays(record.getMedicationDays())
                         .categoryCode(record.getCategoryCode())
                         .amount(record.getAmount())
                         .relatedMedicalRecordId(record.getRelatedMedicalRecordId())
