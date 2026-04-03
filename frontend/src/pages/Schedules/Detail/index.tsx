@@ -86,7 +86,7 @@ const ScheduleDetailPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#F7F8F9]">
       <PageLayout title="" maxWidth="max-w-[760px]" noPaddingTop>
-        <div className="animate-in fade-in slide-in-from-bottom-6 duration-700 pt-2 pb-16 space-y-8 lg:space-y-10">
+        <div className="animate-in fade-in slide-in-from-bottom-6 duration-700 pt-2 pb-12 space-y-6 lg:space-y-8">
 
           {/* Header Block */}
           <ScheduleDetailHeader schedule={schedule} />
@@ -108,12 +108,29 @@ const ScheduleDetailPage: React.FC = () => {
               </h3>
             </div>
 
-            <div className="space-y-3">
-              <h4 className="flex items-center gap-2 text-[12px] font-black text-stone-400 uppercase tracking-widest">
-                <span className="w-1 h-3 bg-stone-200 rounded-full" /> 상세 메모 및 참고사항
-              </h4>
-              <div className="text-[15px] md:text-[16px] leading-[1.9] text-stone-600 font-medium whitespace-pre-wrap pl-3 border-l-2 border-stone-100">
-                {schedule.memo || '작성된 메모가 없습니다.'}
+            <div className="flex flex-col gap-10">
+              {/* Symptom Tags (Placed directly under the main header) */}
+              {schedule.symptomTags && schedule.symptomTags.length > 0 && (
+                <div className="flex flex-wrap gap-2 -mt-4">
+                  {schedule.symptomTags.map((tag: string) => (
+                    <span 
+                      key={tag} 
+                      className="px-3 py-1.5 rounded-xl bg-[#FF6B00] text-white text-[12px] font-black shadow-lg shadow-orange-500/20 flex items-center gap-1.5 animate-in zoom-in-95 duration-300"
+                    >
+                      <span className="opacity-70 text-[10px]">#</span>
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              <div className="space-y-3">
+                <h4 className="flex items-center gap-2 text-[12px] font-black text-stone-400 uppercase tracking-widest">
+                  <span className="w-1 h-3 bg-stone-200 rounded-full" /> 상세 메모 및 참고사항
+                </h4>
+                <div className="text-[15px] md:text-[16px] leading-[1.9] text-stone-600 font-medium whitespace-pre-wrap pl-3 border-l-2 border-stone-100">
+                  {schedule.memo || '작성된 메모가 없습니다.'}
+                </div>
               </div>
             </div>
           </section>

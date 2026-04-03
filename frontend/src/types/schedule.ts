@@ -5,6 +5,7 @@ export interface Schedule {
   dogId: number;
   dogName: string;
   title: string;
+  location?: string; // 추가
   scheduleDate: string; // ISO-8601
   scheduleTypeCode: ScheduleType;
   isCompleted: boolean;
@@ -24,8 +25,10 @@ export interface ScheduleFilters {
 export interface ScheduleCreateRequest {
   dogId: number;
   title: string;
+  location?: string; // 추가
   scheduleDate: string;
   scheduleTypeCode: ScheduleType;
   memo?: string;
   symptomTags?: string[];
+  fileIds?: number[];
 }

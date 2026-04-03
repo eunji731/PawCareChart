@@ -11,6 +11,8 @@ export const ScheduleDetailHeader: React.FC<ScheduleDetailHeaderProps> = ({ sche
   const dDayLabel = dDay === 0 ? 'Day' : dDay > 0 ? `-${dDay}` : `+${Math.abs(dDay)}`;
   const isPast = dDay < 0;
 
+  const location = schedule.location || (schedule as any).location_info; // 스네이크 케이스 방어 코드
+
   return (
     <header className="pb-2">
       <div className="space-y-4">
@@ -28,7 +30,7 @@ export const ScheduleDetailHeader: React.FC<ScheduleDetailHeaderProps> = ({ sche
           {schedule.title}<span className="text-[#FF6B00]">.</span>
         </h1>
 
-        <div className="flex items-center gap-4 pt-2">
+        <div className="flex items-center gap-4 pt-4">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-stone-100 border border-stone-200 flex items-center justify-center shrink-0">
               <span className="text-[12px]">🐕</span>

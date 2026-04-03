@@ -19,6 +19,7 @@ export const useScheduleForm = (id?: string) => {
   const [formData, setFormData] = useState({
     dogId: '',
     title: '',
+    location: '', // 초기값 빈 문자열로 설정
     scheduleDate: new Date().toISOString().split('T')[0],
     scheduleTime: '10:00',
     scheduleTypeCode: 'MEDICAL' as ScheduleType,
@@ -44,22 +45,23 @@ export const useScheduleForm = (id?: string) => {
             return [];
           })
         ]);
+if (data) {
+  const datePart = data.scheduleDate ? data.scheduleDate.split('T')[0] : new Date().toISOString().split('T')[0];
+  const timePart = data.scheduleDate && data.scheduleDate.includes('T') 
+    ? data.scheduleDate.split('T')[1].substring(0, 5) 
+    : '10:00';
 
-        if (data) {
-          const datePart = data.scheduleDate ? data.scheduleDate.split('T')[0] : new Date().toISOString().split('T')[0];
-          const timePart = data.scheduleDate && data.scheduleDate.includes('T') 
-            ? data.scheduleDate.split('T')[1].substring(0, 5) 
-            : '10:00';
+  setFormData({
+    dogId: data.dogId?.toString() || '',
+    title: data.title || '',
+    location: data.location || (data as any).location_info || '', // 스네이크 케이스 방어 및 명시적 세팅
+    scheduleDate: datePart,
+    scheduleTime: timePart,
+    scheduleTypeCode: data.scheduleTypeCode || 'MEDICAL',
+    memo: data.memo || '',
+    symptomTags: data.symptomTags || []
+  });
 
-          setFormData({
-            dogId: data.dogId?.toString() || '',
-            title: data.title || '',
-            scheduleDate: datePart,
-            scheduleTime: timePart,
-            scheduleTypeCode: data.scheduleTypeCode || 'MEDICAL',
-            memo: data.memo || '',
-            symptomTags: data.symptomTags || []
-          });
 
           // 기존 첨부파일 로드
           if (files && files.length > 0) {
@@ -104,9 +106,10 @@ export const useScheduleForm = (id?: string) => {
       const payload = {
         dogId: Number(formData.dogId),
         title: formData.title.trim(),
+        location: formData.location?.trim() || undefined, // 옵셔널 체이닝(?.) 추가
         scheduleDate: `${formData.scheduleDate}T${formData.scheduleTime}:00`,
         scheduleTypeCode: formData.scheduleTypeCode,
-        memo: formData.memo.trim() || undefined,
+        memo: formData.memo?.trim() || undefined, // 메모도 안전하게 처리
         symptomTags: formData.symptomTags,
         fileIds: combinedFileIds.length > 0 ? combinedFileIds : undefined
       };

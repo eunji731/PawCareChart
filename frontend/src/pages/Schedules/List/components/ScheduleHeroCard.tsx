@@ -45,9 +45,18 @@ export const ScheduleHeroCard: React.FC<ScheduleHeroCardProps> = ({ schedule }) 
 
         {/* Title & Date */}
         <div className="space-y-4">
-          <h2 className="text-[24px] md:text-[28px] lg:text-[32px] font-black text-white leading-tight tracking-tight break-keep">
-            {schedule.title}
-          </h2>
+          <div className="space-y-2">
+            <h2 className="text-[24px] md:text-[28px] lg:text-[32px] font-black text-white leading-tight tracking-tight break-keep">
+              {schedule.title}
+            </h2>
+            {schedule.location && (
+              <div className="flex items-center gap-1.5 text-white/50 font-bold text-[14px]">
+                <span className="text-base">📍</span>
+                <span>{schedule.location}</span>
+              </div>
+            )}
+          </div>
+          
           <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 text-stone-400 font-bold text-[15px]">
             <span className="flex items-center gap-2">
                <span className="w-1.5 h-1.5 bg-[#FF6B00] rounded-full"></span>

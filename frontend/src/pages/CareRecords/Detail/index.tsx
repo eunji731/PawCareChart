@@ -89,11 +89,27 @@ const CareRecordDetailPage: React.FC = () => {
             </div>
 
             <div className="flex flex-col gap-10">
+              {/* Symptom Tags (Placed directly under the main header) */}
+              {record.symptomTags && record.symptomTags.length > 0 && (
+                <div className="flex flex-wrap gap-2 -mt-4">
+                  {record.symptomTags.map((tag: string) => (
+                    <span 
+                      key={tag} 
+                      className="px-3 py-1.5 rounded-xl bg-[#FF6B00] text-white text-[12px] font-black shadow-lg shadow-orange-500/20 flex items-center gap-1.5 animate-in zoom-in-95 duration-300"
+                    >
+                      <span className="opacity-70 text-[10px]">#</span>
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+
               {/* Symptoms */}
               {(() => {
                 const raw = record as any;
                 const symptoms = raw.symptoms || raw.medicalDetails?.symptoms || raw.medical_details?.symptoms;
                 if (!symptoms || symptoms.trim() === '') return null;
+                
                 return (
                   <div className="space-y-3">
                     <h4 className="flex items-center gap-2 text-[12px] font-black text-red-500 uppercase tracking-widest">

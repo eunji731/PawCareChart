@@ -101,24 +101,7 @@ export const CareRecordInfoSections: React.FC<CareRecordInfoSectionsProps> = ({ 
         </div>
       )}
 
-      {/* 3. 증상 태그 (심플 스타일) */}
-      {isMedical && symptomTags.length > 0 && (
-        <div className="px-2 py-1">
-          <div className="flex flex-wrap gap-2">
-            {symptomTags.map((tag: string) => (
-              <span 
-                key={tag} 
-                className="px-3 py-1 rounded-full bg-stone-100 border border-stone-200 text-stone-600 text-[12px] font-bold flex items-center gap-1"
-              >
-                <span className="text-[#FF6B00]">#</span>
-                {tag}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* 4. 복약 상태 카드 */}
+      {/* 3. 복약 상태 카드 */}
       {isMedical && medStatus && medStatus !== 'NONE' && (
         <div className={`rounded-[24px] p-5 lg:p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 md:gap-5 border shadow-sm
           ${medStatus === 'ACTIVE' ? 'bg-[#FF6B00]/5 border-[#FF6B00]/20' : 'bg-green-50/50 border-green-200/50'}

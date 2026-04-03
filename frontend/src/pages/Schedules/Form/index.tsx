@@ -84,14 +84,22 @@ const ScheduleFormPage: React.FC = () => {
           </Section>
 
           {/* 3. 일정 상세 */}
-          <Section title="상세 일정" description="언제, 어떤 활동을 계획하시나요?">
+          <Section title="상세 일정" description="언제, 어디서, 어떤 활동을 계획하시나요?">
             <div className="space-y-6">
-              <Input
-                label="일정 제목"
-                placeholder="예: 튼튼동물병원 정기검진"
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Input
+                  label="일정 제목"
+                  placeholder="예: 튼튼동물병원 정기검진"
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                />
+                <Input
+                  label="장소 (선택)"
+                  placeholder="예: 강남구 테헤란로 123"
+                  value={formData.location}
+                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                />
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Input
                   label="날짜"
