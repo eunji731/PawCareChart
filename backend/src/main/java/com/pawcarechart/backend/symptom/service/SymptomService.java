@@ -1,5 +1,6 @@
 package com.pawcarechart.backend.symptom.service;
 
+import com.pawcarechart.backend.symptom.dto.SymptomResponse;
 import com.pawcarechart.backend.symptom.entity.CareRecordSymptom;
 import com.pawcarechart.backend.symptom.entity.ScheduleSymptom;
 import com.pawcarechart.backend.symptom.entity.SymptomMaster;
@@ -107,6 +108,20 @@ public class SymptomService {
                     .dogId(dogId)
                     .build());
         }
+    }
+
+    /**
+     * 이름으로 증상 태그 검색 (자동완성용)
+     */
+    public List<SymptomResponse> searchSymptoms(String keyword) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return Collections.emptyList();
+        }
+        return symptomMasterRepository.findByNameContainingIgnoreCase(keyword.trim())
+                .stream()
+                .map(SymptomResponse::from)
+                .limit(20) // 최대 20개까지만 노출
+                .toList();
     }
 
     private List<String> cleanTags(List<String> tags) {
