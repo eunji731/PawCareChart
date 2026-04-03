@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { parseISO, addDays, isBefore, startOfDay, format } from 'date-fns';
 import type { CareRecord } from '@/types/care';
 import { Badge } from '@/components/common/Badge';
 
@@ -23,19 +24,43 @@ export const CareRecordInfoSections: React.FC<CareRecordInfoSectionsProps> = ({ 
     rawRecord.expenseDetails?.[camelField] ??
     rawRecord.expense_details?.[snakeField];
 
-  const medDays = getField('medicationDays', 'medication_days');
+  const medDays = Number(getField('medicationDays', 'medication_days') || 0);
   const medStart = getField('medicationStartDate', 'medication_start_date');
-  const symptomTags = record.symptomTags || getField('symptomTags', 'symptom_tags') || [];
   
   // 연관 진료 정보 추출
   const relatedMedical = record.relatedMedicalRecord || rawRecord.related_medical_record || rawRecord.expenseDetails?.relatedMedicalRecord || rawRecord.expense_details?.related_medical_record;
 
   let medStatus = record.medicationStatus;
-  const isMedCompletedRaw = rawRecord.is_medication_completed ?? rawRecord.medicalDetails?.is_medication_completed ?? rawRecord.medical_details?.is_medication_completed;
-  if (!medStatus && isMedCompletedRaw !== undefined && isMedCompletedRaw !== null) {
-      medStatus = isMedCompletedRaw ? 'COMPLETED' : 'ACTIVE';
-  } else if (!medStatus && medDays) {
-      medStatus = 'ACTIVE';
+
+  // 날짜 기반 복약 상태 자동 계산
+  let medEndDateStr = '';
+  if (medStart && medDays > 0) {
+    try {
+      const startDate = parseISO(medStart);
+      const medEndDate = addDays(startDate, medDays - 1); // 마지막 복약일
+      medEndDateStr = format(medEndDate, 'yyyy-MM-dd');
+      const completionDate = addDays(startDate, medDays); // 복약이 끝나는 다음 날 00:00
+      const today = startOfDay(new Date());
+      
+      // 오늘 날짜가 종료 예정일과 같거나 이후라면 완료로 표시
+      if (!isBefore(today, completionDate)) {
+        medStatus = 'COMPLETED';
+      } else {
+        medStatus = 'ACTIVE';
+      }
+    } catch (e) {
+      console.error('Date calculation error:', e);
+    }
+  } 
+
+  // 기존 로직 (날짜 정보가 불충분할 때의 fallback)
+  if (!medStatus || medStatus === 'NONE') {
+    const isMedCompletedRaw = rawRecord.is_medication_completed ?? rawRecord.medicalDetails?.is_medication_completed ?? rawRecord.medical_details?.is_medication_completed;
+    if (isMedCompletedRaw !== undefined && isMedCompletedRaw !== null) {
+        medStatus = isMedCompletedRaw ? 'COMPLETED' : 'ACTIVE';
+    } else if (medDays > 0) {
+        medStatus = 'ACTIVE';
+    }
   }
 
   return (
@@ -114,11 +139,11 @@ export const CareRecordInfoSections: React.FC<CareRecordInfoSectionsProps> = ({ 
             <div className="flex flex-col">
                <span className="text-[10px] font-black text-stone-400 uppercase tracking-widest">Medication Status</span>
                <span className="text-[14px] md:text-[15px] font-black text-[#2D2D2D] mt-0.5">
-                 {medStart && medDays 
-                   ? `${medStart} 부터 ${medDays}일간 투약` 
+                 {medStart && medDays > 0 && medEndDateStr
+                   ? `${medStart} ~ ${medEndDateStr} (${medDays}일간)` 
                    : medStart 
                      ? `${medStart} 부터 투약 시작`
-                     : medDays
+                     : medDays > 0
                        ? `${medDays}일간 투약 진행`
                        : '복약 진행 내역'}
                </span>

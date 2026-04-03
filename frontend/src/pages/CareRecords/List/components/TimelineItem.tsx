@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { parseISO, addDays, isBefore, startOfDay, format } from 'date-fns';
 import type { CareRecord } from '@/types/care';
 import { Card } from '@/components/common/Card';
 
@@ -10,6 +11,49 @@ export const TimelineItem: React.FC<{ record: CareRecord }> = ({ record }) => {
   const handleCardClick = () => {
     navigate(`/care-records/${record.id}`);
   };
+
+  const rawRecord = record as any;
+  const getField = (camelField: string, snakeField: string) => 
+    rawRecord[camelField] ?? 
+    rawRecord[snakeField] ?? 
+    rawRecord.medicalDetails?.[camelField] ?? 
+    rawRecord.medical_details?.[snakeField] ??
+    rawRecord.medicalDetails?.[snakeField] ??
+    rawRecord.medical_details?.[camelField];
+
+  // 모든 가능한 경로에서 복약 정보 추출 시도
+  const medDays = Number(getField('medicationDays', 'medication_days') || 0);
+  const medStart = getField('medicationStartDate', 'medication_start_date');
+  const isMedCompletedRaw = getField('isMedicationCompleted', 'is_medication_completed');
+  
+  let medStatus = record.medicationStatus || (isMedCompletedRaw === true ? 'COMPLETED' : (isMedCompletedRaw === false ? 'ACTIVE' : undefined));
+  let medEndDateStr = '';
+
+  // 날짜 정보가 있으면 상태 계산 우선 적용
+  if (medStart && medDays > 0) {
+    try {
+      const startDate = parseISO(medStart);
+      const medEndDate = addDays(startDate, medDays - 1);
+      medEndDateStr = format(medEndDate, 'yyyy-MM-dd');
+      
+      const completionDate = addDays(startDate, medDays);
+      const today = startOfDay(new Date());
+      
+      if (!isBefore(today, completionDate)) {
+        medStatus = 'COMPLETED';
+      } else {
+        medStatus = 'ACTIVE';
+      }
+    } catch (e) {
+      console.error('Date calculation error:', e);
+    }
+  } else if (!medStatus && medDays > 0) {
+    // 날짜는 없지만 기간 정보만 있는 경우
+    medStatus = 'ACTIVE';
+  }
+
+  // 복약 정보 존재 여부 판단
+  const hasMedication = !!(medStart || medDays > 0 || (medStatus && medStatus !== 'NONE'));
 
   return (
     <div className="group flex gap-4 md:gap-8 lg:gap-10 items-stretch relative">
@@ -82,6 +126,17 @@ export const TimelineItem: React.FC<{ record: CareRecord }> = ({ record }) => {
               <span className="text-[12px] font-bold text-stone-500 bg-stone-50/80 border border-stone-100 px-2.5 py-1 rounded-lg flex items-center gap-1.5 shadow-sm">
                 {isMedical ? '🏥' : '🏷️'} {isMedical ? (record.clinicName || 'Clinic') : record.categoryCode}
               </span>
+
+              {isMedical && hasMedication && (
+                <span className={`text-[11px] font-black border px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 shadow-sm
+                  ${medStatus === 'ACTIVE' 
+                    ? 'text-[#FF6B00] bg-orange-50/50 border-orange-100' 
+                    : 'text-green-600 bg-green-50/50 border-green-100'}`}>
+                  <span className="text-[12px]">💊</span> 
+                  {medStatus === 'ACTIVE' ? '복약중' : '복약완료'}
+                  {medEndDateStr && <span className="opacity-60 font-bold ml-0.5">~{medEndDateStr}</span>}
+                </span>
+              )}
 
               {record.relatedMedicalRecordId && (
                 <span className="text-[11px] font-black text-[#FF6B00] bg-orange-50/50 border border-orange-100 px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 shadow-sm">
