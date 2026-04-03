@@ -39,6 +39,7 @@ public class CareService {
     private final CareMapper careMapper;
     private final FileMappingRepository fileMappingRepository;
     private final SymptomService symptomService;
+    private final com.pawcarechart.backend.schedule.repository.ScheduleRepository scheduleRepository;
 
     /**
      * 통합 케어 기록 목록 조회
@@ -282,6 +283,21 @@ public class CareService {
 
         if (request.getFileIds() != null && !request.getFileIds().isEmpty()) {
             fileService.connectFilesToTarget(request.getFileIds(), FileTargetType.CARE_RECORD, recordId, userId);
+        }
+
+        // 일정 전환인 경우 이전 일정 삭제
+        if (request.getSourceScheduleId() != null) {
+            com.pawcarechart.backend.schedule.entity.Schedule schedule = scheduleRepository.findById(request.getSourceScheduleId())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "이전 일정 정보를 찾을 수 없습니다."));
+
+            // 일정 권한 확인 (일정이 속한 강아지의 소유주인지 확인)
+            dogRepository.findByIdAndUserId(schedule.getDogId(), userId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "이전 일정에 대한 권한이 없습니다."));
+
+            // 일정 데이터 정리
+            symptomService.deleteScheduleSymptoms(schedule.getId());
+            fileMappingRepository.deleteAllByTargetTypeAndTargetId(FileTargetType.SCHEDULE, schedule.getId());
+            scheduleRepository.delete(schedule);
         }
 
         return recordId;

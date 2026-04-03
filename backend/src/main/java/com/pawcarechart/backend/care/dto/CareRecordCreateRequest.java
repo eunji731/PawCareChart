@@ -27,6 +27,8 @@ public class CareRecordCreateRequest {
 
     private String note;
 
+    private Long sourceScheduleId; // [추가] 전환의 원본이 되는 일정 ID
+
     private List<Long> fileIds;
 
     private MedicalDetailRequest medicalDetails;

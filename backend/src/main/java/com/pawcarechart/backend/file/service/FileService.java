@@ -128,9 +128,9 @@ public class FileService {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, "파일 매핑 권한이 없습니다.");
             }
 
-            // 중복 매핑 확인
-            if (fileMappingRepository.findByFileId(fileId).isPresent()) {
-                log.info("[FileService] File {} already has a mapping. Skipping.", fileId);
+            // 동일한 대상에 대한 중복 매핑 확인
+            if (fileMappingRepository.existsByFileIdAndTargetTypeAndTargetId(fileId, targetType, targetId)) {
+                log.info("[FileService] File {} already mapped to {} {}. Skipping.", fileId, targetType, targetId);
                 return;
             }
 
