@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { careApi } from '@/api/careApi';
 import { fileApi } from '@/api/fileApi';
 import { useFileUpload } from '@/hooks/useFileUpload';
@@ -7,9 +7,11 @@ import type { RecordType, CareRecordCreateRequest } from '@/types/care';
 
 export const useCareRecordForm = (id?: string) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [recordType, setRecordType] = useState<RecordType>('MEDICAL');
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(!!id);
+  const [fromScheduleId, setFromScheduleId] = useState<number | null>(null);
 
   // 1. 공통 정보 상태
   const [commonData, setCommonData] = useState({
@@ -43,6 +45,48 @@ export const useCareRecordForm = (id?: string) => {
 
   // 4. 파일 업로드 훅
   const fileUploader = useFileUpload('CARE_RECORD');
+
+  // 전환 데이터 처리 (prefillData)
+  useEffect(() => {
+    if (id) return; // 수정 모드일 때는 무시
+
+    const prefillData = location.state?.prefillData;
+    if (prefillData) {
+      if (prefillData.recordType) setRecordType(prefillData.recordType);
+      
+      setCommonData({
+        dogId: prefillData.dogId?.toString() || '',
+        recordDate: prefillData.recordDate || new Date().toISOString().split('T')[0],
+        title: prefillData.title || '',
+        note: prefillData.note || ''
+      });
+
+      if (prefillData.medicalDetails) {
+        setMedicalData(prev => ({
+          ...prev,
+          clinicName: prefillData.medicalDetails.clinicName || '',
+          symptomTags: prefillData.medicalDetails.symptomTags || []
+        }));
+      }
+
+      if (prefillData.expenseDetails) {
+        setExpenseData(prev => ({
+          ...prev,
+          categoryCode: prefillData.expenseDetails.categoryCode || 'ETC',
+          memo: prefillData.expenseDetails.memo || ''
+        }));
+      }
+
+      if (prefillData.files && prefillData.files.length > 0) {
+        fileUploader.setInitialFiles(prefillData.files);
+      }
+
+      if (prefillData.fromScheduleId) {
+        setFromScheduleId(prefillData.fromScheduleId);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, location.state]);
 
   // 데이터 동기화
   useEffect(() => {
@@ -119,6 +163,7 @@ export const useCareRecordForm = (id?: string) => {
     };
 
     loadDetail();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, navigate]);
 
   const handleSave = async () => {
@@ -147,6 +192,7 @@ export const useCareRecordForm = (id?: string) => {
         title: commonData.title.trim(),
         note: commonData.note.trim() || undefined,
         fileIds: combinedFileIds.length > 0 ? combinedFileIds : undefined,
+        sourceScheduleId: fromScheduleId, // 백엔드 자동 삭제를 위해 포함
         medicalDetails: recordType === 'MEDICAL' ? {
           clinicName: medicalData.clinicName.trim() || undefined,
           symptoms: medicalData.symptoms.trim() || undefined,

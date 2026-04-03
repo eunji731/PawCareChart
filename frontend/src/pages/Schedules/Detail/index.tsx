@@ -40,19 +40,53 @@ const ScheduleDetailPage: React.FC = () => {
     }
   };
 
-  const handleConvertToCareRecord = async () => {
-    if (!id) return;
-    if (!window.confirm('이 일정을 실제 케어 기록으로 전환하시겠습니까? \n완료된 기록으로 저장됩니다.')) return;
+  const handleConvertToCareRecord = () => {
+    if (!id || !schedule) return;
     
-    try {
-      const response = await scheduleApi.convertToCareRecord(Number(id));
-      const careRecordId = response.careRecordId;
-      alert('케어 기록으로 성공적으로 전환되었습니다! ✨');
-      navigate(`/care-records/${careRecordId}`);
-    } catch (err) {
-      console.error('Conversion failed:', err);
-      alert('기록 전환에 실패했습니다.');
+    // 일정 타입에 따른 케어 기록 타입 및 카테고리 매핑
+    let recordType: 'MEDICAL' | 'EXPENSE' = 'MEDICAL';
+    let categoryCode = 'ETC';
+    
+    switch (schedule.scheduleTypeCode) {
+      case 'MEDICAL':
+      case 'CHECKUP':
+      case 'MEDICATION':
+        recordType = 'MEDICAL';
+        break;
+      case 'GROOMING':
+        recordType = 'EXPENSE';
+        categoryCode = 'GROOMING';
+        break;
+      case 'ETC':
+      default:
+        recordType = 'EXPENSE';
+        categoryCode = 'ETC';
+        break;
     }
+
+    if (!window.confirm(`이 일정을 ${recordType === 'MEDICAL' ? '진료 기록' : '지출 기록'}으로 전환하시겠습니까? \n추가 정보를 입력할 수 있는 등록 페이지로 이동합니다.`)) return;
+    
+    navigate('/care-records/new', { 
+      state: { 
+        prefillData: {
+          dogId: schedule.dogId,
+          recordDate: schedule.scheduleDate.split('T')[0],
+          title: schedule.title,
+          note: schedule.memo || '',
+          recordType: recordType,
+          medicalDetails: recordType === 'MEDICAL' ? {
+            clinicName: schedule.location || '',
+            symptomTags: schedule.symptomTags || []
+          } : null,
+          expenseDetails: recordType === 'EXPENSE' ? {
+            categoryCode: categoryCode,
+            memo: schedule.memo || ''
+          } : null,
+          files: files || [], // 기존 파일 목록 전달
+          fromScheduleId: schedule.id
+        } 
+      } 
+    });
   };
 
   if (isLoading) {

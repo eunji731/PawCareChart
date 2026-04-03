@@ -62,6 +62,7 @@ export interface CareRecordCreateRequest {
   title: string;
   note?: string;
   fileIds?: number[];
+  sourceScheduleId?: number | null; // 추가: 전환 시 원본 일정 ID
   medicalDetails?: MedicalDetailRequest | null;
   expenseDetails?: ExpenseDetailRequest | null;
 }
