@@ -23,6 +23,8 @@ public interface DashboardMapper {
     List<DashboardResponse.ActiveMedication> selectActiveMedications(
             @Param("userId") Long userId,
             @Param("dogId") Long dogId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
             @Param("today") LocalDate today
     );
 
@@ -38,6 +40,8 @@ public interface DashboardMapper {
     List<DashboardResponse.UpcomingSchedule> selectUpcomingSchedules(
             @Param("userId") Long userId,
             @Param("dogId") Long dogId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
             @Param("today") LocalDate today
     );
 

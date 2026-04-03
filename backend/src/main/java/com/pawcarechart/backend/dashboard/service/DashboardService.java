@@ -20,9 +20,9 @@ public class DashboardService {
 
         return DashboardResponse.builder()
                 .stats(dashboardMapper.selectStats(userId, dogId, startDate, endDate, today))
-                .activeMedications(dashboardMapper.selectActiveMedications(userId, dogId, today))
+                .activeMedications(dashboardMapper.selectActiveMedications(userId, dogId, startDate, endDate, today))
                 .topSymptoms(dashboardMapper.selectTopSymptoms(userId, dogId, startDate, endDate))
-                .upcomingSchedules(dashboardMapper.selectUpcomingSchedules(userId, dogId, today))
+                .upcomingSchedules(dashboardMapper.selectUpcomingSchedules(userId, dogId, startDate, endDate, today))
                 .recentRecords(dashboardMapper.selectRecentRecords(userId, dogId, startDate, endDate))
                 .build();
     }

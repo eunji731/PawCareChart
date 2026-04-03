@@ -14,8 +14,9 @@
                 JOIN public.care_records cr2 ON md2.care_record_id = cr2.id
                 WHERE cr2.user_id = #{userId}
                 <if test="dogId != null">AND cr2.dog_id = #{dogId}</if>
-                AND md2.medication_start_date <![CDATA[<=]]> #{today}
-                AND (md2.medication_start_date + (md2.medication_days || ' days')::interval) <![CDATA[>=]]> #{today}
+                -- 필터 기간 동안 복약 중이었던 처방 (기간 중첩 확인)
+                AND md2.medication_start_date <![CDATA[<=]]> #{endDate}
+                AND (md2.medication_start_date + (md2.medication_days || ' days')::interval) <![CDATA[>=]]> #{startDate}
                 AND md2.is_medication_completed = false
             ) AS activeMedicationCount,
             (
@@ -24,7 +25,8 @@
                 JOIN public.dogs d2 ON s.dog_id = d2.id
                 WHERE d2.user_id = #{userId}
                 <if test="dogId != null">AND s.dog_id = #{dogId}</if>
-                AND s.schedule_date <![CDATA[>=]]> #{today}
+                -- 필터 기간 내의 일정 수
+                AND s.schedule_date BETWEEN #{startDate} AND #{endDate}
             ) AS upcomingScheduleCount
         FROM public.care_records cr
         LEFT JOIN public.care_record_expense_details ed ON cr.id = ed.care_record_id
@@ -33,21 +35,22 @@
         AND cr.record_date BETWEEN #{startDate} AND #{endDate}
     </select>
 
-    <!-- 2. 진행 중인 복약 (최대 3개) -->
+    <!-- 2. 진행 중인 복약 (필터 기간 내 활성 상태였던 것) -->
     <select id="selectActiveMedications" resultType="com.pawcarechart.backend.dashboard.dto.DashboardResponse$ActiveMedication">
         SELECT
             d.name AS dogName,
             cr.title AS title,
             md.medication_start_date AS startDate,
             (md.medication_start_date + (md.medication_days || ' days')::interval)::date AS endDate,
-            (EXTRACT(DAY FROM (md.medication_start_date + (md.medication_days || ' days')::interval) - #{today}::timestamp))::int AS remainingDays
+            -- 오늘 기준 남은 일수 (과거 기록일 경우 0 이하가 될 수 있음)
+            GREATEST(0, (EXTRACT(DAY FROM (md.medication_start_date + (md.medication_days || ' days')::interval) - #{today}::timestamp))::int) AS remainingDays
         FROM public.care_record_medical_details md
         JOIN public.care_records cr ON md.care_record_id = cr.id
         JOIN public.dogs d ON cr.dog_id = d.id
         WHERE cr.user_id = #{userId}
         <if test="dogId != null">AND cr.dog_id = #{dogId}</if>
-        AND md.medication_start_date <![CDATA[<=]]> #{today}
-        AND (md.medication_start_date + (md.medication_days || ' days')::interval) <![CDATA[>=]]> #{today}
+        AND md.medication_start_date <![CDATA[<=]]> #{endDate}
+        AND (md.medication_start_date + (md.medication_days || ' days')::interval) <![CDATA[>=]]> #{startDate}
         AND md.is_medication_completed = false
         ORDER BY endDate ASC
         LIMIT 3
@@ -69,7 +72,7 @@
         LIMIT 5
     </select>
 
-    <!-- 4. 다가오는 일정 (3~5개) -->
+    <!-- 4. 필터 기간 내 일정 (최대 5개) -->
     <select id="selectUpcomingSchedules" resultType="com.pawcarechart.backend.dashboard.dto.DashboardResponse$UpcomingSchedule">
         SELECT
             s.id,
@@ -81,7 +84,8 @@
         JOIN public.dogs d ON s.dog_id = d.id
         WHERE d.user_id = #{userId}
         <if test="dogId != null">AND s.dog_id = #{dogId}</if>
-        AND s.schedule_date <![CDATA[>=]]> #{today}
+        -- 필터 기간 내의 일정만 조회
+        AND s.schedule_date BETWEEN #{startDate} AND #{endDate}
         ORDER BY s.schedule_date ASC
         LIMIT 5
     </select>
