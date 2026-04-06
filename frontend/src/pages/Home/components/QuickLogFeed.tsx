@@ -12,7 +12,10 @@ export const QuickLogFeed: React.FC<QuickLogFeedProps> = ({ selectedDogId }) => 
   const [isLoading, setIsLoading] = useState(false);
 
   const fetchLogs = useCallback(async () => {
-    if (!selectedDogId) return;
+    if (!selectedDogId) {
+      setLogs([]);
+      return;
+    }
     try {
       const data = await healthLogApi.getRecentLogs(selectedDogId);
       setLogs(data || []);
@@ -25,32 +28,39 @@ export const QuickLogFeed: React.FC<QuickLogFeedProps> = ({ selectedDogId }) => 
     fetchLogs();
   }, [fetchLogs]);
 
-  const handleSubmit = async (e?: React.FormEvent, customContent?: string) => {
-    if (e) e.preventDefault();
-    const finalContent = customContent || content;
-    if (!selectedDogId || !finalContent.trim()) return;
+  // 통합 등록 함수
+  const handleAddLog = async (text: string) => {
+    if (!selectedDogId) return alert('반려견을 먼저 선택해 주세요.');
+    if (!text.trim()) return;
 
     try {
       setIsLoading(true);
       await healthLogApi.createLog({
         dogId: selectedDogId,
-        content: finalContent.trim()
+        content: text.trim()
       });
       setContent('');
-      fetchLogs(); // 목록 갱신
+      await fetchLogs(); // 목록 즉시 갱신
     } catch (err) {
+      console.error('Save failed:', err);
       alert('저장에 실패했습니다.');
     } finally {
       setIsLoading(false);
     }
   };
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleAddLog(content);
+  };
+
   const handleDelete = async (id: number) => {
     if (!window.confirm('기록을 삭제하시겠습니까?')) return;
     try {
       await healthLogApi.deleteLog(id);
-      fetchLogs(); // 목록 갱신
+      fetchLogs();
     } catch (err) {
+      console.error('Delete failed:', err);
       alert('삭제에 실패했습니다.');
     }
   };
@@ -78,8 +88,10 @@ export const QuickLogFeed: React.FC<QuickLogFeedProps> = ({ selectedDogId }) => 
           {quickEmojis.map(item => (
             <button
               key={item.label}
-              onClick={() => handleSubmit(undefined, `${item.icon} ${item.label} 확인`)}
-              className="flex-1 py-2 bg-white border border-stone-100 rounded-xl text-xl hover:border-[#FF6B00] hover:bg-orange-50 transition-all active:scale-95"
+              type="button" // 중요: 기본 submit 방지
+              onClick={() => handleAddLog(`${item.icon} ${item.label} 확인`)}
+              className="flex-1 py-2 bg-white border border-stone-100 rounded-xl text-xl hover:border-[#FF6B00] hover:bg-orange-50 transition-all active:scale-95 disabled:opacity-50"
+              disabled={isLoading || !selectedDogId}
               title={item.label}
             >
               {item.icon}
@@ -91,12 +103,13 @@ export const QuickLogFeed: React.FC<QuickLogFeedProps> = ({ selectedDogId }) => 
             type="text"
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            placeholder="직접 입력하기..."
-            className="w-full h-[48px] pl-4 pr-12 bg-white border border-stone-200 rounded-xl text-[14px] font-bold outline-none focus:border-[#FF6B00] transition-all"
+            placeholder={selectedDogId ? "직접 입력하기..." : "반려견을 선택하세요"}
+            className="w-full h-[48px] pl-4 pr-12 bg-white border border-stone-200 rounded-xl text-[14px] font-bold outline-none focus:border-[#FF6B00] transition-all disabled:bg-stone-100"
+            disabled={isLoading || !selectedDogId}
           />
           <button
             type="submit"
-            disabled={isLoading || !content.trim()}
+            disabled={isLoading || !content.trim() || !selectedDogId}
             className="absolute right-2 top-1/2 -translate-y-1/2 w-[32px] h-[32px] bg-[#FF6B00] text-white rounded-lg flex items-center justify-center text-sm disabled:bg-stone-200 transition-all"
           >
             ↵
@@ -118,6 +131,7 @@ export const QuickLogFeed: React.FC<QuickLogFeedProps> = ({ selectedDogId }) => 
                 </span>
               </div>
               <button
+                type="button"
                 onClick={() => handleDelete(log.id)}
                 className="opacity-0 group-hover:opacity-100 p-1 text-stone-300 hover:text-red-400 transition-all"
               >
