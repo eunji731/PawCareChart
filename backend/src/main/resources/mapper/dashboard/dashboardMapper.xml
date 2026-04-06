@@ -6,7 +6,7 @@
     <!-- 1. 핵심 지표 -->
     <select id="selectStats" resultType="com.pawcarechart.backend.dashboard.dto.DashboardResponse$Stats">
         SELECT
-            COALESCE(SUM(ed.amount), 0) AS totalExpense,
+            COALESCE(SUM(md.amount), 0) + COALESCE(SUM(ed.amount), 0) AS totalExpense,
             COUNT(CASE WHEN cr.record_type_code = 'MEDICAL' THEN 1 END) AS medicalCount,
             (
                 SELECT COUNT(*)
@@ -25,10 +25,12 @@
                 JOIN public.dogs d2 ON s.dog_id = d2.id
                 WHERE d2.user_id = #{userId}
                 <if test="dogId != null">AND s.dog_id = #{dogId}</if>
-                -- 필터 기간 내의 일정 수
+                -- 필터 기간 내에 있으면서 오늘 이후(오늘 포함)인 일정 수
                 AND s.schedule_date BETWEEN #{startDate} AND #{endDate}
+                AND s.schedule_date <![CDATA[>=]]> #{today}
             ) AS upcomingScheduleCount
         FROM public.care_records cr
+        LEFT JOIN public.care_record_medical_details md ON cr.id = md.care_record_id
         LEFT JOIN public.care_record_expense_details ed ON cr.id = ed.care_record_id
         WHERE cr.user_id = #{userId}
         <if test="dogId != null">AND cr.dog_id = #{dogId}</if>
@@ -72,7 +74,7 @@
         LIMIT 5
     </select>
 
-    <!-- 4. 필터 기간 내 일정 (최대 5개) -->
+    <!-- 4. 필터 기간 내 다가오는 일정 (과거 제외, 오름차순) -->
     <select id="selectUpcomingSchedules" resultType="com.pawcarechart.backend.dashboard.dto.DashboardResponse$UpcomingSchedule">
         SELECT
             s.id,
@@ -86,6 +88,8 @@
         <if test="dogId != null">AND s.dog_id = #{dogId}</if>
         -- 필터 기간 내의 일정만 조회
         AND s.schedule_date BETWEEN #{startDate} AND #{endDate}
+        -- 오늘 이후(오늘 포함)의 일정만 노출 (과거 일정 제외)
+        AND s.schedule_date <![CDATA[>=]]> #{today}
         ORDER BY s.schedule_date ASC
         LIMIT 5
     </select>
