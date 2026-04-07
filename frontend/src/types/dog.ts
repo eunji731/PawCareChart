@@ -31,9 +31,10 @@ export interface DogCreateRequest {
   birthDate: string | null; // YYYY-MM-DD
   weight: number | null;
   profileImageUrl: string | null;
+  profileImageFileId?: number | null; // 추가: 파일 매핑을 위한 ID
 }
 
 /**
  * 반려견 수정 요청 DTO
  */
-export interface DogUpdateRequest extends DogCreateRequest {}
+export type DogUpdateRequest = Partial<DogCreateRequest>;

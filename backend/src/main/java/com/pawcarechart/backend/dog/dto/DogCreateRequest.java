@@ -26,6 +26,7 @@ public class DogCreateRequest {
     @Schema(description = "몸무게(kg)", example = "4.5")
     private Double weight;
     
-    @Schema(description = "프로필 이미지 URL")
-    private String profileImageUrl;
+    @Schema(description = "프로필 이미지 파일 ID")
+    @com.fasterxml.jackson.annotation.JsonProperty("profileImageFileId")
+    private Long profileImageFileId;
 }

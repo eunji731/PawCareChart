@@ -57,10 +57,10 @@ const DogFormPage = () => {
             <FileUploader 
               variant="panel"
               mode="single"
-              displayUrls={photoUploader.displayUrls}
+              fileInfos={photoUploader.fileInfos}
               onFileSelect={(files) => photoUploader.handleSelect(files, 1)}
               onFileDelete={photoUploader.handleDelete}
-              loading={photoUploader.isLoading}
+              loading={photoUploader.isUploading}
               maxCount={1}
             />
           </div>
