@@ -21,8 +21,11 @@ public class UserResponse {
     @Schema(description = "이름", example = "홍길동")
     private String name;
 
-    @Schema(description = "역할 코드", example = "ROLE_USER")
-    private String roleCode;
+    @Schema(description = "역할 ID", example = "1")
+    private Long roleId;
+
+    @Schema(description = "역할명", example = "일반 사용자")
+    private String roleName;
 
     @Schema(description = "가입 일시")
     private LocalDateTime createdAt;

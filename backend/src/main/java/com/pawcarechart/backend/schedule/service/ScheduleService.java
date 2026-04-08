@@ -2,16 +2,17 @@ package com.pawcarechart.backend.schedule.service;
 
 import com.pawcarechart.backend.care.dto.CareRecordCreateRequest;
 import com.pawcarechart.backend.care.service.CareService;
-import com.pawcarechart.backend.file.constant.FileTargetType;
+import com.pawcarechart.backend.code.entity.CommonCode;
+import com.pawcarechart.backend.code.repository.CommonCodeRepository;
+import com.pawcarechart.backend.dog.repository.DogRepository;
 import com.pawcarechart.backend.file.dto.FileCountResponse;
 import com.pawcarechart.backend.file.repository.FileMappingRepository;
 import com.pawcarechart.backend.file.service.FileService;
-import com.pawcarechart.backend.symptom.service.SymptomService;
-import com.pawcarechart.backend.dog.repository.DogRepository;
 import com.pawcarechart.backend.schedule.dto.ScheduleRequest;
 import com.pawcarechart.backend.schedule.dto.ScheduleResponse;
 import com.pawcarechart.backend.schedule.entity.Schedule;
 import com.pawcarechart.backend.schedule.repository.ScheduleRepository;
+import com.pawcarechart.backend.symptom.service.SymptomService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -20,8 +21,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -39,17 +38,19 @@ public class ScheduleService {
     private final FileService fileService;
     private final FileMappingRepository fileMappingRepository;
     private final com.pawcarechart.backend.schedule.mapper.ScheduleMapper scheduleMapper;
+    private final CommonCodeRepository commonCodeRepository;
 
     /**
      * 일정 목록 조회 (MyBatis)
      */
-    public List<ScheduleResponse> getSchedules(Long userId, Long dogId, String type, String keyword, LocalDate startDate, LocalDate endDate) {
-        List<ScheduleResponse> schedules = scheduleMapper.selectSchedules(userId, dogId, type, keyword, startDate, endDate);
+    public List<ScheduleResponse> getSchedules(Long userId, Long dogId, Long typeId, String keyword, LocalDate startDate, LocalDate endDate) {
+        List<ScheduleResponse> schedules = scheduleMapper.selectSchedules(userId, dogId, typeId, keyword, startDate, endDate);
 
         if (schedules.isEmpty()) return schedules;
 
         List<Long> scheduleIds = schedules.stream().map(ScheduleResponse::getId).toList();
-        List<FileCountResponse> fileCounts = fileMappingRepository.countFilesByTargetIds(FileTargetType.SCHEDULE, scheduleIds);
+        Long scheduleTargetId = getCodeId("FILE_TARGET_TYPE", "SCHEDULE");
+        List<FileCountResponse> fileCounts = fileMappingRepository.countFilesByTargetIds(scheduleTargetId, scheduleIds);
         Map<Long, Integer> fileCountMap = fileCounts.stream()
                 .collect(Collectors.toMap(FileCountResponse::getTargetId, f -> f.getCount().intValue()));
 
@@ -69,9 +70,15 @@ public class ScheduleService {
      */
     public ScheduleResponse getScheduleDetail(Long id, Long userId) {
         Schedule schedule = findAndValidateSchedule(id, userId);
+        
+        com.pawcarechart.backend.dog.entity.Dog dog = dogRepository.findById(schedule.getDogId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "반려견 정보를 찾을 수 없습니다."));
+
         List<String> tags = symptomService.getSymptomNamesByScheduleId(id);
-        List<com.pawcarechart.backend.file.dto.FileResponse> attachments = fileService.getFiles(FileTargetType.SCHEDULE, id);
-        return ScheduleResponse.of(schedule, tags, attachments);
+        
+        Long scheduleTargetId = getCodeId("FILE_TARGET_TYPE", "SCHEDULE");
+        List<com.pawcarechart.backend.file.dto.FileResponse> attachments = fileService.getFiles(scheduleTargetId, id);
+        return ScheduleResponse.of(schedule, dog.getName(), dog.getProfileImageUrl(), tags, attachments);
     }
 
     /**
@@ -79,18 +86,21 @@ public class ScheduleService {
      */
     @Transactional
     public Long registerSchedule(ScheduleRequest request, Long userId) {
-        System.out.println(">>> [DEBUG] registerSchedule START");
-        System.out.println(">>> [DEBUG] fileIds from request: " + request.getFileIds());
-
         validateDogOwnership(request.getDogId(), userId);
+
+        CommonCode scheduleType = null;
+        if (request.getScheduleTypeId() != null) {
+            scheduleType = commonCodeRepository.findById(request.getScheduleTypeId())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "잘못된 일정 유형 ID입니다."));
+        }
 
         Schedule schedule = Schedule.builder()
                 .dogId(request.getDogId())
                 .title(request.getTitle())
                 .scheduleDate(request.getScheduleDate())
-                .scheduleTypeCode(request.getScheduleTypeCode())
+                .scheduleType(scheduleType)
                 .memo(request.getMemo())
-                .location(request.getLocation()) // 장소 추가
+                .location(request.getLocation())
                 .build();
 
         Schedule saved = scheduleRepository.save(schedule);
@@ -98,8 +108,8 @@ public class ScheduleService {
 
         List<Long> fileIds = request.getFileIds();
         if (fileIds != null && !fileIds.isEmpty()) {
-            System.out.println(">>> [DEBUG] Calling connectFilesToTarget with " + fileIds.size() + " files");
-            fileService.connectFilesToTarget(fileIds, FileTargetType.SCHEDULE, saved.getId(), userId);
+            Long scheduleTargetId = getCodeId("FILE_TARGET_TYPE", "SCHEDULE");
+            fileService.connectFilesToTarget(fileIds, scheduleTargetId, saved.getId(), userId);
         }
 
         return saved.getId();
@@ -110,14 +120,20 @@ public class ScheduleService {
      */
     @Transactional
     public void updateSchedule(Long id, ScheduleRequest request, Long userId) {
-        System.out.println(">>> [DEBUG] updateSchedule START. id: " + id);
         Schedule schedule = findAndValidateSchedule(id, userId);
         validateDogOwnership(request.getDogId(), userId);
 
-        schedule.update(request.getTitle(), request.getScheduleDate(), request.getScheduleTypeCode(), request.getMemo(), request.getLocation());
+        CommonCode scheduleType = null;
+        if (request.getScheduleTypeId() != null) {
+            scheduleType = commonCodeRepository.findById(request.getScheduleTypeId())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "잘못된 일정 유형 ID입니다."));
+        }
+
+        schedule.update(request.getTitle(), request.getScheduleDate(), scheduleType, request.getMemo(), request.getLocation());
         symptomService.syncScheduleSymptoms(id, request.getSymptomTags());
         
-        fileService.syncFilesToTarget(request.getFileIds(), FileTargetType.SCHEDULE, id, userId);
+        Long scheduleTargetId = getCodeId("FILE_TARGET_TYPE", "SCHEDULE");
+        fileService.syncFilesToTarget(request.getFileIds(), scheduleTargetId, id, userId);
     }
 
     /**
@@ -127,7 +143,9 @@ public class ScheduleService {
     public void deleteSchedule(Long id, Long userId) {
         findAndValidateSchedule(id, userId);
         symptomService.deleteScheduleSymptoms(id);
-        fileService.deleteFilesByTarget(FileTargetType.SCHEDULE, id);
+        
+        Long scheduleTargetId = getCodeId("FILE_TARGET_TYPE", "SCHEDULE");
+        fileService.deleteFilesByTarget(scheduleTargetId, id);
         scheduleRepository.deleteById(id);
     }
 
@@ -149,31 +167,25 @@ public class ScheduleService {
         schedule.toggleCompletion(true);
 
         List<String> tags = symptomService.getSymptomNamesByScheduleId(id);
-        List<com.pawcarechart.backend.file.dto.FileResponse> attachments = fileService.getFiles(FileTargetType.SCHEDULE, id);
+        Long scheduleTargetId = getCodeId("FILE_TARGET_TYPE", "SCHEDULE");
+        List<com.pawcarechart.backend.file.dto.FileResponse> attachments = fileService.getFiles(scheduleTargetId, id);
         List<Long> fileIds = attachments.stream().map(com.pawcarechart.backend.file.dto.FileResponse::getId).toList();
         
+        Long medicalRecordTypeId = getCodeId("RECORD_TYPE", "MEDICAL");
+
         CareRecordCreateRequest builder = CareRecordCreateRequest.builder()
                 .dogId(schedule.getDogId())
+                .recordTypeId(medicalRecordTypeId)
                 .recordDate(schedule.getScheduleDate().toLocalDate())
                 .title(schedule.getTitle())
                 .note(schedule.getMemo())
                 .fileIds(fileIds)
+                .medicalDetails(CareRecordCreateRequest.MedicalDetailRequest.builder()
+                        .clinicName(schedule.getLocation() != null ? schedule.getLocation() : "일정 기반 등록")
+                        .symptoms(schedule.getMemo())
+                        .symptomTags(tags)
+                        .build())
                 .build();
-
-        if ("MEDICAL".equals(schedule.getScheduleTypeCode())) {
-            builder.setRecordTypeCode("MEDICAL");
-            builder.setMedicalDetails(CareRecordCreateRequest.MedicalDetailRequest.builder()
-                    .clinicName(schedule.getLocation() != null ? schedule.getLocation() : "일정 기반 등록") // location이 있으면 병원명으로 활용
-                    .symptomTags(tags)
-                    .build());
-        } else {
-            builder.setRecordTypeCode("MEDICAL");
-            builder.setMedicalDetails(CareRecordCreateRequest.MedicalDetailRequest.builder()
-                    .clinicName(schedule.getLocation() != null ? schedule.getLocation() : "일정 기반 등록")
-                    .symptoms(schedule.getMemo())
-                    .symptomTags(tags)
-                    .build());
-        }
 
         return careService.registerCareRecord(builder, userId);
     }
@@ -188,5 +200,14 @@ public class ScheduleService {
     private void validateDogOwnership(Long dogId, Long userId) {
         dogRepository.findByIdAndUserId(dogId, userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "반려견 권한이 없습니다."));
+    }
+
+    private Long getCodeId(String groupCode, String code) {
+        return commonCodeRepository.findAllByGroupCodeAndUseYnOrderBySortOrderAsc(groupCode, "Y")
+                .stream()
+                .filter(c -> c.getCode().equals(code))
+                .findFirst()
+                .map(CommonCode::getId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "필요한 공통 코드가 정의되지 않았습니다: " + code));
     }
 }

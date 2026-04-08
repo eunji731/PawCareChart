@@ -16,7 +16,8 @@ public class CareRecordDetailQueryResult {
     private Long dogId;
     private String dogName;
     private String dogProfileImageUrl;
-    private String recordType;
+    private Long recordTypeId;
+    private String recordTypeName;
     private LocalDate recordDate;
     private String title;
     private String note;
@@ -27,7 +28,8 @@ public class CareRecordDetailQueryResult {
     private LocalDate medicationStartDate;
     private Integer medicationDays;
     private String medicationStatus;
-    private String categoryCode;
+    private Long categoryId;
+    private String categoryName;
     private Long amount;
 
     // 연관된 병원 기록 정보 (Join 결과)

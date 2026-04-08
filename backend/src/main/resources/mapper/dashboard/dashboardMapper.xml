@@ -7,16 +7,19 @@
     <select id="selectStats" resultType="com.pawcarechart.backend.dashboard.dto.DashboardResponse$Stats">
         SELECT
             COALESCE(SUM(md.amount), 0) + COALESCE(SUM(ed.amount), 0) AS totalExpense,
-            COUNT(CASE WHEN cr.record_type_code = 'MEDICAL' THEN 1 END) AS medicalCount,
+            COUNT(CASE WHEN cr.record_type_id = (SELECT id FROM public.codes WHERE group_code = 'RECORD_TYPE' AND code = 'MEDICAL') THEN 1 END) AS medicalCount,
             (
                 SELECT COUNT(*)
                 FROM public.care_record_medical_details md2
                 JOIN public.care_records cr2 ON md2.care_record_id = cr2.id
                 WHERE cr2.user_id = #{userId}
                 <if test="dogId != null">AND cr2.dog_id = #{dogId}</if>
-                -- 필터 기간 동안 복약 중이었던 처방 (기간 중첩 확인)
-                AND md2.medication_start_date <![CDATA[<=]]> #{endDate}
-                AND (md2.medication_start_date + (md2.medication_days || ' days')::interval) <![CDATA[>=]]> #{startDate}
+                -- 필터 기간 내의 기록이면서
+                AND cr2.record_date BETWEEN #{startDate} AND #{endDate}
+                -- 오늘 날짜가 복약 기간에 포함되어야 함 (현재 진행 중)
+                AND md2.medication_start_date <![CDATA[<=]]> #{today}
+                -- 종료일(시작일 + 일수)이 오늘보다 커야 함 (오늘까지는 포함, 내일부터는 제외)
+                AND (md2.medication_start_date + (md2.medication_days || ' days')::interval) <![CDATA[>]]> #{today}::timestamp
                 AND md2.is_medication_completed = false
             ) AS activeMedicationCount,
             (
@@ -25,7 +28,6 @@
                 JOIN public.dogs d2 ON s.dog_id = d2.id
                 WHERE d2.user_id = #{userId}
                 <if test="dogId != null">AND s.dog_id = #{dogId}</if>
-                -- 필터 기간 내에 있으면서 오늘 이후(오늘 포함)인 일정 수
                 AND s.schedule_date BETWEEN #{startDate} AND #{endDate}
                 AND s.schedule_date <![CDATA[>=]]> #{today}
             ) AS upcomingScheduleCount
@@ -37,7 +39,7 @@
         AND cr.record_date BETWEEN #{startDate} AND #{endDate}
     </select>
 
-    <!-- 2. 진행 중인 복약 (필터 기간 내 활성 상태였던 것) -->
+    <!-- 2. 진행 중인 복약 (오늘 날짜 기준 활성 상태) -->
     <select id="selectActiveMedications" resultType="com.pawcarechart.backend.dashboard.dto.DashboardResponse$ActiveMedication">
         SELECT
             d.name AS dogName,
@@ -51,14 +53,17 @@
         JOIN public.dogs d ON cr.dog_id = d.id
         WHERE cr.user_id = #{userId}
         <if test="dogId != null">AND cr.dog_id = #{dogId}</if>
-        AND md.medication_start_date <![CDATA[<=]]> #{endDate}
-        AND (md.medication_start_date + (md.medication_days || ' days')::interval) <![CDATA[>=]]> #{startDate}
+        -- 필터 기간 내의 기록이면서
+        AND cr.record_date BETWEEN #{startDate} AND #{endDate}
+        -- 오늘 날짜가 복약 기간에 포함되어야 함
+        AND md.medication_start_date <![CDATA[<=]]> #{today}
+        AND (md.medication_start_date + (md.medication_days || ' days')::interval) <![CDATA[>=]]> #{today}
         AND md.is_medication_completed = false
         ORDER BY endDate ASC
         LIMIT 3
     </select>
 
-    <!-- 3. 증상 랭킹 (Top 5) -->
+    <!-- 3. 증상 랭킹 -->
     <select id="selectTopSymptoms" resultType="com.pawcarechart.backend.dashboard.dto.DashboardResponse$SymptomRanking">
         SELECT
             sm.name AS name,
@@ -74,7 +79,7 @@
         LIMIT 5
     </select>
 
-    <!-- 4. 필터 기간 내 다가오는 일정 (과거 제외, 오름차순) -->
+    <!-- 4. 다가오는 일정 -->
     <select id="selectUpcomingSchedules" resultType="com.pawcarechart.backend.dashboard.dto.DashboardResponse$UpcomingSchedule">
         SELECT
             s.id,
@@ -86,29 +91,104 @@
         JOIN public.dogs d ON s.dog_id = d.id
         WHERE d.user_id = #{userId}
         <if test="dogId != null">AND s.dog_id = #{dogId}</if>
-        -- 필터 기간 내의 일정만 조회
         AND s.schedule_date BETWEEN #{startDate} AND #{endDate}
-        -- 오늘 이후(오늘 포함)의 일정만 노출 (과거 일정 제외)
         AND s.schedule_date <![CDATA[>=]]> #{today}
         ORDER BY s.schedule_date ASC
         LIMIT 5
     </select>
 
-    <!-- 5. 최근 활동 (전체 조회) -->
+    <!-- 5. 최근 활동 -->
     <select id="selectRecentRecords" resultType="com.pawcarechart.backend.dashboard.dto.DashboardResponse$RecentRecord">
         SELECT
             cr.id,
-            cr.record_type_code AS type,
+            c.code_name AS type,
             cr.record_date AS date,
             cr.title,
             COALESCE(md.amount, ed.amount, 0) AS amount
         FROM public.care_records cr
         LEFT JOIN public.care_record_medical_details md ON cr.id = md.care_record_id
         LEFT JOIN public.care_record_expense_details ed ON cr.id = ed.care_record_id
+        LEFT JOIN public.codes c ON cr.record_type_id = c.id
         WHERE cr.user_id = #{userId}
         <if test="dogId != null">AND cr.dog_id = #{dogId}</if>
         AND cr.record_date BETWEEN #{startDate} AND #{endDate}
         ORDER BY cr.record_date DESC, cr.created_at DESC
+    </select>
+
+    <!-- 6. 지출 카테고리별 요약 -->
+    <select id="selectCategorySummaries" resultType="com.pawcarechart.backend.dashboard.dto.DashboardChartResponse$CategorySummary">
+        WITH category_totals AS (
+            SELECT
+                ed.category_id AS categoryId,
+                COALESCE(c.code_name, '기타') AS categoryName,
+                SUM(ed.amount) AS amount
+            FROM public.care_record_expense_details ed
+            JOIN public.care_records cr ON ed.care_record_id = cr.id
+            LEFT JOIN public.codes c ON ed.category_id = c.id
+            WHERE cr.user_id = #{userId}
+            <if test="dogId != null">
+                AND cr.dog_id = #{dogId}
+            </if>
+            AND cr.record_date BETWEEN #{startDate} AND #{endDate}
+            GROUP BY ed.category_id, c.code_name
+        )
+        SELECT 
+            categoryId,
+            categoryName,
+            amount,
+            CASE 
+                WHEN SUM(amount) OVER() > 0 
+                THEN ROUND((amount * 100.0) / SUM(amount) OVER(), 1)
+                ELSE 0 
+            END AS percentage
+        FROM category_totals
+        ORDER BY amount DESC
+    </select>
+
+    <!-- 7. 병원 진료비 총합 -->
+    <select id="selectMedicalTotalAmount" resultType="long">
+        SELECT COALESCE(SUM(md.amount), 0)
+        FROM public.care_record_medical_details md
+        JOIN public.care_records cr ON md.care_record_id = cr.id
+        JOIN public.codes c ON cr.record_type_id = c.id
+        WHERE cr.user_id = #{userId}
+        AND c.group_code = 'RECORD_TYPE' AND c.code = 'MEDICAL'
+        <if test="dogId != null">
+            AND cr.dog_id = #{dogId}
+        </if>
+        AND cr.record_date BETWEEN #{startDate} AND #{endDate}
+    </select>
+
+    <!-- 8. 월별 추이 -->
+    <select id="selectMonthlyTrends" resultType="com.pawcarechart.backend.dashboard.dto.DashboardChartResponse$MonthlyTrend">
+        WITH RECURSIVE month_series AS (
+            SELECT DATE_TRUNC('month', #{startDate}::date) AS month_date
+            UNION ALL
+            SELECT month_date + INTERVAL '1 month'
+            FROM month_series
+            WHERE month_date <![CDATA[<]]> DATE_TRUNC('month', #{endDate}::date)
+        )
+        SELECT
+            TO_CHAR(ms.month_date, 'YYYY-MM') AS month,
+            COALESCE(SUM(combined.total), 0) AS totalAmount,
+            COALESCE(SUM(combined.medical), 0) AS medicalAmount,
+            COALESCE(SUM(combined.expense), 0) AS otherAmount
+        FROM month_series ms
+        LEFT JOIN (
+            SELECT
+                DATE_TRUNC('month', cr.record_date) AS record_month,
+                (COALESCE(md.amount, 0) + COALESCE(ed.amount, 0)) AS total,
+                COALESCE(md.amount, 0) AS medical,
+                COALESCE(ed.amount, 0) AS expense
+            FROM public.care_records cr
+            LEFT JOIN public.care_record_medical_details md ON cr.id = md.care_record_id
+            LEFT JOIN public.care_record_expense_details ed ON cr.id = ed.care_record_id
+            WHERE cr.user_id = #{userId}
+            <if test="dogId != null">AND cr.dog_id = #{dogId}</if>
+            AND cr.record_date BETWEEN #{startDate} AND #{endDate}
+        ) combined ON ms.month_date = combined.record_month
+        GROUP BY ms.month_date
+        ORDER BY ms.month_date ASC
     </select>
 
 </mapper>

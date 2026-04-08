@@ -1,6 +1,7 @@
 package com.pawcarechart.backend.dashboard.controller;
 
 import com.pawcarechart.backend.common.dto.ApiResult;
+import com.pawcarechart.backend.dashboard.dto.DashboardChartResponse;
 import com.pawcarechart.backend.dashboard.dto.DashboardResponse;
 import com.pawcarechart.backend.dashboard.dto.HealthLogDto;
 import com.pawcarechart.backend.dashboard.service.DashboardService;
@@ -35,6 +36,28 @@ public class DashboardController {
         DashboardResponse response = dashboardService.getDashboardSummary(
                 Long.valueOf(userId), dogId, startDate, endDate);
         return ApiResult.ok(response);
+    }
+
+    @Operation(summary = "지출 항목 분석 (차트)", description = "선택한 기간 동안의 지출 카테고리별 합계 및 비율을 조회합니다.")
+    @GetMapping("/charts/expense-analysis")
+    public ApiResult<DashboardChartResponse.ExpenseAnalysis> getExpenseAnalysis(
+            @Parameter(description = "반려견 ID (선택)") @RequestParam(required = false) Long dogId,
+            @Parameter(description = "시작일 (YYYY-MM-DD)") @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @Parameter(description = "종료일 (YYYY-MM-DD)") @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @AuthenticationPrincipal String userId) {
+        DashboardChartResponse.ExpenseAnalysis analysis = dashboardService.getExpenseAnalysis(Long.valueOf(userId), dogId, startDate, endDate);
+        return ApiResult.ok(analysis);
+    }
+
+    @Operation(summary = "월별 지출 추이 (차트)", description = "선택한 기간 동안의 월별 병원비 및 기타 지출 추이를 조회합니다.")
+    @GetMapping("/charts/expense-trend")
+    public ApiResult<List<DashboardChartResponse.MonthlyTrend>> getExpenseTrend(
+            @Parameter(description = "반려견 ID (선택)") @RequestParam(required = false) Long dogId,
+            @Parameter(description = "시작일 (YYYY-MM-DD)") @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @Parameter(description = "종료일 (YYYY-MM-DD)") @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @AuthenticationPrincipal String userId) {
+        List<DashboardChartResponse.MonthlyTrend> trend = dashboardService.getMonthlyTrends(Long.valueOf(userId), dogId, startDate, endDate);
+        return ApiResult.ok(trend);
     }
 
     @Operation(summary = "퀵 관찰 메모 등록", description = "반려견의 상태를 실시간으로 간단하게 기록합니다.")

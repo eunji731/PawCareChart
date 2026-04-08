@@ -9,6 +9,8 @@ import com.pawcarechart.backend.care.entity.ExpenseDetail;
 import com.pawcarechart.backend.care.entity.MedicalDetail;
 import com.pawcarechart.backend.care.mapper.CareMapper;
 import com.pawcarechart.backend.care.repository.*;
+import com.pawcarechart.backend.code.entity.CommonCode;
+import com.pawcarechart.backend.code.repository.CommonCodeRepository;
 import com.pawcarechart.backend.dog.repository.DogRepository;
 import com.pawcarechart.backend.file.constant.FileTargetType;
 import com.pawcarechart.backend.file.dto.FileCountResponse;
@@ -40,18 +42,18 @@ public class CareService {
     private final FileMappingRepository fileMappingRepository;
     private final SymptomService symptomService;
     private final com.pawcarechart.backend.schedule.repository.ScheduleRepository scheduleRepository;
+    private final CommonCodeRepository commonCodeRepository;
 
     /**
      * 통합 케어 기록 목록 조회
      */
     public List<CareRecordListResponse> getCareRecords(
-            Long userId, Long dogId, String type, String keyword, LocalDate startDate, LocalDate endDate) {
+            Long userId, Long dogId, Long typeId, String keyword, LocalDate startDate, LocalDate endDate) {
 
-        String recordType = (type == null || "ALL".equalsIgnoreCase(type) || type.isBlank()) ? null : type.toUpperCase();
         String searchKeyword = (keyword == null || keyword.isBlank()) ? null : keyword.trim();
 
         List<CareRecordListResponse> baseRecords = careMapper.selectCareRecordsByFilters(
-                userId, dogId, recordType, searchKeyword, startDate, endDate
+                userId, dogId, typeId, searchKeyword, startDate, endDate
         );
 
         if (baseRecords.isEmpty()) {
@@ -62,7 +64,9 @@ public class CareService {
                 .map(CareRecordListResponse::getId)
                 .toList();
 
-        List<FileCountResponse> fileCounts = fileMappingRepository.countFilesByTargetIds(FileTargetType.CARE_RECORD, recordIds);
+        // TODO: FileTargetType enum to ID mapping
+        Long careRecordTargetId = getCodeId("FILE_TARGET_TYPE", "CARE_RECORD");
+        List<FileCountResponse> fileCounts = fileMappingRepository.countFilesByTargetIds(careRecordTargetId, recordIds);
 
         Map<Long, Integer> fileCountMap = fileCounts.stream()
                 .collect(Collectors.toMap(
@@ -76,7 +80,8 @@ public class CareService {
                         .dogId(record.getDogId())
                         .dogName(record.getDogName())
                         .dogProfileImageUrl(record.getDogProfileImageUrl())
-                        .recordType(record.getRecordType())
+                        .recordTypeId(record.getRecordTypeId())
+                        .recordTypeName(record.getRecordTypeName())
                         .recordDate(record.getRecordDate())
                         .title(record.getTitle())
                         .note(record.getNote())
@@ -85,7 +90,8 @@ public class CareService {
                         .medicationStatus(record.getMedicationStatus())
                         .medicationStartDate(record.getMedicationStartDate())
                         .medicationDays(record.getMedicationDays())
-                        .categoryCode(record.getCategoryCode())
+                        .categoryId(record.getCategoryId())
+                        .categoryName(record.getCategoryName())
                         .amount(record.getAmount())
                         .relatedMedicalRecordId(record.getRelatedMedicalRecordId())
                         .attachmentCount(fileCountMap.getOrDefault(record.getId(), 0))
@@ -102,14 +108,17 @@ public class CareService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "해당 기록을 찾을 수 없거나 권한이 없습니다."));
 
         List<String> symptomTags = symptomService.getSymptomNamesByCareRecordId(recordId);
-        List<com.pawcarechart.backend.file.dto.FileResponse> attachments = fileService.getFiles(FileTargetType.CARE_RECORD, recordId);
+        
+        Long careRecordTargetId = getCodeId("FILE_TARGET_TYPE", "CARE_RECORD");
+        List<com.pawcarechart.backend.file.dto.FileResponse> attachments = fileService.getFiles(careRecordTargetId, recordId);
 
         CareRecordDetailResponse.CareRecordDetailResponseBuilder responseBuilder = CareRecordDetailResponse.builder()
                 .id(queryResult.getId())
                 .dogId(queryResult.getDogId())
                 .dogName(queryResult.getDogName())
                 .dogProfileImageUrl(queryResult.getDogProfileImageUrl())
-                .recordType(queryResult.getRecordType())
+                .recordTypeId(queryResult.getRecordTypeId())
+                .recordTypeName(queryResult.getRecordTypeName())
                 .recordDate(queryResult.getRecordDate())
                 .title(queryResult.getTitle())
                 .note(queryResult.getNote())
@@ -121,7 +130,8 @@ public class CareService {
                 .medicationStatus(queryResult.getMedicationStatus())
                 .medicationStartDate(queryResult.getMedicationStartDate())
                 .medicationDays(queryResult.getMedicationDays())
-                .categoryCode(queryResult.getCategoryCode())
+                .categoryId(queryResult.getCategoryId())
+                .categoryName(queryResult.getCategoryName())
                 .amount(queryResult.getAmount())
                 .attachmentCount(attachments.size())
                 .attachments(attachments);
@@ -169,14 +179,17 @@ public class CareService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "삭제 권한이 없습니다.");
         }
 
-        if ("MEDICAL".equals(careRecord.getRecordTypeCode())) {
+        String recordTypeCode = careRecord.getRecordType().getCode();
+
+        if ("MEDICAL".equals(recordTypeCode)) {
             medicalDetailRepository.deleteById(recordId);
             symptomService.deleteCareRecordSymptoms(recordId);
         } else {
             expenseDetailRepository.deleteById(recordId);
         }
 
-        fileService.deleteFilesByTarget(FileTargetType.CARE_RECORD, recordId);
+        Long careRecordTargetId = getCodeId("FILE_TARGET_TYPE", "CARE_RECORD");
+        fileService.deleteFilesByTarget(careRecordTargetId, recordId);
         careRecordRepository.delete(careRecord);
     }
 
@@ -192,8 +205,8 @@ public class CareService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "수정 권한이 없습니다.");
         }
 
-        String oldTypeCode = careRecord.getRecordTypeCode();
-        String newTypeCode = request.getRecordTypeCode();
+        String oldTypeCode = careRecord.getRecordType().getCode();
+        String newTypeCode = getCodeValue(request.getRecordTypeId());
 
         if (oldTypeCode.equals(newTypeCode)) {
             if ("MEDICAL".equals(newTypeCode)) {
@@ -214,8 +227,13 @@ public class CareService {
             }
         }
 
-        careRecord.update(request.getDogId(), newTypeCode, request.getRecordDate(), request.getTitle(), request.getNote());
-        fileService.syncFilesToTarget(request.getFileIds(), FileTargetType.CARE_RECORD, recordId, userId);
+        CommonCode recordType = commonCodeRepository.findById(request.getRecordTypeId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "잘못된 기록 유형 ID입니다."));
+
+        careRecord.update(request.getDogId(), recordType, request.getRecordDate(), request.getTitle(), request.getNote());
+        
+        Long careRecordTargetId = getCodeId("FILE_TARGET_TYPE", "CARE_RECORD");
+        fileService.syncFilesToTarget(request.getFileIds(), careRecordTargetId, recordId, userId);
     }
 
     private void updateMedicalDetail(Long recordId, CareRecordCreateRequest.MedicalDetailRequest detailRequest) {
@@ -244,8 +262,11 @@ public class CareService {
         ExpenseDetail expenseDetail = expenseDetailRepository.findById(recordId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "상세 정보를 찾을 수 없습니다."));
 
+        CommonCode category = commonCodeRepository.findById(detailRequest.getCategoryId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "잘못된 카테고리 ID입니다."));
+
         expenseDetail.update(
-                detailRequest.getCategoryCode(),
+                category,
                 detailRequest.getAmount(),
                 detailRequest.getMemo(),
                 detailRequest.getRelatedMedicalRecordId()
@@ -260,10 +281,13 @@ public class CareService {
         dogRepository.findByIdAndUserId(request.getDogId(), userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "반려견 정보를 찾을 수 없거나 권한이 없습니다."));
 
+        CommonCode recordType = commonCodeRepository.findById(request.getRecordTypeId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "잘못된 기록 유형 ID입니다."));
+
         CareRecord careRecord = CareRecord.builder()
                 .dogId(request.getDogId())
                 .userId(userId)
-                .recordTypeCode(request.getRecordTypeCode())
+                .recordType(recordType)
                 .recordDate(request.getRecordDate())
                 .title(request.getTitle())
                 .note(request.getNote())
@@ -272,17 +296,20 @@ public class CareService {
         CareRecord savedRecord = careRecordRepository.save(careRecord);
         Long recordId = savedRecord.getId();
 
-        if ("MEDICAL".equals(request.getRecordTypeCode())) {
+        String recordTypeCode = recordType.getCode();
+
+        if ("MEDICAL".equals(recordTypeCode)) {
             saveMedicalDetail(request.getMedicalDetails(), savedRecord);
             symptomService.processAndConnectSymptoms(recordId, request.getDogId(), request.getMedicalDetails().getSymptomTags());
-        } else if ("EXPENSE".equals(request.getRecordTypeCode())) {
+        } else if ("EXPENSE".equals(recordTypeCode)) {
             saveExpenseDetail(request.getExpenseDetails(), savedRecord);
         } else {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "잘못된 기록 유형 코드입니다.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "잘못된 기록 유형입니다.");
         }
 
         if (request.getFileIds() != null && !request.getFileIds().isEmpty()) {
-            fileService.connectFilesToTarget(request.getFileIds(), FileTargetType.CARE_RECORD, recordId, userId);
+            Long careRecordTargetId = getCodeId("FILE_TARGET_TYPE", "CARE_RECORD");
+            fileService.connectFilesToTarget(request.getFileIds(), careRecordTargetId, recordId, userId);
         }
 
         // 일정 전환인 경우 이전 일정 삭제
@@ -296,7 +323,9 @@ public class CareService {
 
             // 일정 데이터 정리
             symptomService.deleteScheduleSymptoms(schedule.getId());
-            fileMappingRepository.deleteAllByTargetTypeAndTargetId(FileTargetType.SCHEDULE, schedule.getId());
+            
+            Long scheduleTargetId = getCodeId("FILE_TARGET_TYPE", "SCHEDULE");
+            fileMappingRepository.deleteAllByTargetType_IdAndTargetId(scheduleTargetId, schedule.getId());
             scheduleRepository.delete(schedule);
         }
 
@@ -328,9 +357,12 @@ public class CareService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "지출 상세 정보가 누락되었습니다.");
         }
 
+        CommonCode category = commonCodeRepository.findById(detailRequest.getCategoryId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "잘못된 카테고리 ID입니다."));
+
         ExpenseDetail expenseDetail = ExpenseDetail.builder()
                 .careRecord(careRecord)
-                .categoryCode(detailRequest.getCategoryCode())
+                .category(category)
                 .amount(detailRequest.getAmount())
                 .memo(detailRequest.getMemo())
                 .relatedMedicalRecordId(detailRequest.getRelatedMedicalRecordId())
@@ -338,4 +370,20 @@ public class CareService {
 
         expenseDetailRepository.save(expenseDetail);
     }
+
+    private String getCodeValue(Long id) {
+        return commonCodeRepository.findById(id)
+                .map(CommonCode::getCode)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "잘못된 코드 ID입니다."));
+    }
+
+    private Long getCodeId(String groupCode, String code) {
+        return commonCodeRepository.findAllByGroupCodeAndUseYnOrderBySortOrderAsc(groupCode, "Y")
+                .stream()
+                .filter(c -> c.getCode().equals(code))
+                .findFirst()
+                .map(CommonCode::getId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "필요한 공통 코드가 정의되지 않았습니다: " + code));
+    }
 }
+

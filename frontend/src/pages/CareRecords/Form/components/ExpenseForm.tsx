@@ -4,15 +4,17 @@ import { Input } from '@/components/common/Input';
 import { Select } from '@/components/common/Select';
 import { Textarea } from '@/components/common/Textarea';
 import { careApi } from '@/api/careApi';
+import { useCommonCodes } from '@/hooks/useCommonCodes';
 import type { CareRecord } from '@/types/care';
 import { RelatedMedicalRecordModal } from './RelatedMedicalRecordModal';
 
 interface ExpenseFormProps {
   data: {
-    categoryCode: string;
+    categoryCode: string | number;
     amount: string | number;
     memo: string;
     relatedMedicalRecordId: string | number | null;
+    relatedMedicalRecord?: any; // 추가된 필드
   };
   dogId?: string | number;
   onDogChange?: (dogId: string) => void;
@@ -23,20 +25,15 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ data, dogId, onDogChan
   const [medicalCandidates, setMedicalCandidates] = useState<CareRecord[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedRecordInfo, setSelectedRecordInfo] = useState<CareRecord | null>(null);
+  const [selectedRecordInfo, setSelectedRecordInfo] = useState<any>(null);
   
+  const { codes: categories } = useCommonCodes('EXPENSE_CATEGORY');
   const debounceTimerRef = useRef<number | null>(null);
 
-  const categoryOptions = [
-    { value: 'CONSULTATION', label: '🩺 진료비' },
-    { value: 'MEDICINE', label: '💊 약값' },
-    { value: 'EXAM', label: '🔬 검사비' },
-    { value: 'VACCINE', label: '💉 예방접종' },
-    { value: 'GROOMING', label: '✂️ 미용' },
-    { value: 'FEED', label: '🍖 사료/간식' },
-    { value: 'SUPPLIES', label: '🧸 용품' },
-    { value: 'ETC', label: '기타' },
-  ];
+  const categoryOptions = categories.map(c => ({
+    value: c.id.toString(),
+    label: c.codeName
+  }));
 
   const fetchCandidates = useCallback(async (id: number, keyword: string) => {
     try {
@@ -62,23 +59,40 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ data, dogId, onDogChan
     if (dogId) fetchCandidates(Number(dogId), '');
   }, [dogId, fetchCandidates]);
 
+  // 연관 기록 표시 로직 보완
   useEffect(() => {
-    if (data.relatedMedicalRecordId && medicalCandidates.length > 0) {
-      const found = medicalCandidates.find(m => m.id.toString() === data.relatedMedicalRecordId?.toString());
-      if (found) setSelectedRecordInfo(found);
-    } else if (!data.relatedMedicalRecordId) {
+    if (data.relatedMedicalRecordId) {
+      // 1. 서버에서 받은 원본 객체 정보가 있다면 우선 사용
+      if (data.relatedMedicalRecord) {
+        setSelectedRecordInfo(data.relatedMedicalRecord);
+      } 
+      // 2. 후보군 리스트에서 찾기 (새로 선택했을 때 대응)
+      else if (medicalCandidates.length > 0) {
+        const found = medicalCandidates.find(m => m.id.toString() === data.relatedMedicalRecordId?.toString());
+        if (found) setSelectedRecordInfo(found);
+      }
+    } else {
       setSelectedRecordInfo(null);
     }
-  }, [data.relatedMedicalRecordId, medicalCandidates]);
+  }, [data.relatedMedicalRecordId, data.relatedMedicalRecord, medicalCandidates]);
 
   const handleSelectRecord = (record: CareRecord) => {
-    onChange({ ...data, relatedMedicalRecordId: record.id });
+    // 새로 선택 시 객체 정보와 ID를 동시에 업데이트
+    onChange({ 
+      ...data, 
+      relatedMedicalRecordId: record.id,
+      relatedMedicalRecord: record 
+    });
     setSelectedRecordInfo(record);
   };
 
   const handleDogChangeInModal = (newDogId: string) => {
     if (onDogChange) onDogChange(newDogId);
-    onChange({ ...data, relatedMedicalRecordId: null }); // 아이가 바뀌면 연관 기록 초기화
+    onChange({ 
+      ...data, 
+      relatedMedicalRecordId: null,
+      relatedMedicalRecord: null 
+    });
   };
 
   return (
@@ -88,8 +102,8 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ data, dogId, onDogChan
           <Select 
             label="카테고리 *" 
             options={categoryOptions} 
-            value={data.categoryCode} 
-            onChange={(e) => onChange({ ...data, categoryCode: e.target.value })} 
+            value={data.categoryCode?.toString()} 
+            onChange={(e) => onChange({ ...data, categoryCode: Number(e.target.value) })} 
           />
           <div className="relative">
             <Input 
@@ -122,7 +136,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ data, dogId, onDogChan
               </div>
               <div className="flex gap-2">
                 <button type="button" onClick={() => setIsModalOpen(true)} className="px-4 py-2 bg-white border border-stone-200 rounded-xl text-[12px] font-bold text-stone-600 hover:border-[#FF6B00] transition-all">변경</button>
-                <button type="button" onClick={() => onChange({ ...data, relatedMedicalRecordId: null })} className="px-4 py-2 bg-white border border-stone-200 rounded-xl text-[12px] font-bold text-red-400 hover:border-red-200 transition-all">해제</button>
+                <button type="button" onClick={() => onChange({ ...data, relatedMedicalRecordId: null, relatedMedicalRecord: null })} className="px-4 py-2 bg-white border border-stone-200 rounded-xl text-[12px] font-bold text-red-400 hover:border-red-200 transition-all">해제</button>
               </div>
             </div>
           ) : (

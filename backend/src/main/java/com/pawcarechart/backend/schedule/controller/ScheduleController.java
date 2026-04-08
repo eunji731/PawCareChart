@@ -29,12 +29,12 @@ public class ScheduleController {
     @GetMapping
     public ApiResult<List<ScheduleResponse>> getSchedules(
             @RequestParam(required = false) Long dogId,
-            @RequestParam(required = false) String type,
+            @RequestParam(required = false) Long scheduleTypeId,
             @RequestParam(required = false) String keyword,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             @AuthenticationPrincipal String userId) {
-        return ApiResult.ok(scheduleService.getSchedules(Long.valueOf(userId), dogId, type, keyword, startDate, endDate));
+        return ApiResult.ok(scheduleService.getSchedules(Long.valueOf(userId), dogId, scheduleTypeId, keyword, startDate, endDate));
     }
 
     @Operation(summary = "일정 상세 조회")

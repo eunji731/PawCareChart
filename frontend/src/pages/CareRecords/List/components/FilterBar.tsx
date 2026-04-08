@@ -4,6 +4,7 @@ import { Button } from '@/components/common/Button';
 import { dogApi } from '@/api/dogApi';
 import type { Dog } from '@/types/dog';
 import type { CareRecordsFilter } from '@/types/care';
+import { useCommonCodes } from '@/hooks/useCommonCodes';
 
 interface FilterBarProps {
   filters: CareRecordsFilter;
@@ -14,24 +15,25 @@ export const FilterBar: React.FC<FilterBarProps> = ({ filters, onChange }) => {
   const [dogs, setDogs] = useState<Dog[]>([]);
   const [localKeyword, setLocalKeyword] = useState(filters.keyword ?? '');
   const navigate = useNavigate();
+  
+  // 1. 공통 코드 로드 (일상기록 제외 필터링)
+  const { codes: allRecordTypes } = useCommonCodes('RECORD_TYPE');
+  const recordTypes = allRecordTypes.filter(t => t.code !== 'MEMO');
 
   useEffect(() => {
     dogApi.getDogs().then(setDogs).catch(() => setDogs([]));
   }, []);
 
-  // 외부에서 필터가 초기화될 경우를 대비해 동기화
   useEffect(() => {
     setLocalKeyword(filters.keyword ?? '');
   }, [filters.keyword]);
 
-  // 2. 엔터키를 눌렀을 때만 부모의 onChange 호출
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       onChange({ keyword: localKeyword || undefined });
     }
   };
 
-  // 3. 포커스를 잃었을 때도 검색 적용 (선택 사항)
   const handleBlur = () => {
     if (filters.keyword !== localKeyword) {
       onChange({ keyword: localKeyword || undefined });
@@ -42,20 +44,21 @@ export const FilterBar: React.FC<FilterBarProps> = ({ filters, onChange }) => {
     <div className="bg-white rounded-2xl p-6 shadow-[0_20px_60px_rgba(0,0,0,0.02)] border border-[#F0F0F0]">
       <div className="flex flex-col xl:flex-row gap-6 items-stretch xl:items-center">
 
-        {/* GROUP 1: INTEGRATED SEARCH & DOG SELECT - 정제된 사각형 */}
         <div className="flex-grow flex flex-col sm:flex-row gap-3">
+          {/* 검색창 */}
           <div className="relative flex-grow group">
             <input
               placeholder="무엇을 찾으시나요?"
-              value={localKeyword} // 내부 상태 사용
-              onChange={(e) => setLocalKeyword(e.target.value)} // 타이핑 시에는 내부 상태만 업데이트
-              onKeyDown={handleKeyDown} // 엔터키 감지
-              onBlur={handleBlur} // 포커스 아웃 감지
+              value={localKeyword}
+              onChange={(e) => setLocalKeyword(e.target.value)}
+              onKeyDown={handleKeyDown}
+              onBlur={handleBlur}
               className="w-full bg-[#F9F9F9] h-[56px] pl-12 pr-6 rounded-xl border border-transparent focus:border-[#FF6B00] focus:bg-white outline-none text-[15px] font-medium transition-all duration-300 shadow-inner"
             />
             <span className="absolute left-5 top-1/2 -translate-y-1/2 text-lg opacity-20 group-focus-within:opacity-100 transition-opacity">🔍</span>
           </div>
 
+          {/* 반려견 선택 */}
           <div className="relative sm:w-56 group">
             <select
               value={filters.dogId ?? ''}
@@ -68,32 +71,43 @@ export const FilterBar: React.FC<FilterBarProps> = ({ filters, onChange }) => {
             >
               <option value="">모든 아이들 🐾</option>
               {dogs.map((dog) => (
-                <option key={dog.id} value={dog.id}>
-                  {dog.name}
-                </option>
+                <option key={dog.id} value={dog.id}>{dog.name}</option>
               ))}
             </select>
             <span className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-stone-300 font-bold group-hover:text-[#FF6B00] transition-colors">▼</span>
           </div>
         </div>
 
-        {/* GROUP 2: PREMIUM SEGMENTED TABS - 곡률 축소 */}
+        {/* 기록 유형 탭 (ID 기반 필터링 강화) */}
         <div className="flex p-1.5 bg-[#F5F5F5] rounded-xl shadow-inner">
-          {(['ALL', 'MEDICAL', 'EXPENSE'] as const).map((type) => (
-            <button
-              key={type}
-              onClick={() => onChange({ type })}
-              className={`px-8 h-[44px] rounded-lg text-[13px] font-black transition-all duration-300 active:scale-95 ${filters.type === type
-                ? 'bg-white text-[#FF6B00] shadow-sm'
-                : 'text-stone-400 hover:text-stone-600'
-                }`}
-            >
-              {type === 'ALL' ? 'Total' : type === 'MEDICAL' ? 'Medical' : 'Expense'}
-            </button>
-          ))}
+          <button
+            onClick={() => onChange({ type: 'ALL', recordTypeId: undefined })}
+            className={`px-8 h-[44px] rounded-lg text-[13px] font-black transition-all duration-300 active:scale-95 ${(filters.type === 'ALL' && !filters.recordTypeId)
+              ? 'bg-white text-[#FF6B00] shadow-sm'
+              : 'text-stone-400 hover:text-stone-600'
+              }`}
+          >
+            Total
+          </button>
+          
+          {recordTypes.map((type) => {
+            const isActive = filters.recordTypeId === type.id;
+            return (
+              <button
+                key={type.id}
+                onClick={() => onChange({ type: type.code as any, recordTypeId: type.id })}
+                className={`px-8 h-[44px] rounded-lg text-[13px] font-black transition-all duration-300 active:scale-95 ${isActive
+                  ? 'bg-white text-[#FF6B00] shadow-sm'
+                  : 'text-stone-400 hover:text-stone-600'
+                  }`}
+              >
+                {type.codeName}
+              </button>
+            )
+          })}
         </div>
 
-        {/* GROUP 3: MINIMAL DATE RANGE */}
+        {/* 날짜 범위 */}
         <div className="flex items-center gap-6 px-8 border-l border-stone-100 hidden xl:flex">
           <div className="space-y-1 text-right">
             <p className="text-[9px] font-black text-stone-300 uppercase tracking-widest leading-none">Date Range</p>
@@ -115,7 +129,6 @@ export const FilterBar: React.FC<FilterBarProps> = ({ filters, onChange }) => {
           </div>
         </div>
 
-        {/* 4. 기록 추가 버튼 */}
         <div className="flex-shrink-0">
           <Button
             variant="primary"

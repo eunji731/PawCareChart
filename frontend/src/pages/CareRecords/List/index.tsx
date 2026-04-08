@@ -13,33 +13,38 @@ const CareRecordListPage = () => {
   const { records, calendarRecords, isLoading, filters, updateFilter } = useCareRecords();
   const [selectedDate, setSelectedDate] = useState<string>('');
 
-  // 달력 마커 데이터 변환 (CareRecord -> CalendarMarkers)
+  // 달력 마커 데이터 변환 (recordTypeId 기반으로 최적화)
   const calendarMarkers = useMemo(() => {
     const markers: CalendarMarkers = {};
     calendarRecords.forEach(record => {
       const date = record.recordDate;
       if (!markers[date]) markers[date] = [];
-      markers[date].push({
-        type: record.recordType as any
-      });
+      
+      // recordTypeId가 있으면 우선 사용 (숫자), 없으면 recordType (문자열) 사용
+      // Calendar 컴포넌트는 string | number를 모두 수용합니다.
+      const markerType = record.recordTypeId ?? (record as any).recordType;
+
+      if (markerType) {
+        markers[date].push({
+          type: markerType as string | number
+        });
+      }
     });
     return markers;
   }, [calendarRecords]);
 
-  // 달력의 달이 변경될 때 호출 - useCallback으로 안정화
+  // 달력의 달이 변경될 때 호출
   const handleMonthChange = useCallback((year: number, month: number) => {
     const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
     const lastDay = new Date(year, month, 0).getDate();
     const endDate = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
 
-    // 선택된 날짜 초기화 및 해당 월 전체로 필터링
     setSelectedDate('');
     updateFilter({ startDate, endDate });
   }, [updateFilter]);
 
   const handleDateClick = (date: string) => {
     if (selectedDate === date) {
-      // 선택 해제 시 다시 현재 달 전체 보기로 복구
       const d = new Date(date);
       handleMonthChange(d.getFullYear(), d.getMonth() + 1);
     } else {
@@ -51,7 +56,6 @@ const CareRecordListPage = () => {
   return (
     <div className="min-h-screen bg-[#FCFAF8]">
       <PageLayout title="" maxWidth="max-w-[1500px]">
-        {/* 상단 헤더 */}
         <header className="pt-8 pb-10 flex flex-col md:flex-row justify-between items-end gap-6">
           <div className="space-y-3">
             <h1 className="text-[48px] lg:text-[56px] font-black text-[#2D2D2D] leading-[0.95] tracking-tight">
@@ -61,23 +65,12 @@ const CareRecordListPage = () => {
               반려견의 건강 기록과 지출 흐름을 정교한 타임라인으로 관리하세요.
             </p>
           </div>
-          {/* <div className="pb-1">
-            <Button 
-              size="lg" 
-              className="px-8 h-[56px] text-[15px] shadow-xl"
-              onClick={() => navigate('/care-records/new')}
-            >
-              + 기록 추가
-            </Button>
-          </div> */}
         </header>
 
-        {/* 필터 영역 */}
         <section className="mb-6">
           <FilterBar filters={filters} onChange={updateFilter} />
         </section>
 
-        {/* 메인 그리드 */}
         <main className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start pb-20">
           <div className="lg:col-span-5 xl:col-span-4 lg:sticky lg:top-12">
             <div className="bg-white rounded-3xl p-8 shadow-[0_20px_60px_rgba(0,0,0,0.02)] border border-[#F0F0F0]">
@@ -86,15 +79,8 @@ const CareRecordListPage = () => {
                 selectedDate={selectedDate}
                 onDateClick={handleDateClick}
                 onMonthChange={handleMonthChange}
+                legendType="CARE"
               />
-              <div className="mt-8 pt-6 border-t border-stone-100 flex gap-8 justify-center">
-                <div className="flex items-center gap-2.5 text-[11px] font-black text-stone-400 uppercase tracking-widest">
-                  <span className="w-2 h-2 rounded-full bg-[#FF6B00]"></span> Medical
-                </div>
-                <div className="flex items-center gap-2.5 text-[11px] font-black text-stone-400 uppercase tracking-widest">
-                  <span className="w-2 h-2 rounded-full bg-[#FFB380]"></span> Expense
-                </div>
-              </div>
             </div>
           </div>
 

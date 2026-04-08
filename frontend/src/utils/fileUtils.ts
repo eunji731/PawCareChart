@@ -4,12 +4,14 @@
 
 export const isImageFile = (url: string, fileName?: string): boolean => {
   if (!url) return false;
-  
-  // 확장자 추출 (파일명이 있으면 우선, 없으면 URL에서)
-  const nameToCheck = fileName || url;
+
   const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'];
+
+  // blob URL은 확장자가 없으므로 반드시 fileName으로 판단
+  // 일반 URL은 파일명이 없으면 URL 자체 경로에서 추출
+  const nameToCheck = fileName || (url.startsWith('blob:') ? '' : url);
   const extension = nameToCheck.split('.').pop()?.toLowerCase();
-  
+
   return extension ? imageExtensions.includes(extension) : false;
 };
 

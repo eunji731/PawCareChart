@@ -23,7 +23,7 @@ public class ScheduleRequest {
     @NotNull(message = "일정 날짜 및 시간은 필수입니다.")
     private LocalDateTime scheduleDate;
 
-    private String scheduleTypeCode;
+    private Long scheduleTypeId;
     private String memo;
     private String location;
     private List<String> symptomTags;

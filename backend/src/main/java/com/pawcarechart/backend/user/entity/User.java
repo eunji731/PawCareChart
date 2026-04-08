@@ -1,5 +1,6 @@
 package com.pawcarechart.backend.user.entity;
 
+import com.pawcarechart.backend.code.entity.CommonCode;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -27,8 +28,9 @@ public class User {
     @Column(nullable = false, length = 50)
     private String name;
 
-    @Column(name = "role_code", nullable = false, length = 50)
-    private String roleCode;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "role_id", nullable = false)
+    private CommonCode role;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -37,11 +39,11 @@ public class User {
     private LocalDateTime updatedAt;
 
     @Builder
-    public User(String email, String password, String name, String roleCode) {
+    public User(String email, String password, String name, CommonCode role) {
         this.email = email;
         this.password = password;
         this.name = name;
-        this.roleCode = roleCode != null ? roleCode : "ROLE_USER";
+        this.role = role;
     }
 
     @PrePersist
@@ -49,9 +51,6 @@ public class User {
         LocalDateTime now = LocalDateTime.now();
         this.createdAt = now;
         this.updatedAt = now;
-        if (this.roleCode == null) {
-            this.roleCode = "ROLE_USER";
-        }
     }
 
     @PreUpdate

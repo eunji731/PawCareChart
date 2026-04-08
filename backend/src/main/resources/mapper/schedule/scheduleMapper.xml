@@ -7,21 +7,25 @@
         SELECT
             s.id,
             s.dog_id AS dogId,
+            d.name AS dogName,
+            d.profile_image_url AS dogProfileImageUrl,
             s.title,
             s.schedule_date AS scheduleDate,
-            s.schedule_type_code AS scheduleTypeCode,
+            s.schedule_type_id AS scheduleTypeId,
+            c.code_name AS scheduleTypeName,
             s.is_completed AS isCompleted,
             s.memo,
             s.location,
-            0 AS attachmentCount
+            (SELECT COUNT(*) FROM public.file_mappings fm WHERE fm.target_id = s.id AND fm.target_type_id = (SELECT id FROM public.codes WHERE group_code = 'FILE_TARGET_TYPE' AND code = 'SCHEDULE')) AS attachmentCount
         FROM public.schedules s
         JOIN public.dogs d ON s.dog_id = d.id
+        LEFT JOIN public.codes c ON s.schedule_type_id = c.id
         WHERE d.user_id = #{userId}
         <if test="dogId != null">
             AND s.dog_id = #{dogId}
         </if>
-        <if test="type != null and type != ''">
-            AND s.schedule_type_code = #{type}
+        <if test="typeId != null">
+            AND s.schedule_type_id = #{typeId}
         </if>
         <if test="keyword != null and keyword != ''">
             AND (s.title LIKE '%' || #{keyword} || '%' OR s.memo LIKE '%' || #{keyword} || '%')

@@ -8,6 +8,7 @@ import { Textarea } from '@/components/common/Textarea';
 import { Select } from '@/components/common/Select';
 import { TagInput } from '@/components/common/TagInput';
 import { useScheduleForm } from './hooks/useScheduleForm';
+import { useCommonCodes } from '@/hooks/useCommonCodes';
 import { FileUploader } from '@/components/common/FileUploader';
 
 const ScheduleFormPage: React.FC = () => {
@@ -19,11 +20,14 @@ const ScheduleFormPage: React.FC = () => {
     formData,
     setFormData,
     dogs,
-    fileUploader, // 추가
+    fileUploader,
     handleSave,
     isLoading,
     isFetching
   } = useScheduleForm(id);
+
+  // DB에서 일정 유형(SCHEDULE_TYPE) 코드 목록 실시간 호출
+  const { codes: scheduleTypes } = useCommonCodes('SCHEDULE_TYPE');
 
   if (isFetching) {
     return (
@@ -36,7 +40,6 @@ const ScheduleFormPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#FCFAF8]">
       <PageLayout title="" maxWidth="max-w-[1000px]">
-        {/* 1. HERO HEADER */}
         <header className="pt-12 pb-16 flex flex-col md:flex-row justify-between items-end gap-8 border-b border-stone-100 mb-12">
           <div className="space-y-4">
             <h1 className="text-[48px] lg:text-[56px] font-black text-[#2D2D2D] leading-[0.95] tracking-tight">
@@ -56,7 +59,6 @@ const ScheduleFormPage: React.FC = () => {
 
         <div className="space-y-12 pb-32 animate-in fade-in slide-in-from-bottom-4 duration-700">
 
-          {/* 2. 대상 및 유형 선택 */}
           <Section title="기본 정보" description="누구의 어떤 일정인가요?">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Select
@@ -70,20 +72,21 @@ const ScheduleFormPage: React.FC = () => {
               />
               <Select
                 label="일정 유형"
-                value={formData.scheduleTypeCode}
-                onChange={(e) => setFormData({ ...formData, scheduleTypeCode: e.target.value as any })}
+                // 현재 선택된 ID값을 문자열로 변환하여 Select 컴포넌트와 호환
+                value={formData.scheduleTypeId?.toString() || ''}
+                onChange={(e) => setFormData({ ...formData, scheduleTypeId: Number(e.target.value) })}
                 options={[
-                  { label: '🏥 병원 진료', value: 'MEDICAL' },
-                  { label: '✂️ 미용 예약', value: 'GROOMING' },
-                  { label: '💊 복약/영양제', value: 'MEDICATION' },
-                  { label: '🩺 정기 검진', value: 'CHECKUP' },
-                  { label: '📅 기타 일정', value: 'ETC' },
+                  { label: '유형을 선택해주세요', value: '' },
+                  // DB에서 가져온 실제 공통코드 데이터(ID, 명칭) 매핑
+                  ...scheduleTypes.map(t => ({ 
+                    label: t.codeName, 
+                    value: t.id.toString() 
+                  }))
                 ]}
               />
             </div>
           </Section>
 
-          {/* 3. 일정 상세 */}
           <Section title="상세 일정" description="언제, 어디서, 어떤 활동을 계획하시나요?">
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -117,14 +120,12 @@ const ScheduleFormPage: React.FC = () => {
             </div>
           </Section>
 
-          {/* 4. 메모 및 태그 */}
           <Section title="추가 메모" description="일정 시 참고할 사항이나 증상을 미리 적어보세요.">
             <div className="space-y-8">
               <TagInput
                 label="관련 증상 키워드 (선택)"
-                placeholder="예: 구토, 설사, 가려움"
+                placeholder="증상을 입력하고 엔터를 누르세요 (예: 구토, 설사)"
                 tags={formData.symptomTags}
-                suggestions={['구토', '설사', '무기력', '식욕부진', '가려움']}
                 onChange={(tags) => setFormData({ ...formData, symptomTags: tags })}
               />
               <Textarea
@@ -137,14 +138,13 @@ const ScheduleFormPage: React.FC = () => {
             </div>
           </Section>
 
-          {/* 5. 파일 업로드 영역 추가 */}
           <Section title="참조 파일" description="진료 예약증, 이전 처방전, 미용 참고 사진 등을 첨부하세요.">
             <div className="pt-2">
               <FileUploader
                 variant="grid"
                 mode="multiple"
                 maxCount={5}
-                fileInfos={fileUploader.fileInfos} // displayUrls 대신 fileInfos 사용
+                fileInfos={fileUploader.fileInfos}
                 onFileSelect={(files) => fileUploader.handleSelect(files, 5)}
                 onFileDelete={fileUploader.handleDelete}
                 loading={fileUploader.isUploading}
@@ -152,7 +152,6 @@ const ScheduleFormPage: React.FC = () => {
             </div>
           </Section>
 
-          {/* 하단 저장 버튼 */}
           <div className="pt-10 flex justify-center">
             <Button
               size="lg"

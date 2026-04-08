@@ -70,8 +70,10 @@ export const buildMarkersByDate = (records: CareRecord[], currentMonth: Date) =>
       if (!markers[dateKey]) {
         markers[dateKey] = { medical: false, expense: false };
       }
-      if (record.recordType === 'MEDICAL') markers[dateKey].medical = true;
-      if (record.recordType === 'EXPENSE') markers[dateKey].expense = true;
+      const typeId = record.recordTypeId || (record as any).record_type_id;
+      // 1: MEDICAL, 2: EXPENSE (백엔드 코드 정의에 따름)
+      if (typeId === 1 || (record as any).recordType === 'MEDICAL') markers[dateKey].medical = true;
+      if (typeId === 2 || (record as any).recordType === 'EXPENSE') markers[dateKey].expense = true;
     }
   });
 

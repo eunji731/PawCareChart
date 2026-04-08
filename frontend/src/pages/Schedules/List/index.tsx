@@ -3,22 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { Calendar } from '@/components/common/Calendar';
 import type { CalendarMarkers } from '@/components/common/Calendar';
-import { FilterBar } from '@/components/common/FilterBar';
-import type { FilterOption } from '@/components/common/FilterBar';
 import { ScheduleHeroCard } from './components/ScheduleHeroCard';
 import { ScheduleList } from './components/ScheduleList';
 import { useSchedules } from './hooks/useSchedules';
 import { dogApi } from '@/api/dogApi';
+import { useCommonCodes } from '@/hooks/useCommonCodes';
 import type { Dog } from '@/types/dog';
-
-const filterOptions: FilterOption[] = [
-  { label: '전체 일정', value: 'ALL' },
-  { label: '병원 진료', value: 'MEDICAL' },
-  { label: '미용 예약', value: 'GROOMING' },
-  { label: '복약 알림', value: 'MEDICATION' },
-  { label: '정기 검진', value: 'CHECKUP' },
-  { label: '기타 일정', value: 'ETC' },
-];
 
 const ScheduleListPage: React.FC = () => {
   const navigate = useNavigate();
@@ -27,11 +17,13 @@ const ScheduleListPage: React.FC = () => {
   const [activeScheduleId, setActiveScheduleId] = useState<number | null>(null);
   const [dogs, setDogs] = useState<Dog[]>([]);
 
+  // 필터용 공통 코드
+  const { codes: scheduleTypes } = useCommonCodes('SCHEDULE_TYPE');
+
   useEffect(() => {
     dogApi.getDogs().then(setDogs).catch(() => setDogs([]));
   }, []);
 
-  // 날짜순으로 정렬된 일정 목록
   const sortedSchedules = useMemo(() => {
     return [...schedules].sort((a, b) =>
       new Date(a.scheduleDate).getTime() - new Date(b.scheduleDate).getTime()
@@ -55,7 +47,7 @@ const ScheduleListPage: React.FC = () => {
     sortedSchedules.forEach(s => {
       const date = s.scheduleDate.split('T')[0];
       if (!m[date]) m[date] = [];
-      m[date].push({ type: s.scheduleTypeCode as any });
+      m[date].push({ type: s.scheduleTypeId || s.scheduleTypeCode as any });
     });
     return m;
   }, [sortedSchedules]);
@@ -108,7 +100,6 @@ const ScheduleListPage: React.FC = () => {
                   <span className="absolute left-5 top-1/2 -translate-y-1/2 text-lg opacity-20 group-focus-within:opacity-100 transition-opacity">🔍</span>
                 </div>
 
-                {/* 반려견 선택 */}
                 <div className="relative sm:w-48 group">
                   <select
                     value={filters.dogId || ''}
@@ -123,23 +114,23 @@ const ScheduleListPage: React.FC = () => {
                   <span className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-stone-300 font-bold group-hover:text-[#FF6B00] transition-colors">▼</span>
                 </div>
 
-                {/* 일정 유형 선택 */}
                 <div className="relative sm:w-40 group">
                   <select
                     value={filters.type || 'ALL'}
                     onChange={(e) => updateFilter({ type: e.target.value as any })}
                     className="w-full h-[56px] px-6 rounded-xl bg-[#F9F9F9] border border-transparent focus:border-[#FF6B00] focus:bg-white text-[14px] font-bold appearance-none outline-none cursor-pointer transition-all duration-300 shadow-inner"
                   >
-                    {filterOptions.map((option) => (
-                      <option key={option.value} value={option.value}>{option.label}</option>
+                    <option value="ALL">전체 일정</option>
+                    {scheduleTypes.map(type => (
+                      <option key={type.id} value={type.code}>{type.codeName}</option>
                     ))}
                   </select>
                   <span className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-stone-300 font-bold group-hover:text-[#FF6B00] transition-colors">▼</span>
                 </div>
               </div>
 
-              {/* 기간 필터 추가 */}
-              <div className="flex items-center gap-4 px-6 border-l border-stone-100 hidden xl:flex">
+              {/* [복구] 기간 필터 영역 */}
+              <div className="flex items-center gap-4 px-6 border-l border-stone-100">
                 <div className="space-y-1">
                   <p className="text-[9px] font-black text-stone-300 uppercase tracking-widest leading-none">Date Range</p>
                   <div className="flex items-center gap-2">
@@ -160,7 +151,6 @@ const ScheduleListPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* 일정 등록 버튼 (주황색으로 통일) */}
               <div className="flex-shrink-0">
                 <button 
                   className="w-full h-[56px] px-8 bg-[#FF6B00] text-white rounded-xl font-black text-[15px] shadow-lg shadow-orange-500/20 active:scale-95 transition-all flex items-center justify-center gap-2"
@@ -182,24 +172,8 @@ const ScheduleListPage: React.FC = () => {
                 selectedDate={selectedDate}
                 onDateClick={handleDateClick}
                 onMonthChange={handleMonthChange}
+                legendType="SCHEDULE"
               />
-              <div className="mt-10 pt-6 border-t border-stone-100 grid grid-cols-3 gap-y-4 gap-x-2">
-                <div className="flex items-center gap-2 text-[10px] font-black text-stone-400 uppercase tracking-widest">
-                  <span className="w-2 h-2 rounded-full bg-[#FF6B00]"></span> Medical
-                </div>
-                <div className="flex items-center gap-2 text-[10px] font-black text-stone-400 uppercase tracking-widest">
-                  <span className="w-2 h-2 rounded-full bg-blue-400"></span> Grooming
-                </div>
-                <div className="flex items-center gap-2 text-[10px] font-black text-stone-400 uppercase tracking-widest">
-                  <span className="w-2 h-2 rounded-full bg-green-400"></span> Meds
-                </div>
-                <div className="flex items-center gap-2 text-[10px] font-black text-stone-400 uppercase tracking-widest">
-                  <span className="w-2 h-2 rounded-full bg-purple-400"></span> Checkup
-                </div>
-                <div className="flex items-center gap-2 text-[10px] font-black text-stone-400 uppercase tracking-widest">
-                  <span className="w-2 h-2 rounded-full bg-stone-400"></span> Etc
-                </div>
-              </div>
             </div>
           </div>
 

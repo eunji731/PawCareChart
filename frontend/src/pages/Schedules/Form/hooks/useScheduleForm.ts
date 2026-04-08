@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { scheduleApi } from '@/api/scheduleApi';
 import { dogApi } from '@/api/dogApi';
 import { fileApi } from '@/api/fileApi';
 import { useFileUpload } from '@/hooks/useFileUpload';
-import type { ScheduleType } from '@/types/schedule';
+import { useCommonCodes } from '@/hooks/useCommonCodes';
 import type { Dog } from '@/types/dog';
 
 export const useScheduleForm = (id?: string) => {
@@ -12,121 +12,123 @@ export const useScheduleForm = (id?: string) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(!!id);
   const [dogs, setDogs] = useState<Dog[]>([]);
-  
-  // 1. 도메인 'SCHEDULE' 지정
-  const fileUploader = useFileUpload('SCHEDULE');
+  const { codes: targetTypeCodes } = useCommonCodes('FILE_TARGET_TYPE');
 
   const [formData, setFormData] = useState({
     dogId: '',
     title: '',
-    location: '', // 초기값 빈 문자열로 설정
+    location: '',
     scheduleDate: new Date().toISOString().split('T')[0],
     scheduleTime: '10:00',
-    scheduleTypeCode: 'MEDICAL' as ScheduleType,
+    scheduleTypeId: 0 as number,
     memo: '',
     symptomTags: [] as string[]
   });
+
+  const fileUploader = useFileUpload('SCHEDULE');
+  const fileLoadedRef = useRef(false);
 
   useEffect(() => {
     dogApi.getDogs().then(setDogs).catch(() => setDogs([]));
   }, []);
 
+  // 1. 상세 데이터 본문 로드
   useEffect(() => {
     if (!id) return;
-    const loadDetail = async () => {
+
+    const fetchDetail = async () => {
       try {
         setIsFetching(true);
-        console.log(`Loading schedule detail for ID: ${id}`);
+        const data = await scheduleApi.getScheduleDetail(Number(id));
         
-        const [data, files] = await Promise.all([
-          scheduleApi.getScheduleDetail(Number(id)),
-          fileApi.getFiles('SCHEDULE', Number(id)).catch(err => {
-            console.warn('Files not found or error loading files:', err);
-            return [];
-          })
-        ]);
-if (data) {
-  const datePart = data.scheduleDate ? data.scheduleDate.split('T')[0] : new Date().toISOString().split('T')[0];
-  const timePart = data.scheduleDate && data.scheduleDate.includes('T') 
-    ? data.scheduleDate.split('T')[1].substring(0, 5) 
-    : '10:00';
+        const fullDate = data.scheduleDate;
+        const [date, time] = fullDate.includes('T') 
+          ? fullDate.split('T') 
+          : [fullDate, '10:00'];
 
-  setFormData({
-    dogId: data.dogId?.toString() || '',
-    title: data.title || '',
-    location: data.location || (data as any).location_info || '', // 스네이크 케이스 방어 및 명시적 세팅
-    scheduleDate: datePart,
-    scheduleTime: timePart,
-    scheduleTypeCode: data.scheduleTypeCode || 'MEDICAL',
-    memo: data.memo || '',
-    symptomTags: data.symptomTags || []
-  });
-
-
-          // 기존 첨부파일 로드
-          if (files && files.length > 0) {
-            fileUploader.setInitialFiles(files);
-          }
-        }
+        setFormData({
+          dogId: data.dogId.toString(),
+          title: data.title,
+          location: data.location || '',
+          scheduleDate: date,
+          scheduleTime: time.substring(0, 5),
+          scheduleTypeId: data.scheduleTypeId || 0,
+          memo: data.memo || '',
+          symptomTags: data.symptomTags || []
+        });
       } catch (err) {
-        console.error('Failed to load schedule:', err);
-        alert('일정 정보를 불러오는데 실패했습니다.');
+        console.error('Failed to fetch schedule:', err);
         navigate('/schedules');
       } finally {
         setIsFetching(false);
       }
     };
-    loadDetail();
+
+    fetchDetail();
   }, [id, navigate]);
+
+  // 2. 공통코드가 준비되면 파일 정보를 별도로 가져옴 (무한루프 방지)
+  useEffect(() => {
+    if (!id || targetTypeCodes.length === 0 || fileLoadedRef.current) return;
+
+    const fetchFiles = async () => {
+      const found = targetTypeCodes.find(c => c.code === 'SCHEDULE');
+      if (found && found.id) {
+        try {
+          const files = await fileApi.getFiles(found.id, Number(id));
+          if (files && files.length > 0) {
+            fileUploader.setInitialFiles(files);
+            fileLoadedRef.current = true;
+          }
+        } catch (err) {
+          console.error('Failed to load files:', err);
+        }
+      }
+    };
+    fetchFiles();
+  }, [id, targetTypeCodes, fileUploader]);
 
   const handleSave = async () => {
     if (!formData.dogId) return alert('반려견을 선택해주세요.');
-    if (!formData.title.trim()) return alert('일정 제목을 입력해주세요.');
+    if (!formData.title.trim()) return alert('제목을 입력해주세요.');
+    if (!formData.scheduleTypeId) return alert('일정 유형을 선택해주세요.');
 
     try {
       setIsLoading(true);
 
-      // 1. 로컬 파일 먼저 업로드
       let uploadedFileIds: number[] = [];
       if (fileUploader.localFiles.length > 0) {
-        try {
-          const uploadedFiles = await fileUploader.upload();
-          if (uploadedFiles) {
-            uploadedFileIds = uploadedFiles.map(f => f.id);
-          }
-        } catch (uploadErr: any) {
-          console.error('File Upload Error:', uploadErr);
-          throw new Error(uploadErr.response?.data?.message || '파일 업로드 중 오류가 발생했습니다. 허용되지 않는 파일 형식이거나 용량이 너무 큽니다.');
+        const uploadedFiles = await fileUploader.upload(id ? Number(id) : null);
+        if (uploadedFiles) {
+          uploadedFileIds = uploadedFiles.map(f => f.id);
         }
       }
 
-      // 2. 최종 파일 ID 목록 생성
       const combinedFileIds = [...fileUploader.existingFileIds, ...uploadedFileIds];
 
       const payload = {
         dogId: Number(formData.dogId),
         title: formData.title.trim(),
-        location: formData.location?.trim() || undefined, // 옵셔널 체이닝(?.) 추가
+        location: formData.location.trim() || undefined,
         scheduleDate: `${formData.scheduleDate}T${formData.scheduleTime}:00`,
-        scheduleTypeCode: formData.scheduleTypeCode,
-        memo: formData.memo?.trim() || undefined, // 메모도 안전하게 처리
+        scheduleTypeId: Number(formData.scheduleTypeId),
+        memo: formData.memo.trim() || undefined,
         symptomTags: formData.symptomTags,
         fileIds: combinedFileIds.length > 0 ? combinedFileIds : undefined
       };
 
       if (id) {
         await scheduleApi.updateSchedule(Number(id), payload);
-        alert('일정이 성공적으로 수정되었습니다! ✨');
+        alert('일정이 수정되었습니다! ✨');
+        navigate(`/schedules/${id}`); // 수정 시 상세로 이동
       } else {
         await scheduleApi.createSchedule(payload);
-        alert('일정이 성공적으로 저장되었습니다! ✨');
+        alert('일정이 예약되었습니다! ✨');
+        navigate('/schedules');
       }
-      
-      navigate('/schedules');
-    } catch (err: any) {
-      console.error('Save Error:', err);
-      // 구체적인 에러 메시지가 있으면 보여주고, 없으면 기본 메시지 출력
-      alert(err.message || err.response?.data?.message || '저장 중 오류가 발생했습니다.');
+    } catch (err) {
+      console.error('Save failed:', err);
+      alert('저장에 실패했습니다.');
     } finally {
       setIsLoading(false);
     }

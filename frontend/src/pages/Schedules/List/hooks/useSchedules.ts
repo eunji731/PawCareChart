@@ -16,7 +16,7 @@ export const useSchedules = () => {
       setIsLoading(true);
       const data = await scheduleApi.getSchedules(filters);
       setSchedules(data);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to fetch schedules:', err);
       setSchedules([]); // 에러 시 빈 배열로 초기화
     } finally {

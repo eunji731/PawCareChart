@@ -64,7 +64,7 @@ export const HomePage = () => {
           {/* LEFT CONTENT */}
           <div className="lg:col-span-8 flex flex-col gap-10">
             <div className="bg-white rounded-[32px] p-1 border border-[#F0F0F0] shadow-[0_30px_80px_rgba(0,0,0,0.02)]">
-              <ExpenseChart />
+              {filters && <ExpenseChart filters={filters} />}
             </div>
 
             <div className="bg-white rounded-[32px] p-1 border border-[#F0F0F0] shadow-[0_30px_80px_rgba(0,0,0,0.02)]">

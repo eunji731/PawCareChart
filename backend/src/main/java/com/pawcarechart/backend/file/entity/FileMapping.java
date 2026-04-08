@@ -1,6 +1,6 @@
 package com.pawcarechart.backend.file.entity;
 
-import com.pawcarechart.backend.file.constant.FileTargetType;
+import com.pawcarechart.backend.code.entity.CommonCode;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
@@ -19,9 +19,9 @@ public class FileMapping {
     @Column(name = "file_id", nullable = false)
     private Long fileId;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "target_type", nullable = false, length = 50)
-    private FileTargetType targetType;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "target_type_id", nullable = false)
+    private CommonCode targetType;
 
     @Column(name = "target_id", nullable = false)
     private Long targetId;

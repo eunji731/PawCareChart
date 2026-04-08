@@ -1,7 +1,8 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom'; // 추가
+import { useNavigate } from 'react-router-dom';
 import type { Schedule } from '@/types/schedule';
 import { calculateDDay } from '@/utils/dateUtils';
+import { useCommonCodes } from '@/hooks/useCommonCodes';
 
 interface ScheduleListProps {
   schedules: Schedule[];
@@ -9,13 +10,17 @@ interface ScheduleListProps {
   activeId: number;
 }
 
-export const ScheduleList: React.FC<ScheduleListProps> = ({ schedules, onSelect, activeId }) => {
-  const navigate = useNavigate(); // 추가
+export const ScheduleList: React.FC<ScheduleListProps> = ({ schedules, activeId }) => {
+  const navigate = useNavigate();
+  const { getCodeById } = useCommonCodes('SCHEDULE_TYPE');
+
   const getTypeIcon = (type: string) => {
     switch(type) {
       case 'MEDICAL': return '🏥';
       case 'GROOMING': return '✂️';
-      case 'MEDICATION': return '💊';
+      case 'MEDICATION':
+      case 'HEARTWORM': return '💊';
+      case 'CHECKUP': return '🩺';
       default: return '📅';
     }
   };
@@ -26,6 +31,10 @@ export const ScheduleList: React.FC<ScheduleListProps> = ({ schedules, onSelect,
         const dDay = calculateDDay(schedule.scheduleDate);
         const dDayLabel = dDay === 0 ? 'Day' : dDay > 0 ? `-${dDay}` : `+${Math.abs(dDay)}`;
         const isPast = dDay < 0;
+
+        const typeCode = schedule.scheduleTypeId 
+          ? getCodeById(schedule.scheduleTypeId) 
+          : String(schedule.scheduleTypeCode);
 
         return (
           <div 
@@ -40,7 +49,7 @@ export const ScheduleList: React.FC<ScheduleListProps> = ({ schedules, onSelect,
             <div className="flex items-center gap-5">
               <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-[20px] transition-colors
                 ${activeId === schedule.id ? 'bg-[#FF6B00]/10' : 'bg-stone-50 group-hover:bg-stone-100'}`}>
-                {getTypeIcon(schedule.scheduleTypeCode)}
+                {getTypeIcon(typeCode)}
               </div>
               <div className="flex flex-col gap-0.5">
                 <span className="text-[12px] font-black text-stone-400 uppercase tracking-tighter">
@@ -51,7 +60,6 @@ export const ScheduleList: React.FC<ScheduleListProps> = ({ schedules, onSelect,
                 </span>
               </div>
             </div>
-
 
             <div className="flex items-center gap-4">
               <span className={`text-[11px] font-black px-2 py-1 rounded-lg border tabular-nums

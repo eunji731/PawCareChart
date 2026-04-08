@@ -1,5 +1,6 @@
 package com.pawcarechart.backend.care.entity;
 
+import com.pawcarechart.backend.code.entity.CommonCode;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -19,8 +20,9 @@ public class ExpenseDetail {
     @JoinColumn(name = "care_record_id")
     private CareRecord careRecord;
 
-    @Column(name = "category_code", nullable = false, length = 50)
-    private String categoryCode;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id", nullable = false)
+    private CommonCode category;
 
     @Column(name = "amount", nullable = false)
     private Long amount;
@@ -31,8 +33,8 @@ public class ExpenseDetail {
     @Column(name = "related_medical_record_id")
     private Long relatedMedicalRecordId;
 
-    public void update(String categoryCode, Long amount, String memo, Long relatedMedicalRecordId) {
-        this.categoryCode = categoryCode;
+    public void update(CommonCode category, Long amount, String memo, Long relatedMedicalRecordId) {
+        this.category = category;
         this.amount = amount;
         this.memo = memo;
         this.relatedMedicalRecordId = relatedMedicalRecordId;

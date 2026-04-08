@@ -91,11 +91,11 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
 
   if (variant === 'panel') {
     const file = effectiveFiles[0];
-    const isImage = file ? isImageFile(file.url) : false;
-    const extension = file ? getFileExtension(file.url) : '';
+    const isImage = file ? isImageFile(file.url, file.name) : false;
+    const extension = file ? getFileExtension(file.url, file.name) : '';
 
     return (
-      <div className="relative w-full aspect-[4/5] rounded-[32px] overflow-hidden group bg-[#F9F7F5] border border-stone-100 shadow-inner">
+      <div className="relative w-full aspect-4/5 rounded-[32px] overflow-hidden group bg-[#F9F7F5] border border-stone-100 shadow-inner">
         {file ? (
           <>
             {isImage ? (
@@ -107,7 +107,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
                 <p className="text-[12px] text-stone-300 font-bold mt-2 truncate w-full">{file.name}</p>
               </div>
             )}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+            <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
             <div className="absolute bottom-8 left-8 right-8 flex justify-between items-end">
               <div className="text-white">
                 <p className="text-[10px] font-black tracking-[0.2em] opacity-60 uppercase mb-1">{isImage ? 'Selected Image' : 'Selected File'}</p>
@@ -135,7 +135,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
         )}
         
         {file && !loading && (
-          <button onClick={handleButtonClick} className="absolute top-6 right-6 w-12 h-12 bg-white rounded-2xl shadow-xl flex items-center justify-center text-xl hover:scale-110 active:scale-90 transition-all">📁</button>
+          <button onClick={handleButtonClick} className="absolute top-6 right-6 w-12 h-12 bg-white rounded-2xl shadow-xl flex items-center justify-center text-xl hover:scale-110 active:scale-90 transition-all">📷</button>
         )}
 
         <input type="file" ref={fileInputRef} onChange={handleFileChange} accept={accept} className="hidden" />
@@ -150,7 +150,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
         <div className="relative group">
           <div className="w-44 h-44 rounded-3xl overflow-hidden border-4 border-white shadow-2xl bg-[#F9F7F5] flex items-center justify-center relative">
             {file ? (
-              isImageFile(file.url) ? <img src={file.url} alt="Preview" className="w-full h-full object-cover" /> : <span className="text-5xl">{getFileIcon(getFileExtension(file.url))}</span>
+              isImageFile(file.url, file.name) ? <img src={file.url} alt="Preview" className="w-full h-full object-cover" /> : <span className="text-5xl">{getFileIcon(getFileExtension(file.url, file.name))}</span>
             ) : <span className="text-5xl opacity-10">🐶</span>}
             {loading && <div className="absolute inset-0 bg-stone-900/40 flex items-center justify-center"><div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" /></div>}
           </div>

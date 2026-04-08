@@ -84,7 +84,7 @@ const CareRecordDetailPage: React.FC = () => {
             <div className="flex items-center gap-3 border-b border-stone-100 pb-5 mb-8">
               <span className="text-[20px]">📝</span>
               <h3 className="text-[16px] font-black text-[#2D2D2D] tracking-widest uppercase">
-                {record.recordType === 'MEDICAL' ? 'Clinical ' : 'Diary '}<span className="text-[#FF6B00]">Notes.</span>
+                {((record as any).recordType === 'MEDICAL' || record.recordTypeId === 1) ? 'Clinical ' : 'Diary '}<span className="text-[#FF6B00]">Notes.</span>
               </h3>
             </div>
 

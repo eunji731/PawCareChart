@@ -7,6 +7,7 @@ import { ScheduleDetailHeader } from './components/ScheduleDetailHeader';
 import { ScheduleDetailInfo } from './components/ScheduleDetailInfo';
 import { CareRecordAttachmentGallery } from '@/pages/CareRecords/Detail/components/CareRecordAttachmentGallery';
 import { scheduleApi } from '@/api/scheduleApi';
+import { useCommonCodes } from '@/hooks/useCommonCodes';
 
 const ScheduleDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -14,6 +15,11 @@ const ScheduleDetailPage: React.FC = () => {
   const { schedule, files, isLoading, error, refetch } = useScheduleDetail(id);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // 공통 코드 로드
+  const { codes: recordTypes } = useCommonCodes('RECORD_TYPE');
+  const { codes: expenseCategories } = useCommonCodes('EXPENSE_CATEGORY');
+  const { codes: scheduleTypes } = useCommonCodes('SCHEDULE_TYPE');
 
   const handleDelete = async () => {
     if (!id) return;
@@ -41,30 +47,33 @@ const ScheduleDetailPage: React.FC = () => {
   };
 
   const handleConvertToCareRecord = () => {
-    if (!id || !schedule) return;
+    if (!id || !schedule || recordTypes.length === 0) return;
     
-    // 일정 타입에 따른 케어 기록 타입 및 카테고리 매핑
-    let recordType: 'MEDICAL' | 'EXPENSE' = 'MEDICAL';
-    let categoryCode = 'ETC';
+    // 현재 일정의 영문 코드명 확인 (타입 안정성 보강)
+    const foundType = schedule.scheduleTypeId 
+      ? scheduleTypes.find(t => t.id === schedule.scheduleTypeId) 
+      : null;
     
-    switch (schedule.scheduleTypeCode) {
-      case 'MEDICAL':
-      case 'CHECKUP':
-      case 'MEDICATION':
-        recordType = 'MEDICAL';
-        break;
-      case 'GROOMING':
-        recordType = 'EXPENSE';
-        categoryCode = 'GROOMING';
-        break;
-      case 'ETC':
-      default:
-        recordType = 'EXPENSE';
-        categoryCode = 'ETC';
-        break;
+    const currentTypeCode = foundType?.code || String(schedule.scheduleTypeCode || 'ETC');
+
+    // 1. 목표 레코드 타입 ID 찾기 (MEDICAL 또는 EXPENSE)
+    let targetRecordType: 'MEDICAL' | 'EXPENSE' = 'MEDICAL';
+    // 'GROOMING', 'ETC' 타입은 지출(EXPENSE)로 분류
+    if (['GROOMING', 'ETC'].includes(currentTypeCode)) {
+      targetRecordType = 'EXPENSE';
+    }
+    
+    const recordTypeObj = recordTypes.find(t => t.code === targetRecordType);
+    const recordTypeId = recordTypeObj?.id;
+
+    // 2. 지출인 경우 카테고리 ID 찾기
+    let categoryId: number | null = null;
+    if (targetRecordType === 'EXPENSE') {
+      const targetCatCode = currentTypeCode === 'GROOMING' ? 'GROOMING' : 'ETC';
+      categoryId = expenseCategories.find(c => c.code === targetCatCode)?.id || null;
     }
 
-    if (!window.confirm(`이 일정을 ${recordType === 'MEDICAL' ? '진료 기록' : '지출 기록'}으로 전환하시겠습니까? \n추가 정보를 입력할 수 있는 등록 페이지로 이동합니다.`)) return;
+    if (!window.confirm(`이 일정을 ${targetRecordType === 'MEDICAL' ? '진료 기록' : '지출 기록'}으로 전환하시겠습니까? \n추가 정보를 입력할 수 있는 등록 페이지로 이동합니다.`)) return;
     
     navigate('/care-records/new', { 
       state: { 
@@ -73,16 +82,18 @@ const ScheduleDetailPage: React.FC = () => {
           recordDate: schedule.scheduleDate.split('T')[0],
           title: schedule.title,
           note: schedule.memo || '',
-          recordType: recordType,
-          medicalDetails: recordType === 'MEDICAL' ? {
+          recordTypeId: recordTypeId,
+          recordType: targetRecordType,
+          medicalDetails: targetRecordType === 'MEDICAL' ? {
             clinicName: schedule.location || '',
             symptomTags: schedule.symptomTags || []
           } : null,
-          expenseDetails: recordType === 'EXPENSE' ? {
-            categoryCode: categoryCode,
+          expenseDetails: targetRecordType === 'EXPENSE' ? {
+            categoryTypeId: categoryId,
+            categoryCode: categoryId,
             memo: schedule.memo || ''
           } : null,
-          files: files || [], // 기존 파일 목록 전달
+          files: files || [],
           fromScheduleId: schedule.id
         } 
       } 

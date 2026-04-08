@@ -24,8 +24,11 @@ public class CareRecordListResponse {
     @Schema(description = "강아지 프로필 이미지 URL")
     private String dogProfileImageUrl;
 
-    @Schema(description = "기록 유형 (MEDICAL, EXPENSE)")
-    private String recordType;
+    @Schema(description = "기록 유형 ID")
+    private Long recordTypeId;
+
+    @Schema(description = "기록 유형명 (병원 기록, 지출 기록 등)")
+    private String recordTypeName;
 
     @Schema(description = "기록 날짜")
     private LocalDate recordDate;
@@ -54,8 +57,11 @@ public class CareRecordListResponse {
 
 
     // 공통/지출 관련 필드
-    @Schema(description = "지출 카테고리")
-    private String categoryCode;
+    @Schema(description = "지출 카테고리 ID")
+    private Long categoryId;
+
+    @Schema(description = "지출 카테고리명")
+    private String categoryName;
 
     @Schema(description = "금액")
     private Long amount;

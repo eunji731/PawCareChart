@@ -24,13 +24,41 @@ export interface DashboardSummary {
   }>;
 }
 
+export interface ExpenseAnalysis {
+  totalAmount: number;
+  medicalAmount: number;
+  otherAmount: number;
+  categories: Array<{
+    categoryCode: string;
+    categoryName: string;
+    amount: number;
+    percentage: number;
+  }>;
+}
+
+export interface MonthlyTrend {
+  month: string; // YYYY-MM
+  totalAmount: number;
+  medicalAmount: number;
+  otherAmount: number;
+}
+
 export const dashboardApi = {
-  // 홈 대시보드 통합 요약 정보 조회
+  // 1. 통합 요약 정보
   getSummary: async (params: { dogId?: number; startDate: string; endDate: string }): Promise<DashboardSummary> => {
     const response = await apiClient.get('/dashboard/summary', { params });
-    // apiClient 인터셉터가 response.data.data를 반환한다고 가정
     return response.data;
   },
 
-  // 차트 데이터 등 추가 대시보드 API는 여기에 정의
+  // 2. 지출 항목 분석 (도넛 차트용)
+  getExpenseAnalysis: async (params: { dogId?: number; startDate: string; endDate: string }): Promise<ExpenseAnalysis> => {
+    const response = await apiClient.get('/dashboard/charts/expense-analysis', { params });
+    return response.data;
+  },
+
+  // 3. 월별 지출 추이 (라인 차트용)
+  getExpenseTrend: async (params: { dogId?: number; startDate: string; endDate: string }): Promise<MonthlyTrend[]> => {
+    const response = await apiClient.get('/dashboard/charts/expense-trend', { params });
+    return response.data;
+  }
 };

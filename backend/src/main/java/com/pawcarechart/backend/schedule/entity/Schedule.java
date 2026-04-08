@@ -1,5 +1,6 @@
 package com.pawcarechart.backend.schedule.entity;
 
+import com.pawcarechart.backend.code.entity.CommonCode;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
@@ -25,8 +26,9 @@ public class Schedule {
     @Column(name = "schedule_date", nullable = false)
     private LocalDateTime scheduleDate;
 
-    @Column(name = "schedule_type_code", length = 50)
-    private String scheduleTypeCode;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "schedule_type_id")
+    private CommonCode scheduleType;
 
     @Column(name = "is_completed", nullable = false)
     @Builder.Default
@@ -55,10 +57,10 @@ public class Schedule {
         this.updatedAt = LocalDateTime.now();
     }
 
-    public void update(String title, LocalDateTime scheduleDate, String scheduleTypeCode, String memo, String location) {
+    public void update(String title, LocalDateTime scheduleDate, CommonCode scheduleType, String memo, String location) {
         this.title = title;
         this.scheduleDate = scheduleDate;
-        this.scheduleTypeCode = scheduleTypeCode;
+        this.scheduleType = scheduleType;
         this.memo = memo;
         this.location = location;
     }

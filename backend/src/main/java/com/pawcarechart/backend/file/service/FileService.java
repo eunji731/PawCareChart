@@ -1,7 +1,8 @@
 package com.pawcarechart.backend.file.service;
 
 import com.pawcarechart.backend.config.FileProperties;
-import com.pawcarechart.backend.file.constant.FileTargetType;
+import com.pawcarechart.backend.code.entity.CommonCode;
+import com.pawcarechart.backend.code.repository.CommonCodeRepository;
 import com.pawcarechart.backend.file.dto.FileResponse;
 import com.pawcarechart.backend.file.entity.FileEntity;
 import com.pawcarechart.backend.file.entity.FileMapping;
@@ -38,10 +39,10 @@ public class FileService {
     private final FileRepository fileRepository;
     private final FileMappingRepository fileMappingRepository;
     private final FileProperties fileProperties;
+    private final CommonCodeRepository commonCodeRepository;
 
     /**
      * [Step 1] 파일만 먼저 저장 (임시 상태)
-     * targetId 없이 파일 정보만 DB에 기록
      */
     @Transactional
     public List<FileResponse> uploadTemporary(Long userId, List<MultipartFile> files) {
@@ -53,9 +54,6 @@ public class FileService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * 물리 파일 저장 및 DB 레코드 생성 (매핑 없음)
-     */
     private FileResponse savePhysicalFile(Long userId, MultipartFile file) {
         String contentType = file.getContentType();
         if (fileProperties.getAllowedTypes() != null && !fileProperties.getAllowedTypes().contains(contentType)) {
@@ -71,12 +69,16 @@ public class FileService {
 
         try {
             Path uploadPath = Paths.get(fileProperties.getUploadDir()).toAbsolutePath().normalize();
+            log.info("[FileService] Target upload directory: {}", uploadPath);
             if (!Files.exists(uploadPath)) {
                 Files.createDirectories(uploadPath);
+                log.info("[FileService] Created directory: {}", uploadPath);
             }
 
             Path targetLocation = uploadPath.resolve(storedName);
+            log.info("[FileService] Saving file to: {}", targetLocation);
             Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
+            log.info("[FileService] File copy successful.");
 
             String baseUrl = fileProperties.getBaseUrl();
             if (!baseUrl.endsWith("/")) baseUrl += "/";
@@ -100,21 +102,12 @@ public class FileService {
     }
 
     /**
-     * [Step 2] 저장된 본문 ID와 파일들을 연결
+     * [Step 2] 저장된 본문 ID와 파일들을 연결 (Long targetTypeId 기반)
      */
     @Transactional
-    public void connectFilesToTarget(List<Long> fileIds, FileTargetType targetType, Long targetId, Long userId) {
-        log.info("[FileService] Start connecting. targetType={}, targetId={}, userId={}, fileIds={}", targetType, targetId, userId, fileIds);
-        
-        if (fileIds == null || fileIds.isEmpty()) {
-            log.info("[FileService] No fileIds provided. Skipping mapping.");
-            return;
-        }
-
-        if (targetId == null) {
-            log.error("[FileService] targetId is null!");
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "대상 ID가 없습니다.");
-        }
+    public void connectFilesToTarget(List<Long> fileIds, Long targetTypeId, Long targetId, Long userId) {
+        log.info("[FileService] connectFilesToTarget START. fileIds={}, targetTypeId={}, targetId={}, userId={}", fileIds, targetTypeId, targetId, userId);
+        if (fileIds == null || fileIds.isEmpty()) return;
 
         fileIds.forEach(fileId -> {
             if (fileId == null) return;
@@ -122,19 +115,19 @@ public class FileService {
             FileEntity fileEntity = fileRepository.findById(fileId)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "파일을 찾을 수 없습니다. ID: " + fileId));
 
-            // 소유권 확인: 업로드한 사용자와 현재 매핑하려는 사용자가 같은지 확인
             if (!fileEntity.getUserId().equals(userId)) {
-                log.error("[FileService] Ownership mismatch. fileOwner={}, currentUser={}", fileEntity.getUserId(), userId);
+                log.warn("[FileService] Ownership mismatch. fileId={}, fileOwner={}, currentUser={}", fileId, fileEntity.getUserId(), userId);
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, "파일 매핑 권한이 없습니다.");
             }
 
-            // 동일한 대상에 대한 중복 매핑 확인
-            if (fileMappingRepository.existsByFileIdAndTargetTypeAndTargetId(fileId, targetType, targetId)) {
-                log.info("[FileService] File {} already mapped to {} {}. Skipping.", fileId, targetType, targetId);
+            if (fileMappingRepository.existsMapping(fileId, targetTypeId, targetId)) {
+                log.info("[FileService] Mapping already exists for fileId={}, targetTypeId={}, targetId={}", fileId, targetTypeId, targetId);
                 return;
             }
 
-            // 매핑 정보 저장
+            CommonCode targetType = commonCodeRepository.findById(targetTypeId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "유효하지 않은 대상 유형 ID입니다: " + targetTypeId));
+
             FileMapping mapping = FileMapping.builder()
                     .fileId(fileId)
                     .targetType(targetType)
@@ -142,48 +135,25 @@ public class FileService {
                     .build();
             
             fileMappingRepository.save(mapping);
-            log.info("[FileService] Mapping saved. fileId={}, targetId={}", fileId, targetId);
+            log.info("[FileService] Mapping saved. fileId={}, targetType={}, targetId={}", fileId, targetType.getCode(), targetId);
         });
-        
-        // 즉시 반영을 위해 flush 호출 (MyBatis 조회 등과 섞여있을 때를 대비)
         fileMappingRepository.flush();
     }
 
-    /**
-     * 특정 대상의 파일 연결 상태를 최신 상태(fileIds)와 동기화
-     */
     @Transactional
-    public void syncFilesToTarget(List<Long> fileIds, FileTargetType targetType, Long targetId, Long userId) {
-        // 1. 기존 매핑 정보 조회
-        List<FileMapping> existingMappings = fileMappingRepository.findAllByTargetTypeAndTargetId(targetType, targetId);
-        List<Long> existingFileIds = existingMappings.stream()
-                .map(FileMapping::getFileId)
-                .collect(Collectors.toList());
+    public void syncFilesToTarget(List<Long> fileIds, Long targetTypeId, Long targetId, Long userId) {
+        log.info("[FileService] syncFilesToTarget. fileIds={}, targetTypeId={}, targetId={}", fileIds, targetTypeId, targetId);
+        // 기존 매핑 정보 삭제 (물리 파일은 유지)
+        fileMappingRepository.deleteAllByTargetType_IdAndTargetId(targetTypeId, targetId);
 
-        // 2. 새로운 파일 리스트가 null이면 빈 리스트로 취급
-        List<Long> newFileIds = (fileIds == null) ? Collections.emptyList() : fileIds;
-
-        // 3. 삭제되어야 할 파일 (기존에는 있었으나 새 리스트에는 없는 것)
-        List<Long> toDeleteIds = existingFileIds.stream()
-                .filter(id -> !newFileIds.contains(id))
-                .collect(Collectors.toList());
-        toDeleteIds.forEach(id -> deleteFile(id, userId));
-
-        // 4. 새로 추가되어야 할 파일 (새 리스트에는 있으나 기존에는 없는 것)
-        List<Long> toAddIds = newFileIds.stream()
-                .filter(id -> !existingFileIds.contains(id))
-                .collect(Collectors.toList());
-        
-        if (!toAddIds.isEmpty()) {
-            connectFilesToTarget(toAddIds, targetType, targetId, userId);
+        // 새로운 매핑 정보 생성
+        if (fileIds != null && !fileIds.isEmpty()) {
+            connectFilesToTarget(fileIds, targetTypeId, targetId, userId);
         }
     }
 
-    /**
-     * 특정 대상에 매핑된 모든 파일 정보 조회
-     */
-    public List<FileResponse> getFiles(FileTargetType targetType, Long targetId) {
-        List<FileMapping> mappings = fileMappingRepository.findAllByTargetTypeAndTargetId(targetType, targetId);
+    public List<FileResponse> getFiles(Long targetTypeId, Long targetId) {
+        List<FileMapping> mappings = fileMappingRepository.findAllByTargetType_IdAndTargetId(targetTypeId, targetId);
         if (mappings.isEmpty()) return Collections.emptyList();
 
         List<Long> fileIds = mappings.stream()
@@ -197,12 +167,8 @@ public class FileService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * 특정 파일 1건 삭제
-     */
     @Transactional
     public void deleteFile(Long fileId, Long userId) {
-        // 권한 검증: 파일을 업로드한 사용자 본인만 삭제 가능 (FileEntity 기준)
         FileEntity fileEntity = fileRepository.findById(fileId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "파일 정보를 찾을 수 없습니다."));
 
@@ -210,22 +176,14 @@ public class FileService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "파일 삭제 권한이 없습니다.");
         }
 
-        // 물리 파일 삭제
         deletePhysicalFile(fileEntity.getStoredFileName());
-
-        // 매핑 삭제
         fileMappingRepository.deleteByFileId(fileId);
-        
-        // 엔티티 삭제
         fileRepository.delete(fileEntity);
     }
 
-    /**
-     * 특정 대상의 모든 파일 매핑 정보 및 물리 파일 삭제
-     */
     @Transactional
-    public void deleteFilesByTarget(FileTargetType targetType, Long targetId) {
-        List<FileMapping> mappings = fileMappingRepository.findAllByTargetTypeAndTargetId(targetType, targetId);
+    public void deleteFilesByTarget(Long targetTypeId, Long targetId) {
+        List<FileMapping> mappings = fileMappingRepository.findAllByTargetType_IdAndTargetId(targetTypeId, targetId);
         if (mappings.isEmpty()) return;
 
         List<Long> fileIds = mappings.stream().map(FileMapping::getFileId).collect(Collectors.toList());
@@ -256,8 +214,4 @@ public class FileService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "파일 경로가 잘못되었습니다: " + storedFileName);
         }
     }
-
-
-
-
 }

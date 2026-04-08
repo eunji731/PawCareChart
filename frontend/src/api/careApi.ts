@@ -13,6 +13,10 @@ export const careApi = {
       params.type = filters.type;
     }
 
+    if (filters.recordTypeId) {
+      params.recordTypeId = filters.recordTypeId;
+    }
+
     if (filters.keyword?.trim()) {
       params.keyword = filters.keyword.trim();
     }

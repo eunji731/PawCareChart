@@ -31,18 +31,18 @@ public class CareController {
     @GetMapping
     public ApiResult<List<CareRecordListResponse>> getCareRecords(
             @Parameter(description = "반려견 ID (선택)") @RequestParam(required = false) Long dogId,
-            @Parameter(description = "기록 유형 (ALL, MEDICAL, EXPENSE)") @RequestParam(required = false) String type,
+            @Parameter(description = "기록 유형 ID (선택)") @RequestParam(required = false) Long recordTypeId,
             @Parameter(description = "검색어 (제목, 병원명, 진단명)") @RequestParam(required = false) String keyword,
             @Parameter(description = "조회 시작일 (YYYY-MM-DD)") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @Parameter(description = "조회 종료일 (YYYY-MM-DD)") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             @AuthenticationPrincipal String userId) {
 
         log.info("principal userId = {}", userId);
-        log.info("dogId={}, type={}, keyword={}, startDate={}, endDate={}",
-                dogId, type, keyword, startDate, endDate);
+        log.info("dogId={}, recordTypeId={}, keyword={}, startDate={}, endDate={}",
+                dogId, recordTypeId, keyword, startDate, endDate);
 
         List<CareRecordListResponse> result = careService.getCareRecords(
-                Long.valueOf(userId), dogId, type, keyword, startDate, endDate);
+                Long.valueOf(userId), dogId, recordTypeId, keyword, startDate, endDate);
         return ApiResult.ok(result);
     }
 

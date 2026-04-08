@@ -14,9 +14,12 @@ import java.util.List;
 public class ScheduleResponse {
     private Long id;
     private Long dogId;
+    private String dogName;
+    private String dogProfileImageUrl;
     private String title;
     private LocalDateTime scheduleDate;
-    private String scheduleTypeCode;
+    private Long scheduleTypeId;
+    private String scheduleTypeName;
     private boolean isCompleted;
     private String memo;
     private String location;
@@ -25,16 +28,18 @@ public class ScheduleResponse {
     private Integer attachmentCount;
     private List<FileResponse> attachments;
 
-    public static ScheduleResponse of(com.pawcarechart.backend.schedule.entity.Schedule schedule, List<String> symptomTags, List<FileResponse> attachments) {
+    public static ScheduleResponse of(com.pawcarechart.backend.schedule.entity.Schedule schedule, String dogName, String dogProfileImageUrl, List<String> symptomTags, List<FileResponse> attachments) {
         LocalDateTime now = LocalDateTime.now();
         long dDay = ChronoUnit.DAYS.between(now.toLocalDate(), schedule.getScheduleDate().toLocalDate());
 
         return ScheduleResponse.builder()
                 .id(schedule.getId())
                 .dogId(schedule.getDogId())
+                .dogName(dogName)
+                .dogProfileImageUrl(dogProfileImageUrl)
                 .title(schedule.getTitle())
                 .scheduleDate(schedule.getScheduleDate())
-                .scheduleTypeCode(schedule.getScheduleTypeCode())
+                .scheduleTypeId(schedule.getScheduleType() != null ? schedule.getScheduleType().getId() : null)
                 .isCompleted(schedule.getIsCompleted())
                 .memo(schedule.getMemo())
                 .location(schedule.getLocation())

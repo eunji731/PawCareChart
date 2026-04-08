@@ -6,6 +6,7 @@ import com.pawcarechart.backend.auth.dto.RefreshRequest;
 import com.pawcarechart.backend.auth.dto.SignupRequest;
 import com.pawcarechart.backend.auth.entity.RefreshToken;
 import com.pawcarechart.backend.auth.repository.RefreshTokenRepository;
+import com.pawcarechart.backend.code.entity.CommonCode;
 import com.pawcarechart.backend.config.security.JwtTokenProvider;
 import com.pawcarechart.backend.user.entity.User;
 import com.pawcarechart.backend.user.repository.UserRepository;
@@ -27,6 +28,7 @@ public class AuthService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
+    private final com.pawcarechart.backend.code.repository.CommonCodeRepository commonCodeRepository;
 
     @Transactional
     public UserResponse getUserInfo(Long userId) {
@@ -37,7 +39,8 @@ public class AuthService {
                 .id(user.getId())
                 .email(user.getEmail())
                 .name(user.getName())
-                .roleCode(user.getRoleCode())
+                .roleId(user.getRole().getId())
+                .roleName(user.getRole().getCodeName())
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
                 .build();
@@ -49,11 +52,15 @@ public class AuthService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 사용 중인 이메일입니다.");
         }
 
+        Long defaultRoleId = getCodeId("USER_ROLE", "ROLE_USER");
+        CommonCode defaultRole = commonCodeRepository.findById(defaultRoleId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "기본 권한 코드를 찾을 수 없습니다."));
+
         User user = userRepository.save(User.builder()
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .name(request.getName())
-                .roleCode("ROLE_USER")
+                .role(defaultRole)
                 .build());
 
         return issueTokens(user);
@@ -113,7 +120,8 @@ public class AuthService {
     private AuthResponse issueTokens(User user) {
         refreshTokenRepository.deleteByUser_Id(user.getId());
 
-        String accessToken = jwtTokenProvider.createAccessToken(user.getId(), user.getEmail(), user.getRoleCode());
+        String roleCode = user.getRole().getCode();
+        String accessToken = jwtTokenProvider.createAccessToken(user.getId(), user.getEmail(), roleCode);
         String refreshToken = jwtTokenProvider.createRefreshToken(user.getId());
 
         refreshTokenRepository.save(RefreshToken.builder()
@@ -131,5 +139,20 @@ public class AuthService {
                 .email(user.getEmail())
                 .name(user.getName())
                 .build();
+    }
+
+    private String getCodeValue(Long id) {
+        return commonCodeRepository.findById(id)
+                .map(CommonCode::getCode)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "잘못된 코드 ID입니다."));
+    }
+
+    private Long getCodeId(String groupCode, String code) {
+        return commonCodeRepository.findAllByGroupCodeAndUseYnOrderBySortOrderAsc(groupCode, "Y")
+                .stream()
+                .filter(c -> c.getCode().equals(code))
+                .findFirst()
+                .map(CommonCode::getId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "필요한 공통 코드가 정의되지 않았습니다: " + code));
     }
 }

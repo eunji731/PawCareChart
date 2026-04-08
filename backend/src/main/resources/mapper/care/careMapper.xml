@@ -8,7 +8,8 @@
         cr.dog_id AS dogId,
         d.name AS dogName,
         d.profile_image_url AS dogProfileImageUrl,
-        cr.record_type_code AS recordType,
+        cr.record_type_id AS recordTypeId,
+        c1.code_name AS recordTypeName,
         cr.record_date AS recordDate,
         cr.title AS title,
         cr.note AS note,
@@ -17,34 +18,36 @@
         md.medication_start_date AS medicationStartDate,
         md.medication_days AS medicationDays,
 
-        -- 투약 상태 변환 (프론트엔드 medicationStatus 포맷에 맞춤)
+        -- 투약 상태 변환
         CASE
         WHEN md.care_record_id IS NULL THEN 'NONE'
         WHEN md.is_medication_completed = true THEN 'COMPLETED'
         ELSE 'ACTIVE'
         END AS medicationStatus,
 
-        ed.category_code AS categoryCode,
+        ed.category_id AS categoryId,
+        c2.code_name AS categoryName,
         COALESCE(md.amount, ed.amount) AS amount,
         ed.related_medical_record_id AS relatedMedicalRecordId,
 
-        -- TODO: 실제 첨부파일 테이블 조인 카운트로 변경 필요 (일단 에러 안 나게 0으로 처리)
-        0 AS attachmentCount
+        -- 첨부파일 개수 조회
+        (SELECT COUNT(*) FROM public.file_mappings fm 
+         WHERE fm.target_id = cr.id 
+         AND fm.target_type_id = (SELECT id FROM public.codes WHERE group_code = 'FILE_TARGET_TYPE' AND code = 'CARE_RECORD')) AS attachmentCount
 
         FROM public.care_records cr
-        INNER JOIN public.dogs d
-        ON d.id = cr.dog_id
-        LEFT JOIN public.care_record_medical_details md
-        ON md.care_record_id = cr.id
-        LEFT JOIN public.care_record_expense_details ed
-        ON ed.care_record_id = cr.id
+        INNER JOIN public.dogs d ON d.id = cr.dog_id
+        LEFT JOIN public.codes c1 ON cr.record_type_id = c1.id
+        LEFT JOIN public.care_record_medical_details md ON md.care_record_id = cr.id
+        LEFT JOIN public.care_record_expense_details ed ON ed.care_record_id = cr.id
+        LEFT JOIN public.codes c2 ON ed.category_id = c2.id
         WHERE cr.user_id = #{userId}
 
         <if test="dogId != null">
             AND cr.dog_id = #{dogId}
         </if>
-        <if test="recordType != null and recordType != ''">
-            AND cr.record_type_code = #{recordType}
+        <if test="recordTypeId != null">
+            AND cr.record_type_id = #{recordTypeId}
         </if>
         <if test="searchKeyword != null and searchKeyword != ''">
             AND (
@@ -69,7 +72,8 @@
                 cr.dog_id AS dogId,
                 d.name AS dogName,
                 d.profile_image_url AS dogProfileImageUrl,
-                cr.record_type_code AS recordType,
+                cr.record_type_id AS recordTypeId,
+                c1.code_name AS recordTypeName,
                 cr.record_date AS recordDate,
                 cr.title AS title,
                 cr.note AS note,
@@ -87,7 +91,8 @@
                     ELSE 'ACTIVE'
                 END AS medicationStatus,
 
-                ed.category_code AS categoryCode,
+                ed.category_id AS categoryId,
+                c2.code_name AS categoryName,
                 COALESCE(md.amount, ed.amount, 0) AS amount,
 
                 -- 연관 병원 기록 Self-Join 정보
@@ -98,8 +103,10 @@
 
             FROM public.care_records cr
             INNER JOIN public.dogs d ON d.id = cr.dog_id
+            LEFT JOIN public.codes c1 ON cr.record_type_id = c1.id
             LEFT JOIN public.care_record_medical_details md ON md.care_record_id = cr.id
             LEFT JOIN public.care_record_expense_details ed ON ed.care_record_id = cr.id
+            LEFT JOIN public.codes c2 ON ed.category_id = c2.id
             -- Self-Join for related medical record
             LEFT JOIN public.care_records rmr ON ed.related_medical_record_id = rmr.id
             LEFT JOIN public.care_record_medical_details rmd ON rmr.id = rmd.care_record_id
@@ -116,7 +123,7 @@
             FROM public.care_records cr
             INNER JOIN public.care_record_medical_details md ON cr.id = md.care_record_id
             WHERE cr.dog_id = #{dogId}
-              AND cr.record_type_code = 'MEDICAL'
+              AND cr.record_type_id = (SELECT id FROM public.codes WHERE group_code = 'RECORD_TYPE' AND code = 'MEDICAL')
             <if test="keyword != null and keyword != ''">
               AND (
                 cr.title LIKE CONCAT('%', #{keyword}, '%')

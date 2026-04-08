@@ -12,7 +12,7 @@ public interface ScheduleMapper {
     List<ScheduleResponse> selectSchedules(
             @Param("userId") Long userId,
             @Param("dogId") Long dogId,
-            @Param("type") String type,
+            @Param("typeId") Long typeId,
             @Param("keyword") String keyword,
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate

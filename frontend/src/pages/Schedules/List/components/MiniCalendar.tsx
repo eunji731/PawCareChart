@@ -1,78 +1,109 @@
-import React from 'react';
+import React, { useMemo } from 'react';
+import { 
+  format, 
+  startOfMonth, 
+  endOfMonth, 
+  startOfWeek, 
+  endOfWeek, 
+  eachDayOfInterval, 
+  isSameMonth, 
+  isSameDay,
+  parseISO
+} from 'date-fns';
 import type { Schedule } from '@/types/schedule';
+import { useCommonCodes } from '@/hooks/useCommonCodes';
 
 interface MiniCalendarProps {
-  selectedDate: Date;
-  onDateSelect: (date: Date) => void;
+  currentDate: Date;
   schedules: Schedule[];
+  onDateClick: (date: Date) => void;
 }
 
-export const MiniCalendar: React.FC<MiniCalendarProps> = ({ selectedDate, onDateSelect, schedules }) => {
-  const year = selectedDate.getFullYear();
-  const month = selectedDate.getMonth();
+export const MiniCalendar: React.FC<MiniCalendarProps> = ({ currentDate, schedules, onDateClick }) => {
+  const { codes: scheduleTypes, getCodeById } = useCommonCodes('SCHEDULE_TYPE');
 
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const firstDayOfMonth = new Date(year, month, 1).getDay();
+  const days = useMemo(() => {
+    const start = startOfWeek(startOfMonth(currentDate));
+    const end = endOfWeek(endOfMonth(currentDate));
+    return eachDayOfInterval({ start, end });
+  }, [currentDate]);
 
-  const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
-  const emptyDays = Array.from({ length: firstDayOfMonth }, (_, i) => i);
+  const getDaySchedules = (day: Date) => {
+    return schedules.filter(s => isSameDay(parseISO(s.scheduleDate), day));
+  };
 
-  const getDots = (day: number) => {
-    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    const daySchedules = schedules.filter(s => s.scheduleDate && s.scheduleDate.startsWith(dateStr));
-
-    return daySchedules.map(s => {
-      if (s.scheduleTypeCode === 'MEDICAL') return 'bg-[#FF6B00]';
-      if (s.scheduleTypeCode === 'GROOMING') return 'bg-blue-400';
-      if (s.scheduleTypeCode === 'MEDICATION') return 'bg-green-400';
-      return 'bg-stone-300';
-    }).slice(0, 3); // 최대 3개까지만 표시
+  // 색상 매핑 함수
+  const getMarkerColor = (typeCode: string) => {
+    switch(typeCode) {
+      case 'MEDICAL': return 'bg-[#FF6B00]';
+      case 'GROOMING': return 'bg-blue-400';
+      case 'MEDICATION':
+      case 'HEARTWORM': return 'bg-green-400';
+      case 'CHECKUP': return 'bg-purple-400';
+      default: return 'bg-stone-300';
+    }
   };
 
   return (
-    <div className="select-none">
-      <div className="flex items-center justify-between mb-8">
-        <span className="text-[20px] font-black text-stone-800">
-          {selectedDate.toLocaleString('default', { month: 'long' })}
-          <span className="text-[14px] font-bold text-stone-300 ml-2">{year}</span>
-        </span>
+    <div className="bg-white rounded-[32px] p-6 shadow-sm border border-stone-100 flex flex-col gap-6">
+      {/* 1. Header */}
+      <div className="flex items-center justify-between px-2">
+        <h3 className="text-[16px] font-black text-[#2D2D2D] uppercase tracking-tight">
+          {format(currentDate, 'MMMM yyyy')}
+        </h3>
       </div>
 
-      <div className="grid grid-cols-7 gap-y-6">
-        {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => (
-          <div key={d} className="text-center text-[11px] font-black text-stone-300 uppercase tracking-tighter">
-            {d}
-          </div>
+      {/* 2. Calendar Grid */}
+      <div className="grid grid-cols-7 gap-y-2">
+        {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => (
+          <div key={i} className="text-center text-[10px] font-black text-stone-300 mb-2">{d}</div>
         ))}
-
-        {emptyDays.map(d => <div key={`empty-${d}`} />)}
-
-        {days.map(day => {
-          const isSelected = selectedDate.getDate() === day;
-          const dots = getDots(day);
+        {days.map((day, i) => {
+          const daySchedules = getDaySchedules(day);
+          const isSelected = isSameDay(day, currentDate);
+          const isCurrentMonth = isSameMonth(day, currentDate);
 
           return (
-            <div
-              key={day}
-              onClick={() => onDateSelect(new Date(year, month, day))}
-              className="relative flex flex-col items-center cursor-pointer group"
+            <div 
+              key={i} 
+              onClick={() => onDateClick(day)}
+              className={`relative aspect-square flex flex-col items-center justify-center cursor-pointer transition-all rounded-xl
+                ${isSelected ? 'bg-[#FF6B00] text-white shadow-lg shadow-orange-500/20 scale-110 z-10' : 'hover:bg-stone-50'}
+                ${!isCurrentMonth && !isSelected ? 'opacity-20' : ''}
+              `}
             >
-              <div className={`w-9 h-9 flex items-center justify-center rounded-xl text-[14px] font-bold transition-all
-                ${isSelected
-                  ? 'bg-[#FF6B00] text-white shadow-lg shadow-orange-500/30 scale-110'
-                  : 'text-stone-600 hover:bg-stone-50 hover:text-stone-800'
-                }`}
-              >
-                {day}
-              </div>
-              <div className="absolute -bottom-1 flex gap-0.5">
-                {dots.map((dotClass, idx) => (
-                  <div key={idx} className={`w-1 h-1 rounded-full ${dotClass} ${isSelected ? 'brightness-150' : ''}`} />
-                ))}
+              <span className={`text-[12px] font-black tabular-nums ${isSelected ? 'text-white' : 'text-[#2D2D2D]'}`}>
+                {format(day, 'd')}
+              </span>
+              
+              <div className="flex gap-0.5 mt-1 h-1">
+                {daySchedules.slice(0, 3).map((s, idx) => {
+                  const typeCode = s.scheduleTypeId ? getCodeById(s.scheduleTypeId) : String(s.scheduleTypeCode || '');
+                  return (
+                    <div 
+                      key={idx} 
+                      className={`w-1 h-1 rounded-full ${isSelected ? 'bg-white/60' : getMarkerColor(typeCode)}`} 
+                    />
+                  );
+                })}
               </div>
             </div>
           );
         })}
+      </div>
+
+      {/* 3. Legend (범례) 추가 */}
+      <div className="pt-4 border-t border-stone-50">
+        <div className="flex flex-wrap gap-x-4 gap-y-2">
+          {scheduleTypes.map((type) => (
+            <div key={type.id} className="flex items-center gap-1.5">
+              <div className={`w-1.5 h-1.5 rounded-full ${getMarkerColor(type.code)}`} />
+              <span className="text-[10px] font-black text-stone-400 uppercase tracking-tighter">
+                {type.codeName}
+              </span>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

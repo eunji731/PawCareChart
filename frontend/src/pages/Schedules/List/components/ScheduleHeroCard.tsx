@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'; // 추가
 import type { Schedule } from '@/types/schedule';
 import { Badge } from '@/components/common/Badge';
 import { calculateDDay } from '@/utils/dateUtils';
+import { useCommonCodes } from '@/hooks/useCommonCodes';
 
 interface ScheduleHeroCardProps {
   schedule: Schedule;
@@ -10,19 +11,26 @@ interface ScheduleHeroCardProps {
 
 export const ScheduleHeroCard: React.FC<ScheduleHeroCardProps> = ({ schedule }) => {
   const navigate = useNavigate(); // 추가
+  const { codes: scheduleTypes } = useCommonCodes('SCHEDULE_TYPE');
+
   if (!schedule) return null;
   
   const dDay = calculateDDay(schedule.scheduleDate);
   const dDayLabel = dDay === 0 ? 'Day' : dDay > 0 ? `-${dDay}` : `+${Math.abs(dDay)}`;
   const isPast = dDay < 0;
 
-  const typeIcon = {
+  let typeCode = String(schedule.scheduleTypeCode || '');
+  if (schedule.scheduleTypeId) {
+    typeCode = scheduleTypes.find(t => t.id === schedule.scheduleTypeId)?.code || typeCode;
+  }
+
+  const typeIcon: Record<string, string> = {
     MEDICAL: '🏥',
     GROOMING: '✂️',
     MEDICATION: '💊',
     CHECKUP: '🩺',
     ETC: '📅'
-  }[schedule.scheduleTypeCode];
+  };
 
   return (
     <div 
@@ -40,7 +48,7 @@ export const ScheduleHeroCard: React.FC<ScheduleHeroCardProps> = ({ schedule }) 
           `}>
             🚨 D{dDayLabel}
           </span>
-          <span className="text-4xl drop-shadow-lg">{typeIcon}</span>
+          <span className="text-4xl drop-shadow-lg">{typeIcon[typeCode] || '📅'}</span>
         </div>
 
         {/* Title & Date */}
@@ -82,7 +90,7 @@ export const ScheduleHeroCard: React.FC<ScheduleHeroCardProps> = ({ schedule }) 
             {schedule.symptomTags.map(tag => (
               <Badge
                 key={tag}
-                className="!bg-white/10 !text-white !border-none !px-4 !py-2 !text-[12px] !rounded-xl"
+                className="bg-white/10! text-white! border-none! px-4! py-2! text-[12px]! rounded-xl!"
               >
                 <span className="opacity-50 mr-1">#</span>{tag}
               </Badge>

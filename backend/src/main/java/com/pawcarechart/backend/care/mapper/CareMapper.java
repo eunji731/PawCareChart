@@ -11,7 +11,14 @@ import java.util.Optional;
 @Mapper
 public interface CareMapper {
 
-    List<CareRecordListResponse> selectCareRecordsByFilters(Long userId, Long dogId, String recordType, String searchKeyword, LocalDate startDate, LocalDate endDate);
+    List<CareRecordListResponse> selectCareRecordsByFilters(
+            @Param("userId") Long userId,
+            @Param("dogId") Long dogId,
+            @Param("recordTypeId") Long recordTypeId,
+            @Param("searchKeyword") String searchKeyword,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
 
     Optional<CareRecordDetailQueryResult> selectCareRecordDetail(@Param("id") Long id, @Param("userId") Long userId);
 

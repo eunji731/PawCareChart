@@ -81,7 +81,7 @@ export const useDogForm = (id?: string) => {
 
       if (photoUploader.hasNewFiles) {
         try {
-          const uploaded = await photoUploader.upload(); 
+          const uploaded = await photoUploader.upload(id ? Number(id) : null); 
           if (uploaded && uploaded.length > 0) {
             finalProfileImageUrl = uploaded[0].fileUrl || null;
             finalFileId = uploaded[0].id;

@@ -1,21 +1,25 @@
 package com.pawcarechart.backend.file.controller;
 
+import com.pawcarechart.backend.code.entity.CommonCode;
+import com.pawcarechart.backend.code.repository.CommonCodeRepository;
 import com.pawcarechart.backend.common.dto.ApiResult;
-import com.pawcarechart.backend.file.constant.FileTargetType;
 import com.pawcarechart.backend.file.dto.FileResponse;
 import com.pawcarechart.backend.file.service.FileService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.util.List;
@@ -28,6 +32,7 @@ import java.util.List;
 public class FileController {
 
     private final FileService fileService;
+    private final CommonCodeRepository commonCodeRepository;
 
     @Operation(summary = "파일 임시 업로드", description = "파일을 먼저 업로드하고 fileId 목록을 반환받습니다. (매핑 전 상태)")
     @PostMapping("/upload")
@@ -40,9 +45,10 @@ public class FileController {
     @Operation(summary = "파일 목록 조회", description = "특정 대상에 매핑된 모든 파일 정보를 조회합니다.")
     @GetMapping
     public ApiResult<List<FileResponse>> getFiles(
-            @RequestParam FileTargetType targetType,
-            @RequestParam Long targetId) {
-        return ApiResult.ok(fileService.getFiles(targetType, targetId));
+            @Parameter(description = "대상 유형 ID (공통 코드 ID)") @RequestParam Long targetTypeId,
+            @Parameter(description = "대상 ID") @RequestParam Long targetId) {
+        
+        return ApiResult.ok(fileService.getFiles(targetTypeId, targetId));
     }
 
     @Operation(summary = "파일 다운로드/미리보기", description = "저장된 파일명을 통해 실제 파일을 조회합니다.")
@@ -74,5 +80,14 @@ public class FileController {
             @AuthenticationPrincipal String userId) {
         fileService.deleteFile(fileId, Long.valueOf(userId));
         return ApiResult.ok(null);
+    }
+
+    private Long getCodeId(String groupCode, String code) {
+        return commonCodeRepository.findAllByGroupCodeAndUseYnOrderBySortOrderAsc(groupCode, "Y")
+                .stream()
+                .filter(c -> c.getCode().equals(code.toUpperCase()))
+                .findFirst()
+                .map(CommonCode::getId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "유효하지 않은 대상 유형입니다: " + code));
     }
 }

@@ -1,27 +1,35 @@
 import { useState, useEffect, useCallback } from 'react';
 import { scheduleApi } from '@/api/scheduleApi';
-import { fileApi } from '@/api/fileApi'; // 추가
+import { fileApi } from '@/api/fileApi';
+import { useCommonCodes } from '@/hooks/useCommonCodes';
 import type { Schedule } from '@/types/schedule';
-import type { FileItem } from '@/types/file'; // 추가
+import type { FileItem } from '@/types/file';
 
 export const useScheduleDetail = (id?: string) => {
   const [schedule, setSchedule] = useState<Schedule | null>(null);
-  const [files, setFiles] = useState<FileItem[]>([]); // 추가
+  const [files, setFiles] = useState<FileItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { codes: targetTypeCodes } = useCommonCodes('FILE_TARGET_TYPE');
 
   const fetchDetail = useCallback(async () => {
     if (!id) return;
     try {
       setIsLoading(true);
+      setError(null);
       
-      const [scheduleData, scheduleFiles] = await Promise.all([
-        scheduleApi.getScheduleDetail(Number(id)),
-        fileApi.getFiles('SCHEDULE', Number(id))
-      ]);
-
+      // 1. 일정 상세 정보 조회
+      const scheduleData = await scheduleApi.getScheduleDetail(Number(id));
       setSchedule(scheduleData);
-      setFiles(scheduleFiles);
+
+      // 2. 공통 코드 기반 파일 조회
+      if (targetTypeCodes.length > 0) {
+        const found = targetTypeCodes.find(c => c.code === 'SCHEDULE');
+        if (found) {
+          const scheduleFiles = await fileApi.getFiles(found.id, Number(id));
+          setFiles(scheduleFiles);
+        }
+      }
     } catch (err: any) {
       console.error('Failed to fetch schedule detail:', err);
       setError('일정 정보를 불러오는데 실패했습니다.');
@@ -45,11 +53,11 @@ export const useScheduleDetail = (id?: string) => {
     } finally {
       setIsLoading(false);
     }
-  }, [id]);
+  }, [id, targetTypeCodes]);
 
   useEffect(() => {
     fetchDetail();
   }, [fetchDetail]);
 
-  return { schedule, files, isLoading, error, refetch: fetchDetail }; // files 추가
+  return { schedule, files, isLoading, error, refetch: fetchDetail };
 };

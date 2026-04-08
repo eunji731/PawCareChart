@@ -5,7 +5,8 @@ export interface CareRecord {
   dogId: number;
   dogName: string;
   dogProfileImageUrl: string | null;
-  recordType: RecordType;
+  //recordType: RecordType;
+  recordTypeId: number;
   recordDate: string;
   title: string;
   note?: string;
@@ -19,7 +20,8 @@ export interface CareRecord {
   medicationStartDate?: string | null;
   medicationDays?: number | null;
   // Common / Expense
-  categoryCode?: string;
+  categoryCode?: string; // 표시용 코드명 (문자열)
+  categoryTypeId?: number; // DB ID
   amount?: number | null;
   // Expense Specific
   relatedMedicalRecordId?: number | null;
@@ -31,6 +33,7 @@ export interface CareRecord {
 export interface CareRecordsFilter {
   dogId?: number;
   type?: RecordType | 'ALL';
+  recordTypeId?: number; // 필터링용 ID 추가
   keyword?: string;
   startDate?: string;
   endDate?: string;
@@ -49,7 +52,7 @@ export interface MedicalDetailRequest {
 }
 
 export interface ExpenseDetailRequest {
-  categoryCode: string;
+  categoryId: number; // categoryCode -> categoryId 로 변경
   amount: number;
   memo?: string;
   relatedMedicalRecordId?: number | null;
@@ -57,12 +60,12 @@ export interface ExpenseDetailRequest {
 
 export interface CareRecordCreateRequest {
   dogId: number;
-  recordTypeCode: RecordType;
+  recordTypeId: number; // recordTypeCode -> recordTypeId 로 변경
   recordDate: string;
   title: string;
   note?: string;
   fileIds?: number[];
-  sourceScheduleId?: number | null; // 추가: 전환 시 원본 일정 ID
+  sourceScheduleId?: number | null;
   medicalDetails?: MedicalDetailRequest | null;
   expenseDetails?: ExpenseDetailRequest | null;
 }

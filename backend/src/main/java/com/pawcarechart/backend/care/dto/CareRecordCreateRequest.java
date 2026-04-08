@@ -1,5 +1,6 @@
 package com.pawcarechart.backend.care.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -16,8 +17,8 @@ public class CareRecordCreateRequest {
     @NotNull(message = "반려견 ID는 필수입니다.")
     private Long dogId;
 
-    @NotBlank(message = "기록 유형 코드는 필수입니다.")
-    private String recordTypeCode; // MEDICAL, EXPENSE
+    @NotNull(message = "기록 유형 ID는 필수입니다.")
+    private Long recordTypeId;
 
     @NotNull(message = "기록 날짜는 필수입니다.")
     private LocalDate recordDate;
@@ -29,6 +30,7 @@ public class CareRecordCreateRequest {
 
     private Long sourceScheduleId; // [추가] 전환의 원본이 되는 일정 ID
 
+    @JsonProperty("fileIds")
     private List<Long> fileIds;
 
     private MedicalDetailRequest medicalDetails;
@@ -58,8 +60,8 @@ public class CareRecordCreateRequest {
     @AllArgsConstructor
     @Builder
     public static class ExpenseDetailRequest {
-        @NotBlank(message = "지출 카테고리는 필수입니다.")
-        private String categoryCode;
+        @NotNull(message = "지출 카테고리 ID는 필수입니다.")
+        private Long categoryId;
         @NotNull(message = "지출 금액은 필수입니다.")
         private Long amount;
         private String memo;
