@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { healthLogApi } from '@/api/healthLogApi';
+import { useToast } from '@/context/ToastContext';
 
 interface ContextBarProps {
   selectedDogId?: number;
@@ -16,10 +17,11 @@ export const ContextBar: React.FC<ContextBarProps> = ({
 }) => {
   const [memo, setMemo] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { showToast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedDogId) return alert('반려견을 먼저 선택해 주세요.');
+    if (!selectedDogId) return showToast('반려견을 먼저 선택해 주세요.', 'warning');
     if (!memo.trim()) return;
 
     try {
@@ -29,11 +31,11 @@ export const ContextBar: React.FC<ContextBarProps> = ({
         content: memo.trim()
       });
       setMemo('');
-      alert('퀵 메모가 저장되었습니다! ✨');
+      showToast('퀵 메모가 저장되었습니다! ✨', 'success');
       if (onMemoAdded) onMemoAdded();
     } catch (err) {
       console.error('Failed to save quick memo:', err);
-      alert('메모 저장에 실패했습니다.');
+      showToast('메모 저장에 실패했습니다.', 'error');
     } finally {
       setIsSubmitting(false);
     }

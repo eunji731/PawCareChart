@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { apiClient } from '@/lib/apiClient';
 import { useCommonCodes } from '@/hooks/useCommonCodes';
+import { useToast } from '@/context/ToastContext';
 
 export const useSignup = () => {
+  const { showToast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -41,11 +43,10 @@ export const useSignup = () => {
         name,
         roleId: userRole.id
       });
-      
-      alert('멍케어차트 가입을 환영합니다! 🎉 (로그인 창으로 넘어갑니다.)');
+
+      showToast('멍케어차트 가입을 환영합니다! 🎉 (로그인 창으로 넘어갑니다.)', 'success');
       window.location.href = '/login';
-    } catch (err: unknown) {
-      console.error('회원가입 에러:', err);
+      } catch (err: unknown) {      console.error('회원가입 에러:', err);
       // axios 에러 등에서 response.data.message 추출
       const errorResponse = (err as { response?: { data?: { message?: string } } })?.response;
       const errorMessage = errorResponse?.data?.message || '회원가입 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';

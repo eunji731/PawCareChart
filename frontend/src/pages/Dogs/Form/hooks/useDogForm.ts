@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { dogApi } from '@/api/dogApi';
 import { useFileUpload } from '@/hooks/useFileUpload';
+import { useToast } from '@/context/ToastContext';
 import type { DogCreateRequest } from '@/types/dog';
 
 export const useDogForm = (id?: string) => {
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const isEdit = !!id;
 
   const [formData, setFormData] = useState({
@@ -54,7 +56,7 @@ export const useDogForm = (id?: string) => {
             }]);
           }
         } catch (err: any) {
-          alert('정보를 불러오지 못했습니다.');
+          showToast('정보를 불러오지 못했습니다.', 'error');
           navigate('/dogs');
         } finally {
           setIsFetching(false);
@@ -68,7 +70,7 @@ export const useDogForm = (id?: string) => {
   // ============ 저장 ============
   const handleSave = async () => {
     if (!formData.name.trim()) {
-      alert('반려견 이름은 필수입니다! 🐾');
+      showToast('반려견 이름은 필수입니다! 🐾', 'warning');
       return;
     }
 
@@ -88,7 +90,8 @@ export const useDogForm = (id?: string) => {
           }
         } catch (uploadErr: any) {
           console.error('파일 업로드 중 오류:', uploadErr);
-          return alert(uploadErr.message || '이미지 업로드에 실패했습니다.');
+          showToast(uploadErr.message || '이미지 업로드에 실패했습니다.', 'error');
+          return;
         }
       }
 
@@ -108,11 +111,11 @@ export const useDogForm = (id?: string) => {
         await dogApi.createDog(dogPayload);
       }
 
-      alert('성공적으로 저장되었습니다! ✨');
+      showToast('성공적으로 저장되었습니다! ✨', 'success');
       navigate('/dogs');
     } catch (err: any) {
       console.error('Save Error:', err);
-      alert(err.response?.data?.message || '저장 중 오류가 발생했습니다.');
+      showToast(err.response?.data?.message || '저장 중 오류가 발생했습니다.', 'error');
     } finally {
       setIsLoading(false);
     }
@@ -123,10 +126,10 @@ export const useDogForm = (id?: string) => {
     try {
       setIsLoading(true);
       await dogApi.deleteDog(Number(id));
-      alert('삭제되었습니다.');
+      showToast('삭제되었습니다.', 'success');
       navigate('/dogs');
     } catch (err: any) {
-      alert('삭제 중 오류가 발생했습니다.');
+      showToast('삭제 중 오류가 발생했습니다.', 'error');
     } finally {
       setIsLoading(false);
     }

@@ -1,15 +1,17 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/context/ToastContext';
 
 export const useLogin = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  
+
   const navigate = useNavigate();
   const { login } = useAuth();
+  const { showToast } = useToast();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,10 +26,10 @@ export const useLogin = () => {
     try {
       // Spring Boot 백엔드 API (AuthContext 경유) 호출
       await login({ email, password });
-      
-      alert('로그인에 성공했습니다!');
+
+      showToast('로그인에 성공했습니다!', 'success');
       navigate('/'); // 홈 화면으로 이동
-      
+
     } catch (err: any) {
       console.error('로그인 에러:', err);
       // 백엔드에서 내려주는 상세 에러 메시지가 있다면 표시

@@ -8,10 +8,12 @@ import { ScheduleDetailInfo } from './components/ScheduleDetailInfo';
 import { CareRecordAttachmentGallery } from '@/pages/CareRecords/Detail/components/CareRecordAttachmentGallery';
 import { scheduleApi } from '@/api/scheduleApi';
 import { useCommonCodes } from '@/hooks/useCommonCodes';
+import { useToast } from '@/context/ToastContext';
 
 const ScheduleDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const { schedule, files, isLoading, error, refetch } = useScheduleDetail(id);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -30,7 +32,7 @@ const ScheduleDetailPage: React.FC = () => {
       navigate('/schedules');
     } catch (err) {
       console.error('Delete failed:', err);
-      alert('일정 삭제에 실패했습니다.');
+      showToast('일정 삭제에 실패했습니다.', 'error');
     } finally {
       setIsDeleting(false);
     }

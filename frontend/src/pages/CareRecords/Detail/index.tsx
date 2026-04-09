@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { ConfirmModal } from '@/components/common/ConfirmModal';
+import { useToast } from '@/context/ToastContext';
 import { useCareRecordDetail } from './hooks/useCareRecordDetail';
 import { CareRecordDetailHeader } from './components/CareRecordDetailHeader';
 import { CareRecordInfoSections } from './components/CareRecordInfoSections';
@@ -11,6 +12,7 @@ import { careApi } from '@/api/careApi';
 const CareRecordDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const { record, files, isLoading, error } = useCareRecordDetail(id);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -21,10 +23,11 @@ const CareRecordDetailPage: React.FC = () => {
       setIsDeleting(true);
       await careApi.deleteRecord(Number(id));
       setIsDeleteModalOpen(false);
+      showToast('기록이 삭제되었습니다.', 'success');
       navigate('/care-records');
     } catch (err) {
       console.error('Delete failed:', err);
-      alert('기록 삭제에 실패했습니다. 다시 시도해주세요.');
+      showToast('기록 삭제에 실패했습니다. 다시 시도해주세요.', 'error');
     } finally {
       setIsDeleting(false);
     }
@@ -60,26 +63,18 @@ const CareRecordDetailPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#F7F8F9]">
-      {/* 
-        App-like Narrow Container: 
-        Max-width 760px prevents the "PC Blog Layout" text spreading out too far, 
-        giving a focused, native mobile/tablet application feel.
-      */}
       <PageLayout title="" maxWidth="max-w-[760px]" noPaddingTop>
         <div className="animate-in fade-in slide-in-from-bottom-6 duration-700 pt-2 pb-16 space-y-8 lg:space-y-10">
 
-          {/* Header Block */}
           <CareRecordDetailHeader
             record={record}
             onDelete={() => setIsDeleteModalOpen(true)}
           />
 
-          {/* Data Widgets (Grid Cards) */}
           <section>
             <CareRecordInfoSections record={record} />
           </section>
 
-          {/* Unified Text Record Card */}
           <section className="bg-white rounded-[28px] lg:rounded-[36px] p-8 lg:p-10 shadow-sm border border-stone-200/60 min-h-[220px]">
             <div className="flex items-center gap-3 border-b border-stone-100 pb-5 mb-8">
               <span className="text-[20px]">📝</span>
@@ -89,7 +84,6 @@ const CareRecordDetailPage: React.FC = () => {
             </div>
 
             <div className="flex flex-col gap-10">
-              {/* Symptom Tags (Placed directly under the main header) */}
               {record.symptomTags && record.symptomTags.length > 0 && (
                 <div className="flex flex-wrap gap-2 -mt-4">
                   {record.symptomTags.map((tag: string) => (
@@ -104,7 +98,6 @@ const CareRecordDetailPage: React.FC = () => {
                 </div>
               )}
 
-              {/* Symptoms */}
               {(() => {
                 const raw = record as any;
                 const symptoms = raw.symptoms || raw.medicalDetails?.symptoms || raw.medical_details?.symptoms;
@@ -122,7 +115,6 @@ const CareRecordDetailPage: React.FC = () => {
                 );
               })()}
 
-              {/* Treatment */}
               {(() => {
                 const raw = record as any;
                 const treatment = raw.treatment || raw.medicalDetails?.treatment || raw.medical_details?.treatment;
@@ -139,7 +131,6 @@ const CareRecordDetailPage: React.FC = () => {
                 );
               })()}
 
-              {/* Diary Note */}
               {record.note && record.note.trim() !== '' && (
                 <div className="space-y-3">
                   <h4 className="flex items-center gap-2 text-[12px] font-black text-stone-400 uppercase tracking-widest">
@@ -151,7 +142,6 @@ const CareRecordDetailPage: React.FC = () => {
                 </div>
               )}
 
-              {/* Fallback if ALL are empty */}
               {(() => {
                 const raw = record as any;
                 const symptoms = raw.symptoms || raw.medicalDetails?.symptoms || raw.medical_details?.symptoms;
@@ -170,14 +160,12 @@ const CareRecordDetailPage: React.FC = () => {
             </div>
           </section>
 
-          {/* Attachment Gallery Card */}
           {files && files.length > 0 && (
             <section className="bg-white rounded-[28px] lg:rounded-[36px] p-8 lg:p-10 shadow-sm border border-stone-200/60">
               <CareRecordAttachmentGallery files={files} />
             </section>
           )}
 
-          {/* Action Bar (at the bottom of content) */}
           <div className="pt-10 flex items-center justify-end gap-3 border-t border-stone-100">
             <button 
               onClick={() => navigate('/care-records')}
@@ -199,11 +187,9 @@ const CareRecordDetailPage: React.FC = () => {
             </button>
           </div>
 
-
         </div>
       </PageLayout>
 
-      {/* Delete Modal */}
       <ConfirmModal
         open={isDeleteModalOpen}
         title="기록 영구 삭제"

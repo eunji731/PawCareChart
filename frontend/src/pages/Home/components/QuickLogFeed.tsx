@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { healthLogApi } from '@/api/healthLogApi';
+import { useToast } from '@/context/ToastContext';
 import type { HealthLog } from '@/api/healthLogApi';
 
 interface QuickLogFeedProps {
@@ -10,6 +11,7 @@ export const QuickLogFeed: React.FC<QuickLogFeedProps> = ({ selectedDogId }) => 
   const [logs, setLogs] = useState<HealthLog[]>([]);
   const [content, setContent] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const { showToast } = useToast();
 
   const fetchLogs = useCallback(async () => {
     if (!selectedDogId) {
@@ -30,7 +32,7 @@ export const QuickLogFeed: React.FC<QuickLogFeedProps> = ({ selectedDogId }) => 
 
   // 통합 등록 함수
   const handleAddLog = async (text: string) => {
-    if (!selectedDogId) return alert('반려견을 먼저 선택해 주세요.');
+    if (!selectedDogId) return showToast('반려견을 먼저 선택해 주세요.', 'warning');
     if (!text.trim()) return;
 
     try {
@@ -41,9 +43,10 @@ export const QuickLogFeed: React.FC<QuickLogFeedProps> = ({ selectedDogId }) => 
       });
       setContent('');
       await fetchLogs(); // 목록 즉시 갱신
+      showToast('메모가 저장되었습니다! ✨', 'success');
     } catch (err) {
       console.error('Save failed:', err);
-      alert('저장에 실패했습니다.');
+      showToast('저장에 실패했습니다.', 'error');
     } finally {
       setIsLoading(false);
     }
@@ -59,9 +62,10 @@ export const QuickLogFeed: React.FC<QuickLogFeedProps> = ({ selectedDogId }) => 
     try {
       await healthLogApi.deleteLog(id);
       fetchLogs();
+      showToast('삭제되었습니다.', 'success');
     } catch (err) {
       console.error('Delete failed:', err);
-      alert('삭제에 실패했습니다.');
+      showToast('삭제에 실패했습니다.', 'error');
     }
   };
 

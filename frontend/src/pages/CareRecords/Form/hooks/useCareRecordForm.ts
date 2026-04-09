@@ -4,11 +4,13 @@ import { careApi } from '@/api/careApi';
 import { fileApi } from '@/api/fileApi';
 import { useFileUpload } from '@/hooks/useFileUpload';
 import { useCommonCodes } from '@/hooks/useCommonCodes';
+import { useToast } from '@/context/ToastContext';
 import type { CareRecord, CareRecordCreateRequest } from '@/types/care';
 
 export const useCareRecordForm = (id?: string) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { showToast } = useToast();
   
   const { codes: recordTypes } = useCommonCodes('RECORD_TYPE');
   const { codes: targetTypeCodes } = useCommonCodes('FILE_TARGET_TYPE');
@@ -204,12 +206,12 @@ export const useCareRecordForm = (id?: string) => {
   }, [medicalData.amount, expenseData.amount, recordTypeId, recordTypes]);
 
   const handleSave = async () => {
-    if (!commonData.dogId) return alert('반려견을 선택해주세요.');
-    if (!commonData.title.trim()) return alert('제목을 입력해주세요.');
+    if (!commonData.dogId) return showToast('반려견을 선택해주세요.', 'warning');
+    if (!commonData.title.trim()) return showToast('제목을 입력해주세요.', 'warning');
 
     const typeCode = getRecordTypeCode(recordTypeId);
     if (typeCode === 'EXPENSE' && !expenseData.categoryCode) {
-      return alert('지출 카테고리를 선택해주세요.');
+      return showToast('지출 카테고리를 선택해주세요.', 'warning');
     }
 
     try {
@@ -252,16 +254,16 @@ export const useCareRecordForm = (id?: string) => {
 
       if (id) {
         await careApi.updateRecord(Number(id), payload);
-        alert('기록이 수정되었습니다! ✨');
+        showToast('기록이 수정되었습니다! ✨', 'success');
         navigate(`/care-records/${id}`); 
       } else {
         await careApi.createRecord(payload);
-        alert('기록이 저장되었습니다! ✨');
+        showToast('기록이 저장되었습니다! ✨', 'success');
         navigate('/care-records'); 
       }
     } catch (err: any) {
       console.error('Save Error:', err);
-      alert(err.response?.data?.message || '저장 중 오류가 발생했습니다.');
+      showToast(err.response?.data?.message || '저장 중 오류가 발생했습니다.', 'error');
     } finally {
       setIsLoading(false);
     }

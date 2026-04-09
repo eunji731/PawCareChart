@@ -5,10 +5,12 @@ import { dogApi } from '@/api/dogApi';
 import { fileApi } from '@/api/fileApi';
 import { useFileUpload } from '@/hooks/useFileUpload';
 import { useCommonCodes } from '@/hooks/useCommonCodes';
+import { useToast } from '@/context/ToastContext';
 import type { Dog } from '@/types/dog';
 
 export const useScheduleForm = (id?: string) => {
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(!!id);
   const [dogs, setDogs] = useState<Dog[]>([]);
@@ -89,9 +91,9 @@ export const useScheduleForm = (id?: string) => {
   }, [id, targetTypeCodes, fileUploader]);
 
   const handleSave = async () => {
-    if (!formData.dogId) return alert('반려견을 선택해주세요.');
-    if (!formData.title.trim()) return alert('제목을 입력해주세요.');
-    if (!formData.scheduleTypeId) return alert('일정 유형을 선택해주세요.');
+    if (!formData.dogId) return showToast('반려견을 선택해주세요.', 'warning');
+    if (!formData.title.trim()) return showToast('제목을 입력해주세요.', 'warning');
+    if (!formData.scheduleTypeId) return showToast('일정 유형을 선택해주세요.', 'warning');
 
     try {
       setIsLoading(true);
@@ -119,16 +121,16 @@ export const useScheduleForm = (id?: string) => {
 
       if (id) {
         await scheduleApi.updateSchedule(Number(id), payload);
-        alert('일정이 수정되었습니다! ✨');
+        showToast('일정이 수정되었습니다! ✨', 'success');
         navigate(`/schedules/${id}`); // 수정 시 상세로 이동
       } else {
         await scheduleApi.createSchedule(payload);
-        alert('일정이 예약되었습니다! ✨');
+        showToast('일정이 예약되었습니다! ✨', 'success');
         navigate('/schedules');
       }
     } catch (err) {
       console.error('Save failed:', err);
-      alert('저장에 실패했습니다.');
+      showToast('저장에 실패했습니다.', 'error');
     } finally {
       setIsLoading(false);
     }
