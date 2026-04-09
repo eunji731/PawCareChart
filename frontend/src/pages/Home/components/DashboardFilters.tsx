@@ -43,13 +43,14 @@ export const DashboardFilters: React.FC<DashboardFiltersProps> = ({ onFilterChan
   };
 
   return (
-    <div className="flex flex-col lg:flex-row items-center gap-4">
+    <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
       
-      <div className="relative group">
+      {/* 반려견 선택 */}
+      <div className="relative group w-full sm:w-auto">
         <select 
           value={selectedDogId || ''}
           onChange={(e) => setSelectedDogId(e.target.value ? Number(e.target.value) : undefined)}
-          className="appearance-none bg-white h-[52px] pl-6 pr-12 rounded-[20px] border border-stone-100 shadow-sm text-[#2D2D2D] font-black text-[14px] outline-none focus:ring-4 focus:ring-[#FF6B00]/5 focus:border-[#FF6B00] transition-all cursor-pointer min-w-[160px]"
+          className="appearance-none bg-white h-[52px] w-full sm:w-[160px] pl-6 pr-12 rounded-[20px] border border-stone-100 shadow-sm text-[#2D2D2D] font-black text-[14px] outline-none focus:ring-4 focus:ring-[#FF6B00]/5 focus:border-[#FF6B00] transition-all cursor-pointer"
         >
           <option value="">모든 아이들 🐾</option>
           {dogs.map(dog => (
@@ -59,8 +60,9 @@ export const DashboardFilters: React.FC<DashboardFiltersProps> = ({ onFilterChan
         <span className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-stone-300 group-hover:text-[#FF6B00] transition-colors">▼</span>
       </div>
 
-      <div className="flex items-center gap-3">
-        <div className="hidden md:flex gap-1 p-1 bg-stone-100/50 rounded-[18px]">
+      <div className="flex flex-wrap items-center justify-center gap-2 w-full sm:w-auto">
+        {/* 퀵 버튼 (모바일에서도 가로로 작게 유지) */}
+        <div className="flex gap-1 p-1 bg-stone-100/50 rounded-[18px]">
           {(['7D', '1M', '3M'] as const).map(p => (
             <button
               key={p}
@@ -72,19 +74,19 @@ export const DashboardFilters: React.FC<DashboardFiltersProps> = ({ onFilterChan
           ))}
         </div>
 
-        {/* 기간 카드 너비 및 간격 조정 */}
-        <div className="flex items-center px-5 h-[52px] bg-white rounded-[20px] border border-stone-100 shadow-sm focus-within:border-[#FF6B00] transition-all">
-          <div className="flex items-center gap-2">
+        {/* 기간 카드 - 모바일에서 유연한 너비 적용 */}
+        <div className="flex items-center px-4 h-[52px] bg-white rounded-[20px] border border-stone-100 shadow-sm focus-within:border-[#FF6B00] transition-all flex-grow sm:flex-grow-0">
+          <div className="flex items-center gap-2 w-full justify-center">
             <span className="text-base opacity-30">📅</span>
             <div className="flex items-center">
-              <div className="w-[95px]">
+              <div className="w-[85px] sm:w-[95px]">
                 <DatePicker 
                   selected={startDate}
                   onChange={(date) => setStartDate(date)}
                 />
               </div>
-              <span className="text-stone-300 font-light mx-1">~</span>
-              <div className="w-[95px]">
+              <span className="text-stone-300 font-light mx-0.5 sm:mx-1">~</span>
+              <div className="w-[85px] sm:w-[95px]">
                 <DatePicker 
                   selected={endDate}
                   onChange={(date) => setEndDate(date)}

@@ -25,8 +25,17 @@ export const DatePicker: React.FC<DatePickerProps> = ({
         dateFormat="yyyy-MM-dd"
         placeholderText={placeholderText}
         className="w-full bg-transparent border-none outline-none text-[14px] font-black text-[#2D2D2D] cursor-pointer"
-        popperPlacement="bottom-end"
-        // 다음 달 이동 버튼 등 커스텀 가능
+        
+        /**
+         * [최종 해결책]
+         * 1. portalId를 지정하여 DOM 최상단에 렌더링 (부모 overflow 영향 제거)
+         * 2. index.css에서 모바일 시 fixed + center 설정을 통해 잘림 방지
+         */
+        portalId="root-portal"
+        popperPlacement="bottom-start"
+        
+        fixedHeight
+        autoComplete="off"
       />
     </div>
   );

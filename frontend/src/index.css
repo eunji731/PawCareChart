@@ -92,3 +92,30 @@ html, body {
 .react-datepicker__triangle {
   display: none !important;
 }
+
+/* 모바일 팝업 모드일 때 (withPortal) 스타일 */
+.react-datepicker__portal {
+  background-color: rgba(0, 0, 0, 0.5) !important;
+  z-index: 9999 !important;
+}
+
+.react-datepicker__portal .react-datepicker {
+  border-radius: 32px !important;
+  padding: 20px !important;
+}
+
+/* [추가] 모바일 화면 이탈 방지 강제 스타일 */
+@media (max-width: 767px) {
+  .react-datepicker-popper {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    margin: 0 !important;
+    z-index: 9999 !important;
+  }
+  
+  .react-datepicker__navigation {
+    top: 20px !important;
+  }
+}
