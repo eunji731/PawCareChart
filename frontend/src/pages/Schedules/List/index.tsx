@@ -8,6 +8,8 @@ import { ScheduleList } from './components/ScheduleList';
 import { useSchedules } from './hooks/useSchedules';
 import { dogApi } from '@/api/dogApi';
 import { useCommonCodes } from '@/hooks/useCommonCodes';
+import { DatePicker } from '@/components/common/DatePicker';
+import { parseISO, format } from 'date-fns';
 import type { Dog } from '@/types/dog';
 
 const ScheduleListPage: React.FC = () => {
@@ -17,7 +19,6 @@ const ScheduleListPage: React.FC = () => {
   const [activeScheduleId, setActiveScheduleId] = useState<number | null>(null);
   const [dogs, setDogs] = useState<Dog[]>([]);
 
-  // 필터용 공통 코드
   const { codes: scheduleTypes } = useCommonCodes('SCHEDULE_TYPE');
 
   useEffect(() => {
@@ -104,7 +105,7 @@ const ScheduleListPage: React.FC = () => {
                   <select
                     value={filters.dogId || ''}
                     onChange={(e) => updateFilter({ dogId: e.target.value ? Number(e.target.value) : undefined })}
-                    className="w-full h-[56px] px-6 rounded-xl bg-[#F9F9F9] border border-transparent focus:border-[#FF6B00] focus:bg-white text-[14px] font-bold appearance-none outline-none cursor-pointer transition-all duration-300 shadow-inner"
+                    className="w-full h-[56px] px-6 rounded-xl bg-[#F9F9F9] border border-transparent focus:border-[#FF6B00] focus:bg-white text-[14px] font-black appearance-none outline-none cursor-pointer transition-all duration-300 shadow-inner"
                   >
                     <option value="">모든 아이들 🐾</option>
                     {dogs.map((dog) => (
@@ -118,7 +119,7 @@ const ScheduleListPage: React.FC = () => {
                   <select
                     value={filters.type || 'ALL'}
                     onChange={(e) => updateFilter({ type: e.target.value as any })}
-                    className="w-full h-[56px] px-6 rounded-xl bg-[#F9F9F9] border border-transparent focus:border-[#FF6B00] focus:bg-white text-[14px] font-bold appearance-none outline-none cursor-pointer transition-all duration-300 shadow-inner"
+                    className="w-full h-[56px] px-6 rounded-xl bg-[#F9F9F9] border border-transparent focus:border-[#FF6B00] focus:bg-white text-[14px] font-black appearance-none outline-none cursor-pointer transition-all duration-300 shadow-inner"
                   >
                     <option value="ALL">전체 일정</option>
                     {scheduleTypes.map(type => (
@@ -129,24 +130,24 @@ const ScheduleListPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* [복구] 기간 필터 영역 */}
-              <div className="flex items-center gap-4 px-6 border-l border-stone-100">
-                <div className="space-y-1">
-                  <p className="text-[9px] font-black text-stone-300 uppercase tracking-widest leading-none">Date Range</p>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="date"
-                      value={filters.startDate || ''}
-                      onChange={(e) => updateFilter({ startDate: e.target.value })}
-                      className="bg-transparent border-none outline-none text-[13px] font-black text-[#2D2D2D] cursor-pointer hover:text-[#FF6B00] transition-colors"
-                    />
-                    <span className="text-stone-200 font-light">/</span>
-                    <input
-                      type="date"
-                      value={filters.endDate || ''}
-                      onChange={(e) => updateFilter({ endDate: e.target.value })}
-                      className="bg-transparent border-none outline-none text-[13px] font-black text-[#2D2D2D] cursor-pointer hover:text-[#FF6B00] transition-colors"
-                    />
+              {/* [개편] 프리미엄 기간 카드 스타일 적용 */}
+              <div className="flex items-center px-5 h-[56px] bg-[#F9F9F9] rounded-2xl border border-transparent focus-within:border-[#FF6B00] focus-within:bg-white transition-all shadow-inner">
+                <div className="flex items-center gap-2">
+                  <span className="text-base opacity-30">📅</span>
+                  <div className="flex items-center">
+                    <div className="w-[95px]">
+                      <DatePicker 
+                        selected={filters.startDate ? parseISO(filters.startDate) : null}
+                        onChange={(date) => updateFilter({ startDate: date ? format(date, 'yyyy-MM-dd') : undefined })}
+                      />
+                    </div>
+                    <span className="text-stone-300 font-light mx-1">~</span>
+                    <div className="w-[95px]">
+                      <DatePicker 
+                        selected={filters.endDate ? parseISO(filters.endDate) : null}
+                        onChange={(date) => updateFilter({ endDate: date ? format(date, 'yyyy-MM-dd') : undefined })}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
