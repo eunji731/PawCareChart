@@ -11,6 +11,7 @@
   "compilerOptions": {
     "noUnusedLocals": false, // 안 쓰는 지역 변수 있어도 빌드 허용
     "noUnusedParameters": false, // 안 쓰는 파라미터 있어도 빌드 허용
-    "noImplicitAny": false // 타입이 불분명해도 일단 허용 (role_code 에러 방지용)
+    "noImplicitAny": false, // 타입이 불분명해도 일단 허용 (role_code 에러 방지용)
+    "skipLibCheck": true
   }
 }
