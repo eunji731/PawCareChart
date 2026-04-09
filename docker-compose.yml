@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  # 2.(Spring Boot)
+  backend:
+    build: ./backend
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/${DB_NAME}
+      - SPRING_DATASOURCE_USERNAME=${DB_USER}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      
+      - JWT_SECRET_BASE64=${JWT_SECRET_BASE64}
+      - JWT_ACCESS_TOKEN_EXPIRE_SECONDS=${JWT_ACCESS_EXPIRE}
+      - JWT_REFRESH_TOKEN_EXPIRE_SECONDS=${JWT_REFRESH_EXPIRE}
+      
+      - FILE_UPLOAD_DIR=/app/uploads
+      - FILE_BASE_URL=${FILE_BASE_URL}
+    volumes:
+      
+      - ${UPLOAD_DIR}:/app/uploads
+    depends_on:
+      - db
+
+  # (React + Vite)
+  frontend:
+    build: ./frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
