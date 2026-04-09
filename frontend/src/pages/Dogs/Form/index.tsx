@@ -1,6 +1,8 @@
 import { useNavigate, useParams } from 'react-router-dom';
+import { format, parseISO } from 'date-fns';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { Input } from '@/components/common/Input';
+import { DatePicker } from '@/components/common/DatePicker';
 import { FormActions } from '@/components/common/FormActions';
 import { ConfirmModal } from '@/components/common/ConfirmModal';
 import { FileUploader } from '@/components/common/FileUploader';
@@ -93,11 +95,11 @@ const DogFormPage = () => {
 
                 {/* GRID 2: BIRTH & WEIGHT */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <Input 
+                  <DatePicker 
                     label="생년월일" 
-                    type="date" 
-                    value={formData.birthDate} 
-                    onChange={(e) => setFormData({...formData, birthDate: e.target.value})} 
+                    variant="form"
+                    selected={formData.birthDate ? parseISO(formData.birthDate) : null} 
+                    onChange={(date) => setFormData({...formData, birthDate: date ? format(date, 'yyyy-MM-dd') : ''})} 
                   />
                   <div className="relative">
                     <Input 

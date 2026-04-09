@@ -1,9 +1,11 @@
 import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { format, parseISO } from 'date-fns';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { Button } from '@/components/common/Button';
 import { Section } from '@/components/common/Section';
 import { Input } from '@/components/common/Input';
+import { DatePicker } from '@/components/common/DatePicker';
 import { Textarea } from '@/components/common/Textarea';
 import { Select } from '@/components/common/Select';
 import { TagInput } from '@/components/common/TagInput';
@@ -104,11 +106,11 @@ const ScheduleFormPage: React.FC = () => {
                 />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Input
+                <DatePicker
                   label="날짜"
-                  type="date"
-                  value={formData.scheduleDate}
-                  onChange={(e) => setFormData({ ...formData, scheduleDate: e.target.value })}
+                  variant="form"
+                  selected={formData.scheduleDate ? parseISO(formData.scheduleDate) : null}
+                  onChange={(date) => setFormData({ ...formData, scheduleDate: date ? format(date, 'yyyy-MM-dd') : '' })}
                 />
                 <Input
                   label="시간"

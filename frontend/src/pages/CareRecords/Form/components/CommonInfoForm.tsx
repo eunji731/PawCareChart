@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
+import { format, parseISO } from 'date-fns';
 import { Section } from '@/components/common/Section';
 import { Select } from '@/components/common/Select';
 import { Input } from '@/components/common/Input';
+import { DatePicker } from '@/components/common/DatePicker';
 import { Textarea } from '@/components/common/Textarea';
 import { dogApi } from '@/api/dogApi';
 import type { Dog } from '@/types/dog';
@@ -37,11 +39,11 @@ export const CommonInfoForm: React.FC<CommonInfoFormProps> = ({ data, onChange }
           value={data.dogId} 
           onChange={(e) => onChange({ ...data, dogId: e.target.value })} 
         />
-        <Input 
+        <DatePicker 
           label="기록일 *" 
-          type="date" 
-          value={data.recordDate} 
-          onChange={(e) => onChange({ ...data, recordDate: e.target.value })} 
+          variant="form"
+          selected={data.recordDate ? parseISO(data.recordDate) : null} 
+          onChange={(date) => onChange({ ...data, recordDate: date ? format(date, 'yyyy-MM-dd') : '' })} 
         />
       </div>
       <div className="space-y-6">
