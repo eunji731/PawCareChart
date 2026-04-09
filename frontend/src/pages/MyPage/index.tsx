@@ -90,7 +90,7 @@ export const MyPage = () => {
                 <div className="space-y-1.5">
                   <p className="text-[11px] font-black text-stone-300 uppercase tracking-widest">Role</p>
                   <Badge color="stone" className="px-3 py-0.5 rounded-lg opacity-70">
-                    {user?.role_code || 'MEMBER'}
+                    {user?.type_id || 'MEMBER'}
                   </Badge>
                 </div>
               </div>

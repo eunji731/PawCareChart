@@ -1,15 +1,15 @@
 spring:
   # --- [ 운영 환경용 DB 연결 ] ---
   datasource:
-    url: ${DB_URL}
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
   # --- [ JPA (Hibernate) 설정 (운영) ] ---
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
     show-sql: false
     properties:
       hibernate:
@@ -23,5 +23,5 @@ logging:
 
 # --- [ 운영 환경용 파일 업로드 설정 ] ---
 file:
-  upload-dir: ${FILE_UPLOAD_DIR:/var/www/pawcare/uploads}
-  base-url: ${FILE_BASE_URL:https://api.pawcarechart.com/api/files/download}
+  upload-dir: ${FILE_UPLOAD_DIR:/app/uploads}
+  base-url: ${FILE_BASE_URL:http://35.175.212.189:8080/api/files/download}

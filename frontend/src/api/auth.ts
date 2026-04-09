@@ -4,6 +4,7 @@ export interface User {
   id: string;
   email: string;
   name: string;
+  type_id?: string;
 }
 
 export const authApi = {
@@ -26,6 +27,7 @@ export const authApi = {
         id: String(data.id), // 프론트엔드 User 인터페이스가 string id를 사용하므로 변환
         email: data.email,
         name: data.name,
+        type_id: data.type_id,
       };
     } catch (error) {
       console.error('❌ /me 정보를 가져오는 로직 실패:', error);
