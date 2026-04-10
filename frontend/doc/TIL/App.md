@@ -17,18 +17,18 @@
 `ProtectedRoute` : 로그인한 사람만 접근할 수 있는 페이지를 감싸는 껍데기(인증 필요한 페이지와 아닌 페이지를 구분하는 핵심)
 
 ### 페이지 import 관련
-`LoginPage` : 로그인 페이지
-`SignupPage` : 회원가입 페이지
-`HomePage` : 메인 페이지(대시보드)
-`MyPage` : 마이 페이지
-`DogListPage` : 강아지 목록 페이지
-`DogFormPage` : 강아지 폼 페이지
-`CareRecordListPage` : 케어 기록 목록 페이지
-`CareRecordFormPage` : 케어 기록 폼 페이지
-`CareRecordDetailPage` : 케어 기록 상세 페이지
-`ScheduleListPage` : 스케줄 목록 페이지
-`ScheduleFormPage` : 스케줄 폼 페이지
-`ScheduleDetailPage` : 스케줄 상세 페이지
+- `LoginPage` : 로그인 페이지
+- `SignupPage` : 회원가입 페이지
+- `HomePage` : 메인 페이지(대시보드)
+- `MyPage` : 마이 페이지
+- `DogListPage` : 강아지 목록 페이지
+- `DogFormPage` : 강아지 폼 페이지
+- `CareRecordListPage` : 케어 기록 목록 페이지
+- `CareRecordFormPage` : 케어 기록 폼 페이지
+- `CareRecordDetailPage` : 케어 기록 상세 페이지
+- `ScheduleListPage` : 스케줄 목록 페이지
+- `ScheduleFormPage` : 스케줄 폼 페이지
+- `ScheduleDetailPage` : 스케줄 상세 페이지
 
 
 ## 공개페이지, 보호페이지 구분
